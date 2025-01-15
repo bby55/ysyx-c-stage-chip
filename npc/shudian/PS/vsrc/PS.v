@@ -109,11 +109,21 @@ module PS_control(
 		);
 		reg [9:0] buffer;
     reg [2:0] ps2_clk_sync;
-		wire [7:0] aaa;
+		reg [1:0]seal;
+		reg [1:0]state,next_state;
+		parameter A = 2'b00,B = 2'b01,C = 2'b10;
     always @(posedge clk) begin
         ps2_clk_sync <=  {ps2_clk_sync[1:0],ps2_clk};
     end
 
+		always @(posedge clk or posedge resetn)begin
+			if(~resetn)begin
+				state <= A;
+				end
+			else begin
+				state <= next_state;	
+				end
+			end
     wire sampling = ps2_clk_sync[2] & ~ps2_clk_sync[1];
 
     always @(posedge clk) begin
@@ -128,19 +138,25 @@ module PS_control(
                 if ((buffer[0] == 0) &&  // start bit
                     (ps2_data)       &&  // stop bit
                     (^buffer[9:1])) begin      // odd  parity
-										if(buffer[8:1] ==	8'hf0)begin
-											cur_key <= 0;
-											update <= 1;
-											$display("display buffer:%x",buffer[8:1]);
-											$strobe("strobe buffer:%x",buffer[8:1]);
+										case(state)
+												A: next_state = (buffer[8:1] == 8'hf0)? B:A;
+												B: next_state = (buffer[8:1] == 8'hf0)? B:C;
+												C: next_state = A;
+												default: next_state = A;
+											endcase
+										case(state)
+												A:seal = A;
+												B:seal = B;
+												C:seal = C;
+												default: seal = A;
+											endcase
+
+										if(buffer[8:1] == 8'hf0)
 											num <= num + 1;
-											$strobe("strobe cur_key %x", cur_key[8:1]);
-											$display("display cur_key %x", cur_key[8:1]);
-											$display("display num:%d",num);
-											$strobe("strobe num:%d",num);
-										end else begin
+										if(state == 2'b10)begin
 											cur_key <= buffer;
-											update <= 0;
+										end else begin
+											cur_key <= 0;
 										end
                end
                 count <= 0;     // for next
@@ -151,7 +167,6 @@ module PS_control(
             end
         end
     end
-		assign aaa = buffer[7:0];
 		endmodule
 module PS(input clk,
 	input rst,

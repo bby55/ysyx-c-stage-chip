@@ -41,11 +41,13 @@ VM_USER_LDLIBS = \
 
 # User .cpp files (from .cpp's on Verilator command line)
 VM_USER_CLASSES = \
+	auto_bind \
 	main \
 
 # User .cpp directories (from .cpp's on Verilator command line)
 VM_USER_DIR = \
-	./csrc_v \
+	/home/ysyxbby/ysyx-workbench/npc/shudian/PS/build \
+	/home/ysyxbby/ysyx-workbench/npc/shudian/PS/csrc \
 
 
 ### Default rules...
@@ -57,7 +59,9 @@ include $(VERILATOR_ROOT)/include/verilated.mk
 ### Executable rules... (from --exe)
 VPATH += $(VM_USER_DIR)
 
-main.o: ./csrc_v/main.cpp
+auto_bind.o: /home/ysyxbby/ysyx-workbench/npc/shudian/PS/build/auto_bind.cpp
+	$(OBJCACHE) $(CXX) $(CXXFLAGS) $(CPPFLAGS) $(OPT_FAST) -c -o $@ $<
+main.o: /home/ysyxbby/ysyx-workbench/npc/shudian/PS/csrc/main.cpp
 	$(OBJCACHE) $(CXX) $(CXXFLAGS) $(CPPFLAGS) $(OPT_FAST) -c -o $@ $<
 
 ### Link rules... (from --exe)
