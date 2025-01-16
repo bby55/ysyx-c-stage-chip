@@ -19,6 +19,7 @@
 #include <readline/history.h>
 #include "sdb.h"
 #include <stdlib.h>
+#include <string.h>
 
 static int is_batch_mode = false;
 
@@ -58,7 +59,7 @@ static int cmd_q(char *args) {
 
 static int cmd_help(char *args);
 
-/*static int cmd_si(char *args){
+static int cmd_si(char *args){
 	int i;
 	if(args == NULL)
 		cpu_exec(1);
@@ -67,24 +68,13 @@ static int cmd_help(char *args);
 		cpu_exec(i);
 	}
 	return 0;
-}*/
-static int cmd_si(char *args){
-  /* extract the first argument */
-  char *arg = strtok(NULL, " ");
-  /* Number of single-step execution instructions */
-  int i;
- 
-  if (arg == NULL) {
-    /* no argument given */
-    i = 1;
-  }
-  else {
-    sscanf (arg, "%d", &i);
-  }
-  cpu_exec(i);
-  return 0;
 }
 
+static int cmd_info(char *args){
+	if(strcmp(args,"r")==0)
+	 isa_reg_display();
+	return 0;
+}
 
 static struct {
   const char *name;
@@ -95,6 +85,7 @@ static struct {
   { "c", "Continue the execution of the program", cmd_c },
   { "q", "Exit NEMU", cmd_q },
 	{ "si","Execute the program",cmd_si},
+	{ "info","Printf",cmd_info},
   /* TODO: Add more commands */
 
 };
