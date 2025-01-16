@@ -84,8 +84,10 @@ static int cmd_x(char *args){
 	int i = 0;
 	int N = atoi(strtok(args, " "));
 	int addr = atoi(strtok(NULL," "));
-	for(i = 0 ; i <= N ; i++)
-		paddr_read(addr,N);
+	for(i = 0 ; i <= N ; i++){
+		printf("%x\n",paddr_read(addr,4));//addr len
+    addr = addr + 4;
+	}
 	return 0;
 }
 static struct {
