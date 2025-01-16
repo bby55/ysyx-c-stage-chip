@@ -12,7 +12,7 @@
 *
 * See the Mulan PSL v2 for more details.
 ***************************************************************************************/
-
+#include <stdio.h>
 #include <isa.h>
 #include <cpu/cpu.h>
 #include <readline/readline.h>
@@ -83,7 +83,7 @@ static int cmd_info(char *args){
 static int cmd_x(char *args){
 	int i = 0;
 	int N = atoi(strtok(args, " "));
-	int addr = atoi(strtok(NULL," "));
+	long addr =strtol(strtok(NULL," "),NULL,16);
 	for(i = 0 ; i <= N ; i++){
 		printf("%x\n",paddr_read(addr,4));//addr len
     addr = addr + 4;
