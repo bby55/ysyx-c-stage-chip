@@ -85,7 +85,7 @@ static int cmd_x(char *args){
 	int N = atoi(strtok(args, " "));
 	long addr =strtol(strtok(NULL," "),NULL,16);
 	for(i = 0 ; i < N ; i++){
-		printf("%x\n",paddr_read(addr,4));//addr len
+		printf("%lx:\n%x\n",addr,paddr_read(addr,4));//addr len
     addr = addr + 4;
 	}
 	return 0;
