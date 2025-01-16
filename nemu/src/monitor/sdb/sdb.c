@@ -43,6 +43,8 @@ static char* rl_gets() {
   return line_read;
 }
 
+void isa_reg_display(void);
+
 static int cmd_c(char *args) {
   cpu_exec(-1);
   return 0;
@@ -56,7 +58,7 @@ static int cmd_q(char *args) {
 
 static int cmd_help(char *args);
 
-static int cmd_si(char *args){
+/*static int cmd_si(char *args){
 	int i;
 	if(args == NULL)
 		cpu_exec(1);
@@ -65,8 +67,23 @@ static int cmd_si(char *args){
 		cpu_exec(i);
 	}
 	return 0;
+}*/
+static int cmd_si(char *args){
+  /* extract the first argument */
+  char *arg = strtok(NULL, " ");
+  /* Number of single-step execution instructions */
+  int i;
+ 
+  if (arg == NULL) {
+    /* no argument given */
+    i = 1;
+  }
+  else {
+    sscanf (arg, "%d", &i);
+  }
+  cpu_exec(i);
+  return 0;
 }
-
 
 
 static struct {
