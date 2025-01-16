@@ -22,7 +22,7 @@
 #include <string.h>
 
 static int is_batch_mode = false;
-
+word_t paddr_read(paddr_t addr, int len);
 void init_regex();
 void init_wp_pool();
 
@@ -80,9 +80,14 @@ static int cmd_info(char *args){
 	return 0;
 }
 
-//static int cmd_x(char *args){
-	//paddr_read(,args);
-//}
+static int cmd_x(char *args){
+	int i = 0;
+	int N = atoi(strtok(args, " "));
+	int addr = atoi(strtok(NULL," "));
+	for(i = 0 ; i <= N ; i++)
+		paddr_read(addr,N);
+	return 0;
+}
 static struct {
   const char *name;
   const char *description;
@@ -93,7 +98,7 @@ static struct {
   { "q", "Exit NEMU", cmd_q },
 	{ "si","Execute the program",cmd_si},
 	{ "info","Printf",cmd_info},
-//	{ "x","scan the pmem",cmd_x},
+	{ "x","scan the pmem",cmd_x},
   /* TODO: Add more commands */
 
 };
