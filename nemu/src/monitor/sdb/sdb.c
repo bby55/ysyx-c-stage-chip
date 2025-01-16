@@ -71,10 +71,12 @@ static int cmd_si(char *args){
 }
 
 static int cmd_info(char *args){
+	if(args == NULL){
+		printf("Please input info r or info w");
+		return 0;
+	}
 	if(strcmp(args,"r")==0)
 	 isa_reg_display();
-	if(args == NULL)
-		printf("Please input info r or info w");
 	return 0;
 }
 
