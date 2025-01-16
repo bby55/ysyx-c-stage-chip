@@ -21,7 +21,7 @@
 #include <regex.h>
 
 enum {
-  TK_NOTYPE = 256, TK_EQ,
+  TK_NOTYPE = 256, TK_EQ,TK_PLUS,TK_MINUS,TK_DOT,TK_DIV,TK_LFBKT,TK_RGBKT,TK_NUM
 
   /* TODO: Add more token types */
 
@@ -37,8 +37,14 @@ static struct rule {
    */
 
   {" +", TK_NOTYPE},    // spaces
-  {"\\+", '+'},         // plus
+  {"\\+", TK_PLUS},         // plus
   {"==", TK_EQ},        // equal
+	{"\\-",TK_MINUS},
+	{"\\*",TK_DOT},
+	{"\\/",TK_DIV},
+	{"\\(",TK_LFBKT},
+	{"\\)",TK_RGBKT},
+	{"[0-9]+",TK_NUM},
 };
 
 #define NR_REGEX ARRLEN(rules)
@@ -95,6 +101,46 @@ static bool make_token(char *e) {
          */
 
         switch (rules[i].token_type) {
+					case TK_EQ:
+							tokens[nr_token].type =	TK_EQ; 
+							strncpy(tokens[nr_token].str, "=", sizeof(tokens[nr_token].str));
+							nr_token++;
+							break;
+					case TK_PLUS:
+							tokens[nr_token].type =	TK_PLUS; 
+							strncpy(tokens[nr_token].str, "+", sizeof(tokens[nr_token].str));
+							nr_token++;
+							break;
+					case TK_MINUS:
+							tokens[nr_token].type =	TK_MINUS; 
+							strncpy(tokens[nr_token].str, "-", sizeof(tokens[nr_token].str));
+							nr_token++;
+							break;
+					case TK_DOT:
+							tokens[nr_token].type =	TK_DOT; 
+							strncpy(tokens[nr_token].str, "*", sizeof(tokens[nr_token].str));
+							nr_token++;
+							break;
+					case TK_DIV:
+							tokens[nr_token].type =	TK_DIV; 
+							strncpy(tokens[nr_token].str, "/", sizeof(tokens[nr_token].str));
+							nr_token++;
+							break;
+					case TK_LFBKT:
+							tokens[nr_token].type =	TK_LFBKT; 
+							strncpy(tokens[nr_token].str, "(", sizeof(tokens[nr_token].str));
+							nr_token++;
+							break;
+					case TK_RGBKT:
+							tokens[nr_token].type =	TK_RGBKT; 
+							strncpy(tokens[nr_token].str, ")", sizeof(tokens[nr_token].str));
+							nr_token++;
+							break;
+					case TK_NUM:
+							tokens[nr_token].type =	TK_NUM; 
+							strncpy(tokens[nr_token].str, substr_start, substr_len);
+							nr_token++;
+							break;
           default: TODO();
         }
 

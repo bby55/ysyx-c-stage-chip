@@ -21,6 +21,7 @@
 #include <stdlib.h>
 #include <string.h>
 
+
 static int is_batch_mode = false;
 word_t paddr_read(paddr_t addr, int len);
 void init_regex();
@@ -90,6 +91,12 @@ static int cmd_x(char *args){
 	}
 	return 0;
 }
+
+
+static int cmd_p(char *args){
+	//printf("%d\n",make_token(args));
+	return 0;
+}
 static struct {
   const char *name;
   const char *description;
@@ -99,8 +106,9 @@ static struct {
   { "c", "Continue the execution of the program", cmd_c },
   { "q", "Exit NEMU", cmd_q },
 	{ "si","Execute the program",cmd_si},
-	{ "info","Printf",cmd_info},
+	{ "info","Printf the reg or monitor",cmd_info},
 	{ "x","scan the pmem",cmd_x},
+	{ "p","test",cmd_p}
   /* TODO: Add more commands */
 
 };
