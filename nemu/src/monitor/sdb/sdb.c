@@ -80,6 +80,9 @@ static int cmd_info(char *args){
 	return 0;
 }
 
+//static int cmd_x(char *args){
+	//paddr_read(,args);
+//}
 static struct {
   const char *name;
   const char *description;
@@ -90,6 +93,7 @@ static struct {
   { "q", "Exit NEMU", cmd_q },
 	{ "si","Execute the program",cmd_si},
 	{ "info","Printf",cmd_info},
+//	{ "x","scan the pmem",cmd_x},
   /* TODO: Add more commands */
 
 };
