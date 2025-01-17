@@ -19,7 +19,7 @@
  * Type 'man regex' for more information about POSIX regex functions.
  */
 #include <regex.h>
-
+#include <stdlib.h>
 enum {
   TK_NOTYPE = 256, TK_EQ,TK_PLUS,TK_MINUS,TK_DOT,TK_DIV,TK_LFBKT,TK_RGBKT,TK_NUM
 
@@ -99,7 +99,7 @@ static bool make_token(char *e) {
          * to record the token in the array `tokens'. For certain types
          * of tokens, some extra actions should be performed.
          */
-
+			if(nr_token < 32){
         switch (rules[i].token_type) {
 					case TK_EQ:
 							tokens[nr_token].type =	TK_EQ; 
@@ -143,7 +143,7 @@ static bool make_token(char *e) {
 							break;
           default: TODO();
         }
-
+				}
         break;
       }
     }
@@ -157,15 +157,130 @@ static bool make_token(char *e) {
   return true;
 }
 
+	word_t select_main_token(int p, int q){
+		int Tokens_DD[32] = {};	
+		int Tokens_PM[32] = {};
+		int Tokens_OP[32] = {};
+		int i = 0;
+		int j = 0;
+		int n = 0;
+		int x = 0;
+		int y = 0;
+		for(;p < q;p++){
+			if (tokens[p].type == TK_PLUS || tokens[p].type == TK_DIV || tokens[p].type == TK_DOT || tokens[p].type == TK_MINUS){
+				//if(tokens[p - 1].type != TK_LFBKT && tokens[p + 1].type != TK_RGBKT){
+					if(tokens[p].type == TK_DOT || tokens[p].type == TK_DIV){
+						if(i < 32){
+						Tokens_DD[i] = p;
+						i++;
+						}
+					}
+					if(tokens[p].type == TK_PLUS || tokens[p].type == TK_MINUS){
+						if(j < 32){
+						Tokens_PM[j] = p;
+						j++;
+						}
+					}
+				//}
+			}
+		}
+	  int lenth1 = i;
+	  int lenth2 = j;
+	for(n = 0; n < lenth1 + lenth2; n++){
+		if(lenth1 != 0 && x < lenth1){
+			Tokens_OP[n] = Tokens_DD[x];	
+			x++;
+		}
+		if(lenth2 != 0 && x == lenth1 && y < lenth2){
+			Tokens_OP[n] = Tokens_PM[y];
+			y++;
+		}
+		else
+			break;
+	}
+	int OP;
+	OP = Tokens_OP[n];	
+	return OP;	
+	}
 
+
+
+bool check_parentheses(int p, int q)
+{
+    if(tokens[p].type != '('  || tokens[q].type != ')')
+        return false;
+    int l = p , r = q;
+    while(l < r)
+    {
+        if(tokens[l].type == '('){
+            if(tokens[r].type == ')')
+            {
+                l ++ , r --;
+                continue;
+            }
+
+            else
+                r --;
+        }
+        else if(tokens[l].type == ')')
+            return false;
+        else l ++;
+    }
+    return true;
+}
+
+
+
+
+word_t eval(int p, int q) {
+		if (p > q) {
+			/* Bad expression */
+			assert(0);
+			return 0;
+		}
+		else if (p == q) {
+			if(tokens[p].type == TK_NUM){
+				return atoi(tokens[p].str);	
+			/* Single token.
+			* For now this token should be a number.
+			* Return the value of the number.
+			*/
+			}
+		}
+		else if (check_parentheses(p, q) == true) {
+    /* The expression is surrounded by a matched pair of parentheses.
+     * If that is the case, just throw away the parentheses.
+     */
+			return eval(p + 1, q - 1);
+		}
+		else {
+			int op = select_main_token(p,q);
+			int val1 = eval(p, op - 1);
+			int val2 = eval(op + 1, q);
+
+			switch (tokens[op].type) {
+				case TK_PLUS: return val1 + val2;
+				case TK_MINUS:	return val1 - val2; 
+				case TK_DOT:	return val1 * val2; 
+				case TK_DIV:	return val1 / val2; 
+				default: assert(0);
+								 return 0;
+			}
+		}
+		return 0;
+	}	
 word_t expr(char *e, bool *success) {
   if (!make_token(e)) {
     *success = false;
     return 0;
   }
+	int p = 0;
+	int q = nr_token - 1; 
+	word_t result = eval(p,q);	
+
 
   /* TODO: Insert codes to evaluate the expression. */
-  TODO();
+//  TODO();
 
-  return 0;
+  return result;
 }
