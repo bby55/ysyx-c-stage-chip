@@ -212,7 +212,7 @@ static bool make_token(char *e) {
 
 
 
-bool check_parentheses(int p, int q)
+/*bool check_parentheses(int p, int q)
 {
     if(tokens[p].type != '('  || tokens[q].type != ')')
         return false;
@@ -235,8 +235,38 @@ bool check_parentheses(int p, int q)
     }
     return true;
 }
-
-
+*/
+bool check_expr_parentheses(int p, int q){
+  int i;
+  int stack_top = -1;
+  bool flag = true;
+ 
+  for (i = p; i <= q ; i++){
+    if (tokens[i].type == TK_LFBKT){
+        stack_top++;
+    } else if (tokens[i].type == TK_RGBKT){    
+      if (stack_top >= 0){
+        stack_top--;          
+      } else {
+        flag = false;
+        break;
+      }
+    }
+  }
+  if (stack_top < 0 && flag == true){
+    flag = true;
+  } else {
+    flag = false;
+  }
+  return flag;
+}
+ 
+bool check_parentheses(int p, int q){
+  if (tokens[p].type == TK_LFBKT && tokens[q].type == TK_RGBKT){
+    return check_expr_parentheses(p + 1, q - 1);
+  }
+  return false;
+}
 
 
 word_t eval(int p, int q) {
