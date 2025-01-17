@@ -171,13 +171,13 @@ static bool make_token(char *e) {
 			if (tokens[p].type == TK_PLUS || tokens[p].type == TK_DIV || tokens[p].type == TK_DOT || tokens[p].type == TK_MINUS){
 				//if(tokens[p - 1].type != TK_LFBKT && tokens[p + 1].type != TK_RGBKT){
 					if(tokens[p].type == TK_DOT || tokens[p].type == TK_DIV){
-						if(i < 32){
+						if(i < 320){
 						Tokens_DD[i] = p;
 						i++;
 						}
 					}
 					if(tokens[p].type == TK_PLUS || tokens[p].type == TK_MINUS){
-						if(j < 32){
+						if(j < 320){
 						Tokens_PM[j] = p;
 						j++;
 						}
