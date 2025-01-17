@@ -207,6 +207,8 @@ static bool make_token(char *e) {
 						}
 					}
 					if(tokens[p].type == TK_AND || tokens[p].type == TK_NOR_EQ || tokens[p].type == TK_EQ){
+						printf("%d", p);
+						assert(0);
 						return p;
 					}
 			}
