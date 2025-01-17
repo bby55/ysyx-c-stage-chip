@@ -187,11 +187,14 @@ static bool make_token(char *e) {
 		int Tokens_DD[320] = {};	
 		int Tokens_PM[320] = {};
 		int Tokens_OP[320] = {};
+		int Tokens_LG[320] = {};
 		int i = 0;
 		int j = 0;
+		int m = 0;
 		int n = 0;
 		int x = 0;
 		int y = 0;
+		int z = 0;
 		for(;p < q;p++){
 			if (tokens[p].type == TK_PLUS || tokens[p].type == TK_DIV || tokens[p].type == TK_DOT || tokens[p].type == TK_MINUS){
 					if(tokens[p].type == TK_DOT || tokens[p].type == TK_DIV){
@@ -207,14 +210,16 @@ static bool make_token(char *e) {
 						}
 					}
 					if(tokens[p].type == TK_AND || tokens[p].type == TK_NOR_EQ || tokens[p].type == TK_EQ){
-						printf("%d", p);
-						assert(0);
-						return p;
+						if(m < 320){
+							Tokens_LG[z] = p;
+							m++;
 					}
 			}
 		}
+		}
 	  int lenth1 = i;
 	  int lenth2 = j;
+		int lenth3 = m;
 		int s = 0;
 	for(n = 0; n < lenth1 + lenth2; n++){
 		if(lenth1 != 0 && x < lenth1){
@@ -225,6 +230,11 @@ static bool make_token(char *e) {
 		else if(lenth2 != 0 && x == lenth1 && y < lenth2 ){
 			Tokens_OP[n] = Tokens_PM[y];
 			y++;
+			s++;
+		}
+		else if(lenth3 != 0 && y == lenth2 && z < lenth3){
+			Tokens_OP[n] = Tokens_LG[z];
+			z++;
 			s++;
 		}
 		else
