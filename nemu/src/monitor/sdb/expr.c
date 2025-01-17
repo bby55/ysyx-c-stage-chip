@@ -70,10 +70,10 @@ void init_regex() {
 
 typedef struct token {
   int type;
-  char str[32];
+  char str[320];
 } Token;
 
-static Token tokens[32] __attribute__((used)) = {};
+static Token tokens[320] __attribute__((used)) = {};
 static int nr_token __attribute__((used))  = 0;
 
 static bool make_token(char *e) {
@@ -99,7 +99,7 @@ static bool make_token(char *e) {
          * to record the token in the array `tokens'. For certain types
          * of tokens, some extra actions should be performed.
          */
-			if(nr_token < 32){
+			if(nr_token < 320){
         switch (rules[i].token_type) {
 					case TK_EQ:
 							tokens[nr_token].type =	TK_EQ; 
