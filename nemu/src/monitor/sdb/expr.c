@@ -233,8 +233,9 @@ bool check_parentheses(int p, int q)
 
 
 word_t eval(int p, int q) {
-		if (p > q) {
+		if (p > q){ 
 			/* Bad expression */
+			printf("BAD");
 			assert(0);
 			return 0;
 		}
@@ -263,8 +264,10 @@ word_t eval(int p, int q) {
 				case TK_MINUS:	return val1 - val2; 
 				case TK_DOT:	return val1 * val2; 
 				case TK_DIV:	return val1 / val2; 
-				default: assert(0);
-								 return 0;
+				default: 
+									printf("Unexpected token type: %d\n", tokens[op].type);
+									assert(0);
+									return 0;
 			}
 		}
 		return 0;
