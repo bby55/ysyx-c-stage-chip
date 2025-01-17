@@ -221,7 +221,7 @@ static bool make_token(char *e) {
 	  int lenth2 = j;
 		int lenth3 = m;
 		int s = 0;
-	for(n = 0; n < lenth1 + lenth2; n++){
+	for(n = 0; n < lenth1 + lenth2 + lenth3; n++){
 		if(lenth1 != 0 && x < lenth1){
 			Tokens_OP[n] = Tokens_DD[x];	
 			x++;
@@ -232,7 +232,7 @@ static bool make_token(char *e) {
 			y++;
 			s++;
 		}
-		else if(lenth3 != 0 && y == lenth2 && z < lenth3){
+		else if(lenth3 != 0 && x == lenth1 && y == lenth2 && z < lenth3){
 			Tokens_OP[n] = Tokens_LG[z];
 			z++;
 			s++;
