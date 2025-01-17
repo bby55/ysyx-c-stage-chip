@@ -194,7 +194,7 @@ static bool make_token(char *e) {
 			x++;
 			s++;
 		}
-		if(lenth2 != 0 && x == lenth1 && y < lenth2 ){
+		else if(lenth2 != 0 && x == lenth1 && y < lenth2 ){
 			Tokens_OP[n] = Tokens_PM[y];
 			y++;
 			s++;
