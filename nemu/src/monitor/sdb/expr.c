@@ -203,7 +203,7 @@ static bool make_token(char *e) {
 			break;
 	}
 	int OP;
-	OP = Tokens_OP[n];	
+	OP = Tokens_OP[n-1];	
 	return OP;	
 	}
 
