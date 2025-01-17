@@ -206,7 +206,7 @@ static bool make_token(char *e) {
 	}
 	int OP;
 	printf("%d",n);
-	OP = Tokens_OP[s+1];	
+	OP = Tokens_OP[s-1];	
 	return OP;	
 	}
 
