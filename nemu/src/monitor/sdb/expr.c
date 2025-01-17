@@ -203,9 +203,6 @@ static bool make_token(char *e) {
 			break;
 	}
 	int OP;
-	printf("%d",n);
-	printf("s-1:%d\n",s-1);
-	printf("OP:%d",Tokens_OP[s-1]);
 	OP = Tokens_OP[s-1];	
 	return OP;	
 	}

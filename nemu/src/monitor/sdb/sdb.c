@@ -105,7 +105,7 @@ static int cmd_p(char *args){
   word_t result = expr(args, &success);
 
   if (success) {
-    printf("Result: %d\n", result);
+    printf("Result:  %d\n", result);
   } else {
     printf("Expression evaluation failed\n");
   }
