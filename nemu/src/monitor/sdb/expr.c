@@ -141,7 +141,8 @@ static bool make_token(char *e) {
 							strncpy(tokens[nr_token].str, substr_start, substr_len);
 							nr_token++;
 							break;
-          default: TODO();
+          default: printf("No rules is com.\n");
+                        break;
         }
 				}
         break;
