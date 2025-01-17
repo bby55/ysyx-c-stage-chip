@@ -95,8 +95,23 @@ static int cmd_x(char *args){
 
 static int cmd_p(char *args){
 	//printf("%d\n",make_token(args));
-	return 0;
-}
+  bool success = true;
+
+  if (args == NULL) {
+    printf("No expression provided\n");
+    return 0;
+  }
+
+  word_t result = expr(args, &success);
+
+  if (success) {
+    printf("Result: %d\n", result);
+  } else {
+    printf("Expression evaluation failed\n");
+  }
+
+  return 0;
+}	
 static struct {
   const char *name;
   const char *description;
