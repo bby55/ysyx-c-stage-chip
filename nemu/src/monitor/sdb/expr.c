@@ -187,15 +187,18 @@ static bool make_token(char *e) {
 		}
 	  int lenth1 = i;
 	  int lenth2 = j;
+		int s = 0;
 	for(n = 0; n < lenth1 + lenth2; n++){
 		if(lenth1 != 0 && x < lenth1){
 			Tokens_OP[n] = Tokens_DD[x];	
 			x++;
+			s++;
 			printf("666");
 		}
-		if(lenth2 != 0 && x == lenth1 && y < lenth2 +1){
+		if(lenth2 != 0 && x == lenth1 && y < lenth2 ){
 			Tokens_OP[n] = Tokens_PM[y];
 			y++;
+			s++;
 			printf("%d\n",Tokens_OP[n]);
 			printf("777");
 		}
@@ -203,7 +206,7 @@ static bool make_token(char *e) {
 			break;
 	}
 	int OP;
-	OP = Tokens_OP[n];	
+	OP = Tokens_OP[s-1];	
 	return OP;	
 	}
 
