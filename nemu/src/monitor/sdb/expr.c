@@ -21,7 +21,7 @@
 #include <regex.h>
 #include <stdlib.h>
 enum {
-  TK_NOTYPE = 256, TK_EQ,TK_PLUS,TK_MINUS,TK_DOT,TK_DIV,TK_LFBKT,TK_RGBKT,TK_NUM
+  TK_NOTYPE = 256, TK_EQ,TK_PLUS,TK_MINUS,TK_DOT,TK_DIV,TK_LFBKT,TK_RGBKT,TK_NUM,TK_AND,TK_NOR_EQ,TK_ADDR,TK_XNUM,TK_REG
 
   /* TODO: Add more token types */
 
@@ -45,6 +45,11 @@ static struct rule {
 	{"\\(",TK_LFBKT},
 	{"\\)",TK_RGBKT},
 	{"[0-9]+",TK_NUM},
+	{"&&",TK_AND},
+	{"!=",TK_NOR_EQ},
+	{"0x[a-zA-Z0-9]+",TK_XNUM},
+	{"\\$[a-z0-9]+",TK_REG},
+	{"\\*",TK_ADDR},
 };
 
 #define NR_REGEX ARRLEN(rules)
@@ -141,6 +146,26 @@ static bool make_token(char *e) {
 							strncpy(tokens[nr_token].str, substr_start, substr_len);
 							nr_token++;
 							break;
+					case TK_AND:
+							tokens[nr_token].type = TK_AND;
+							strncpy(tokens[nr_token].str, "&&" , sizeof(tokens[nr_token].str));
+							nr_token++;
+					case TK_NOR_EQ:
+							tokens[nr_token].type = TK_NOR_EQ;
+							strncpy(tokens[nr_token].str, "!=" , sizeof(tokens[nr_token].str));
+							nr_token++;
+					case TK_XNUM:
+							tokens[nr_token].type = TK_XNUM;
+							strncpy(tokens[nr_token].str, substr_start , substr_len);
+							nr_token++;
+					case TK_REG:
+							tokens[nr_token].type = TK_REG;
+							strncpy(tokens[nr_token].str, "$" , sizeof(tokens[nr_token].str));
+							nr_token++;
+					case TK_ADDR:
+							tokens[nr_token].type = TK_ADDR;
+							strncpy(tokens[nr_token].str, "*" , sizeof(tokens[nr_token].str));
+							nr_token++;
           default: printf("No rules is com.\n");
                         break;
         }
@@ -169,7 +194,6 @@ static bool make_token(char *e) {
 		int y = 0;
 		for(;p < q;p++){
 			if (tokens[p].type == TK_PLUS || tokens[p].type == TK_DIV || tokens[p].type == TK_DOT || tokens[p].type == TK_MINUS){
-				//if(tokens[p - 1].type != TK_LFBKT && tokens[p + 1].type != TK_RGBKT){
 					if(tokens[p].type == TK_DOT || tokens[p].type == TK_DIV){
 						if(i < 320){
 						Tokens_DD[i] = p;
@@ -182,7 +206,9 @@ static bool make_token(char *e) {
 						j++;
 						}
 					}
-				//}
+					if(tokens[p].type == TK_AND || tokens[p].type == TK_NOR_EQ || tokens[p].type == TK_EQ){
+						return p;
+					}
 			}
 		}
 	  int lenth1 = i;
@@ -209,30 +235,6 @@ static bool make_token(char *e) {
 
 
 
-/*bool check_parentheses(int p, int q)
-{
-    if(tokens[p].type != '('  || tokens[q].type != ')')
-        return false;
-    int l = p , r = q;
-    while(l < r)
-    {
-        if(tokens[l].type == '('){
-            if(tokens[r].type == ')')
-            {
-                l ++ , r --;
-                continue;
-            }
-
-            else
-                r --;
-        }
-        else if(tokens[l].type == ')')
-            return false;
-        else l ++;
-    }
-    return true;
-}
-*/
 bool check_expr_parentheses(int p, int q){
   int i;
   int stack_top = -1;
@@ -269,7 +271,7 @@ bool check_parentheses(int p, int q){
 word_t eval(int p, int q) {
 		if (p > q){ 
 			/* Bad expression */
-			printf("BAD");
+			printf("菜就多练");
 			//assert(0);
 			return 0;
 		}
@@ -299,6 +301,9 @@ word_t eval(int p, int q) {
 				case TK_MINUS:	return val1 - val2; 
 				case TK_DOT:	return val1 * val2; 
 				case TK_DIV:	return val1 / val2; 
+				case TK_EQ:   return val1 == val2;
+				case TK_NOR_EQ:	return val1 != val2;
+				case TK_AND:	return val1 && val2;
 				default: 
 									printf("Unexpected token type: %d\n", tokens[op].type);
 									assert(0);
