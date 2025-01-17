@@ -191,10 +191,12 @@ static bool make_token(char *e) {
 		if(lenth1 != 0 && x < lenth1){
 			Tokens_OP[n] = Tokens_DD[x];	
 			x++;
+			printf("666");
 		}
 		if(lenth2 != 0 && x == lenth1 && y < lenth2){
 			Tokens_OP[n] = Tokens_PM[y];
 			y++;
+			printf("777");
 		}
 		else
 			break;
