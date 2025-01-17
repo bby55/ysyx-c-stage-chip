@@ -159,9 +159,9 @@ static bool make_token(char *e) {
 }
 
 	word_t select_main_token(int p, int q){
-		int Tokens_DD[32] = {};	
-		int Tokens_PM[32] = {};
-		int Tokens_OP[32] = {};
+		int Tokens_DD[320] = {};	
+		int Tokens_PM[320] = {};
+		int Tokens_OP[320] = {};
 		int i = 0;
 		int j = 0;
 		int n = 0;
