@@ -200,6 +200,7 @@ static bool make_token(char *e) {
 		int x = 0;
 		int y = 0;
 		int z = 0;
+		 for (; p < q; p++) {
 			if (tokens[p].type == TK_PLUS || tokens[p].type == TK_DIV || tokens[p].type == TK_DOT || tokens[p].type == TK_MINUS || tokens[p].type == TK_EQ ||tokens[p].type == TK_NOR_EQ ||tokens[p].type == TK_AND ){
 					if(tokens[p].type == TK_DOT || tokens[p].type == TK_DIV){
 						if(i < 320){
@@ -220,6 +221,7 @@ static bool make_token(char *e) {
 					}
 			}
 		}
+		 }
 	  int lenth1 = i;
 	  int lenth2 = j;
 		int lenth3 = m;
