@@ -20,6 +20,11 @@
  */
 #include <regex.h>
 #include <stdlib.h>
+
+
+word_t isa_reg_str2val(const char *s, bool *success);
+
+
 enum {
   TK_NOTYPE = 256, TK_NOR_EQ,TK_PLUS,TK_MINUS,TK_DOT,TK_DIV,TK_LFBKT,TK_RGBKT,TK_NUM,TK_AND,TK_EQ,TK_ADDR,TK_XNUM,TK_REG
 
@@ -42,14 +47,7 @@ static struct rule {
 	{"\\-",TK_MINUS},
 	{"\\*",TK_DOT},
 	{"\\/",TK_DIV},
-	{"\\(",TK_LFBKT},
-	{"\\)",TK_RGBKT},
-	{"0x[a-zA-Z0-9]+",TK_XNUM},
-	{"[0-9]+",TK_NUM},
-	{"&&",TK_AND},
-	{"!=",TK_NOR_EQ},
-	{"\\$[a-z0-9]+",TK_REG},
-	{"\\*",TK_ADDR}
+	{"\\(",TK_LFBKT}, {"\\)",TK_RGBKT}, {"0x[a-zA-Z0-9]+",TK_XNUM}, {"[0-9]+",TK_NUM}, {"&&",TK_AND}, {"!=",TK_NOR_EQ}, {"\\$[a-z0-9]+",TK_REG}, {"\\*",TK_ADDR}
 };
 
 #define NR_REGEX ARRLEN(rules)
@@ -297,7 +295,11 @@ word_t eval(int p, int q) {
 				return atoi(tokens[p].str);	
 			}
 			else if(tokens[p].type == TK_XNUM){
-			return strtoul(tokens[p].str, NULL, 16);
+				return strtoul(tokens[p].str, NULL, 16);
+			}
+			else if(tokens[p].type == TK_REG){
+				bool success = true;
+				return isa_reg_str2val(tokens[p].str,&success);
 			}
 			else{
 				printf("格式错误，程序退出");
