@@ -44,10 +44,10 @@ static struct rule {
 	{"\\/",TK_DIV},
 	{"\\(",TK_LFBKT},
 	{"\\)",TK_RGBKT},
+	{"0x[a-zA-Z0-9]+",TK_XNUM},
 	{"[0-9]+",TK_NUM},
 	{"&&",TK_AND},
 	{"!=",TK_NOR_EQ},
-	{"0x[a-zA-Z0-9]+",TK_XNUM},
 	{"\\$[a-z0-9]+",TK_REG},
 	{"\\*",TK_ADDR}
 };
