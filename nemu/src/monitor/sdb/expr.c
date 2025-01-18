@@ -299,6 +299,10 @@ word_t eval(int p, int q) {
 		else if (p == q) {
 			if(tokens[p].type == TK_NUM){
 				return atoi(tokens[p].str);	
+			}
+			else{
+				printf("格式错误，程序退出");
+				assert(0);
 			/* Single token.
 			* For now this token should be a number.
 			* Return the value of the number.
