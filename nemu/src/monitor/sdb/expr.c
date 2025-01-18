@@ -282,7 +282,7 @@ bool check_parentheses(int p, int q){
   return false;
 }
 
-
+int temp;
 word_t eval(int p, int q) {
 		if (p > q){ 
 			/* Bad expression */
@@ -302,7 +302,6 @@ word_t eval(int p, int q) {
 				//static char hex_str[320];
 				//sprintf(hex_str, "0x%x",isa_reg_str2val(tokens[p].str,&success));
 				//return strtoul(hex_str, NULL, 16);
-				int temp = 0;
 				temp = isa_reg_str2val(tokens[p].str,&success);
 				return temp;
 			}
