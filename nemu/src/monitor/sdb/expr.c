@@ -152,10 +152,17 @@ static bool make_token(char *e) {
 							nr_token++;
 							break;
 					case TK_NUM:
+							if(tokens[nr_token].type == TK_PTR){
+								strncpy(tokens[nr_token].str, substr_start, substr_len);
+								nr_token++;
+								break;
+							}
+							else{
 								tokens[nr_token].type =	TK_NUM; 
 								strncpy(tokens[nr_token].str, substr_start, substr_len);
 								nr_token++;
 								break;
+							}
 					case TK_AND:
 							tokens[nr_token].type = TK_AND;
 							strncpy(tokens[nr_token].str, "&&" , sizeof(tokens[nr_token].str));
