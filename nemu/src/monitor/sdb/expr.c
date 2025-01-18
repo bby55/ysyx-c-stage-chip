@@ -211,7 +211,7 @@ static bool make_token(char *e) {
 					}
 					if(tokens[p].type == TK_AND || tokens[p].type == TK_NOR_EQ || tokens[p].type == TK_EQ){
 						if(m < 320){
-							Tokens_LG[z] = p;
+							Tokens_LG[m] = p;
 							m++;
 					}
 			}
