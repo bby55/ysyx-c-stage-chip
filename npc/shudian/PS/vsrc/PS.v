@@ -153,7 +153,7 @@ module PS_control(
 
 										if(buffer[8:1] == 8'hf0)
 											num <= num + 1;
-										if(state == 2'b10)begin
+										if(state == 2'b10 || seal ==2'b00)begin
 											cur_key <= buffer;
 										end else begin
 											cur_key <= 0;
