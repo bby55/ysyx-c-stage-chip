@@ -161,7 +161,7 @@ static bool make_token(char *e) {
 							break;
 					case TK_REG:
 							tokens[nr_token].type = TK_REG;
-							strncpy(tokens[nr_token].str, "$" , sizeof(tokens[nr_token].str));
+							strncpy(tokens[nr_token].str,substr_start+1,substr_len);
 							nr_token++;
 							break;
 					case TK_ADDR:
