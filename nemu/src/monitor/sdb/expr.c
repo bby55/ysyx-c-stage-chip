@@ -321,7 +321,7 @@ word_t eval(int p, int q) {
 			}
 			else if(tokens[p].type == TK_PTR){
 					long addr =strtol(tokens[p].str,NULL,16);
-					return paddr_read(addr,0);
+					return paddr_read(addr,4);
 			}	
 			else{
 				printf("格式错误，程序退出");
