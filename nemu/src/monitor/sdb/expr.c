@@ -126,7 +126,7 @@ static bool make_token(char *e) {
 							nr_token++;
 							break;
 					case TK_DOT:
-							if (i == 0 || tokens[i - 1].type == TK_PLUS || tokens[i - 1].type == TK_MINUS ||  tokens[i - 1].type == TK_EQ || tokens[i - 1].type == TK_DIV || tokens[i - 1].type == TK_DOT || tokens[i - 1].type == TK_NOR_EQ || tokens[i - 1].type == TK_AND || tokens[i - 1].type == TK_LFBKT){
+							if (nr_token == 0 || tokens[nr_token  - 1].type == TK_PLUS || tokens[nr_token  - 1].type == TK_MINUS ||  tokens[nr_token  - 1].type == TK_EQ || tokens[nr_token  - 1].type == TK_DIV || tokens[nr_token  - 1].type == TK_DOT || tokens[nr_token  - 1].type == TK_NOR_EQ || tokens[nr_token  - 1].type == TK_AND || tokens[nr_token- 1].type == TK_LFBKT){
 								tokens[nr_token].type = TK_PTR;
 								break;
 							}
