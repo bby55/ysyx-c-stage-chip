@@ -150,6 +150,7 @@ static bool make_token(char *e) {
 							tokens[nr_token].type = TK_AND;
 							strncpy(tokens[nr_token].str, "&&" , sizeof(tokens[nr_token].str));
 							nr_token++;
+							break;
 					case TK_NOR_EQ:
 							tokens[nr_token].type = TK_NOR_EQ;
 							strncpy(tokens[nr_token].str, "!=" , sizeof(tokens[nr_token].str));
@@ -158,14 +159,17 @@ static bool make_token(char *e) {
 							tokens[nr_token].type = TK_XNUM;
 							strncpy(tokens[nr_token].str, substr_start , substr_len);
 							nr_token++;
+							break;
 					case TK_REG:
 							tokens[nr_token].type = TK_REG;
 							strncpy(tokens[nr_token].str, "$" , sizeof(tokens[nr_token].str));
 							nr_token++;
+							break;
 					case TK_ADDR:
 							tokens[nr_token].type = TK_ADDR;
 							strncpy(tokens[nr_token].str, "*" , sizeof(tokens[nr_token].str));
 							nr_token++;
+							break;
           default: printf("No rules is com.\n");
                         break;
         }
