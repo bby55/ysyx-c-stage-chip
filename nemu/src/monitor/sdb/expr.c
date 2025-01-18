@@ -295,7 +295,7 @@ word_t eval(int p, int q) {
 				return atoi(tokens[p].str);	
 			}
 			else if(tokens[p].type == TK_XNUM){
-			return strtol(tokens[p].str, NULL, 16);
+			return strtoul(tokens[p].str, NULL, 16);
 			}
 			else{
 				printf("格式错误，程序退出");
