@@ -302,7 +302,9 @@ word_t eval(int p, int q) {
 				//static char hex_str[320];
 				//sprintf(hex_str, "0x%x",isa_reg_str2val(tokens[p].str,&success));
 				//return strtoul(hex_str, NULL, 16);
-				return isa_reg_str2val(tokens[p].str,&success);
+				int temp = 0;
+				temp = isa_reg_str2val(tokens[p].str,&success);
+				return temp;
 			}
 			else{
 				printf("格式错误，程序退出");
