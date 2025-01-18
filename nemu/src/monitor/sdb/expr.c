@@ -23,10 +23,10 @@
 
 
 word_t isa_reg_str2val(const char *s, bool *success);
-
+word_t paddr_read(paddr_t addr, int len);
 
 enum {
-  TK_NOTYPE = 256, TK_NOR_EQ,TK_PLUS,TK_MINUS,TK_DOT,TK_DIV,TK_LFBKT,TK_RGBKT,TK_NUM,TK_AND,TK_EQ,TK_ADDR,TK_XNUM,TK_REG
+  TK_NOTYPE = 256, TK_NOR_EQ,TK_PLUS,TK_MINUS,TK_DOT,TK_DIV,TK_LFBKT,TK_RGBKT,TK_NUM,TK_AND,TK_EQ,TK_ADDR,TK_XNUM,TK_REG,TK_PTR
 
   /* TODO: Add more token types */
 
@@ -47,7 +47,13 @@ static struct rule {
 	{"\\-",TK_MINUS},
 	{"\\*",TK_DOT},
 	{"\\/",TK_DIV},
-	{"\\(",TK_LFBKT}, {"\\)",TK_RGBKT}, {"0x[a-zA-Z0-9]+",TK_XNUM}, {"[0-9]+",TK_NUM}, {"&&",TK_AND}, {"!=",TK_NOR_EQ}, {"\\$[a-z0-9]+",TK_REG}, {"\\*",TK_ADDR}
+	{"\\(",TK_LFBKT}, 
+	{"\\)",TK_RGBKT}, 
+	{"0x[a-zA-Z0-9]+",TK_XNUM}, 
+	{"[0-9]+",TK_NUM}, 
+	{"&&",TK_AND}, 
+	{"!=",TK_NOR_EQ}, 
+	{"\\$[a-z0-9]+",TK_REG},
 };
 
 #define NR_REGEX ARRLEN(rules)
@@ -120,10 +126,16 @@ static bool make_token(char *e) {
 							nr_token++;
 							break;
 					case TK_DOT:
-							tokens[nr_token].type =	TK_DOT; 
-							strncpy(tokens[nr_token].str, "*", sizeof(tokens[nr_token].str));
-							nr_token++;
-							break;
+							if (i == 0 || tokens[i - 1].type == TK_PLUS || tokens[i - 1].type == TK_MINUS ||  tokens[i - 1].type == TK_EQ || tokens[i - 1].type == TK_DIV || tokens[i - 1].type == TK_DOT || tokens[i - 1].type == TK_NOR_EQ || tokens[i - 1].type == TK_AND || tokens[i - 1].type == TK_LFBKT){
+								tokens[nr_token].type = TK_PTR;
+								break;
+							}
+							else{
+								tokens[nr_token].type =	TK_DOT; 
+								strncpy(tokens[nr_token].str, "*", sizeof(tokens[nr_token].str));
+								nr_token++;
+								break;
+							}
 					case TK_DIV:
 							tokens[nr_token].type =	TK_DIV; 
 							strncpy(tokens[nr_token].str, "/", sizeof(tokens[nr_token].str));
@@ -140,10 +152,10 @@ static bool make_token(char *e) {
 							nr_token++;
 							break;
 					case TK_NUM:
-							tokens[nr_token].type =	TK_NUM; 
-							strncpy(tokens[nr_token].str, substr_start, substr_len);
-							nr_token++;
-							break;
+								tokens[nr_token].type =	TK_NUM; 
+								strncpy(tokens[nr_token].str, substr_start, substr_len);
+								nr_token++;
+								break;
 					case TK_AND:
 							tokens[nr_token].type = TK_AND;
 							strncpy(tokens[nr_token].str, "&&" , sizeof(tokens[nr_token].str));
@@ -155,18 +167,20 @@ static bool make_token(char *e) {
 							nr_token++;
 							break;
 					case TK_XNUM:
-							tokens[nr_token].type = TK_XNUM;
-							strncpy(tokens[nr_token].str, substr_start , substr_len);
-							nr_token++;
-							break;
+							if(tokens[nr_token].type == TK_PTR){
+								strncpy(tokens[nr_token].str, substr_start, substr_len);
+								nr_token++;
+								break;
+							}
+							else{
+								tokens[nr_token].type = TK_XNUM;
+								strncpy(tokens[nr_token].str, substr_start , substr_len);
+								nr_token++;
+								break;
+							}
 					case TK_REG:
 							tokens[nr_token].type = TK_REG;
 							strncpy(tokens[nr_token].str,substr_start+1,substr_len);
-							nr_token++;
-							break;
-					case TK_ADDR:
-							tokens[nr_token].type = TK_ADDR;
-							strncpy(tokens[nr_token].str, "*" , sizeof(tokens[nr_token].str));
 							nr_token++;
 							break;
           default: printf("No rules is com.\n");
@@ -305,6 +319,10 @@ word_t eval(int p, int q) {
 				temp = isa_reg_str2val(tokens[p].str,&success);
 				return temp;
 			}
+			else if(tokens[p].type == TK_PTR){
+					long addr =strtol(tokens[p].str,NULL,16);
+					return paddr_read(addr,0);
+			}	
 			else{
 				printf("格式错误，程序退出");
 				assert(0);
