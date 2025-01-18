@@ -201,7 +201,11 @@ static bool make_token(char *e) {
 		int y = 0;
 		int z = 0;
 		for(;p < q;p++){
-			if (tokens[p].type == TK_PLUS || tokens[p].type == TK_DIV || tokens[p].type == TK_DOT || tokens[p].type == TK_MINUS || tokens[p].type == TK_EQ ||tokens[p].type == TK_NOR_EQ ||tokens[p].type == TK_AND ){
+			if (tokens[0].type == TK_PLUS || tokens[0].type == TK_DIV || tokens[0].type == TK_DOT || tokens[0].type == TK_MINUS || tokens[0].type == TK_EQ ||tokens[0].type == TK_NOR_EQ ||tokens[0].type == TK_AND ){
+				printf("表达式格式错误，程序结束");
+				assert(0);
+			}
+			else if (tokens[p].type == TK_PLUS || tokens[p].type == TK_DIV || tokens[p].type == TK_DOT || tokens[p].type == TK_MINUS || tokens[p].type == TK_EQ ||tokens[p].type == TK_NOR_EQ ||tokens[p].type == TK_AND ){
 					if(tokens[p].type == TK_DOT || tokens[p].type == TK_DIV){
 						if(i < 320){
 						Tokens_DD[i] = p;
