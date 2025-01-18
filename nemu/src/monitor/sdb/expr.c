@@ -299,9 +299,10 @@ word_t eval(int p, int q) {
 			}
 			else if(tokens[p].type == TK_REG){
 				bool success = true;
-				static char hex_str[320];
-				sprintf(hex_str, "0x%x",isa_reg_str2val(tokens[p].str,&success));
-				return strtoul(hex_str, NULL, 16);
+				//static char hex_str[320];
+				//sprintf(hex_str, "0x%x",isa_reg_str2val(tokens[p].str,&success));
+				//return strtoul(hex_str, NULL, 16);
+				return isa_reg_str2val(tokens[p].str,&success);
 			}
 			else{
 				printf("格式错误，程序退出");
