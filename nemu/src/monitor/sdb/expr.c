@@ -155,6 +155,7 @@ static bool make_token(char *e) {
 							tokens[nr_token].type = TK_NOR_EQ;
 							strncpy(tokens[nr_token].str, "!=" , sizeof(tokens[nr_token].str));
 							nr_token++;
+							break;
 					case TK_XNUM:
 							tokens[nr_token].type = TK_XNUM;
 							strncpy(tokens[nr_token].str, substr_start , substr_len);
