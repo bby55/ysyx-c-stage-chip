@@ -282,7 +282,7 @@ bool check_parentheses(int p, int q){
   return false;
 }
 
-int temp;
+unsigned int temp;
 word_t eval(int p, int q) {
 		if (p > q){ 
 			/* Bad expression */
