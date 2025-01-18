@@ -46,7 +46,7 @@ static struct rule {
 	{"\\)",TK_RGBKT},
 	{"[0-9]+",TK_NUM},
 	{"&&",TK_AND},
-	{"!=",TK_NOR_EQ},
+	{"\\!=",TK_NOR_EQ},
 	{"0x[a-zA-Z0-9]+",TK_XNUM},
 	{"\\$[a-z0-9]+",TK_REG},
 	{"\\*",TK_ADDR},
