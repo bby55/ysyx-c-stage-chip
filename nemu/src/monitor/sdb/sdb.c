@@ -233,7 +233,7 @@ void test_expr() {
 		printf("NO USE:%s\n",rubbish);
     printf("expression: %s\n", expression);
     // 调用 expr() 函数求值
-    word_t res = expr(expression, &success);
+    word_t res = expr(rubbish, &success);
 
     // 检查 success 标志
     if (!success) {
