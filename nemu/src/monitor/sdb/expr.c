@@ -241,6 +241,7 @@ static bool make_token(char *e) {
 							Tokens_LG[m] = p;
 							m++;
 					}
+					}
 					if(tokens[p].type == TK_LFBKT || seal == 1){
 						seal = 1;
 					}
@@ -249,7 +250,6 @@ static bool make_token(char *e) {
 					}
 			}
 		}
-		 }
 	  int lenth1 = i;
 	  int lenth2 = j;
 		int lenth3 = m;
