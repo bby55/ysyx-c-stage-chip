@@ -195,6 +195,7 @@ void sdb_mainloop() {
   }
 }
 
+	int pass_count;
 void test_expr() {
   FILE *fp = fopen("/home/ysyxbby/ysyx-workbench/nemu/tools/gen-expr/input", "r");
   if (fp == NULL) perror("test_expr error");
@@ -205,7 +206,7 @@ void test_expr() {
   ssize_t read;
   bool success = false;
 
-  while (true) {
+  /*while (true) {
     if(fscanf(fp, "%u ", &correct_res) == -1) break;
     read = getline(&e, &len, fp);
     e[read-1] = '\0';
@@ -224,6 +225,49 @@ void test_expr() {
   if (e) free(e);
 
   Log("expr test pass");
+	*/
+	while (true) {
+    // 读取预期结果
+    if (fscanf(fp, "%u", &correct_res) != 1) {
+        break;  // 文件读取结束或格式错误
+    }
+
+    // 打印调试信息
+    printf("correct_res: %u\n", correct_res);
+
+    // 读取表达式
+    read = getline(&e, &len, fp);
+    if (read == -1) {
+        printf("test_expr error: failed to read expression\n");
+        break;  // 读取失败
+    }
+
+    // 去掉行末的换行符
+    if (e[read - 1] == '\n') {
+        e[read - 1] = '\0';
+    }
+
+    // 打印调试信息
+    printf("expression: %s\n", e);
+
+    // 调用 expr() 函数求值
+    word_t res = expr(e, &success);
+
+    // 检查 success 标志
+    if (!success) {
+        printf("test_expr error: expr() failed for expression: %s\n", e);
+        assert(0);  // 终止程序
+    }
+
+    // 比较结果
+    if (res != correct_res) {
+        printf("test_expr error: expression: %s\n", e);
+        printf("expected: %u, got: %u\n", correct_res, res);
+        assert(0);  // 终止程序
+    }
+
+    pass_count++;  // 增加通过数
+}
 }
 
 void init_sdb() {
@@ -231,6 +275,7 @@ void init_sdb() {
   init_regex();
   /* test math expression calculation */
   test_expr();
+	printf("通过测试数:%d",pass_count);
   /* Initialize the watchpoint pool. */
   init_wp_pool();
 }
