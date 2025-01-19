@@ -227,15 +227,11 @@ void test_expr() {
 		char *rubbish = strtok(e,"\0");
     word_t res = expr(rubbish, &success);
 
-    if (!success) {
-        printf("test_expr error: expr() failed for expression: %s\n", e);
-        assert(0); 
-    }
 
     if (res != correct_res) {
         printf("test_expr error: expression: %s\n", e);
         printf("expected: %u, got: %u\n", correct_res, res);
-        //assert(0); 
+        assert(0); 
     }
 
     pass_count++;  
