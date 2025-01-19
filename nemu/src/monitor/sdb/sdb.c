@@ -248,8 +248,9 @@ void test_expr() {
     }
 
     // 打印调试信息
-		char *rubbish = strchr(e, '@');
-		char *expression = rubbish + 2; 
+		char *rubbish = strtok(e,"@");
+		char *expression = strtok(NULL,"@"); 
+		(void)rubbish;
     printf("expression: %s\n", expression);
     // 调用 expr() 函数求值
     word_t res = expr(expression, &success);
