@@ -276,8 +276,8 @@ void init_sdb() {
   /* Compile the regular expressions. */
   init_regex();
   /* test math expression calculation */
-  test_expr();
-	printf("通过测试数:%d\n",pass_count);
+//  test_expr();
+//	printf("通过测试数:%d\n",pass_count);
   /* Initialize the watchpoint pool. */
   init_wp_pool();
 }
