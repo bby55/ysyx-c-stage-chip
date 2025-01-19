@@ -225,15 +225,12 @@ void test_expr() {
     }
 
 		char *rubbish = strtok(e,"\0");
-		char *expression = strtok(NULL,"\0"); 
-		printf("NO USE:%s\n",rubbish);
-    printf("expression: %s\n", expression);
     word_t res = expr(rubbish, &success);
 
-    //if (!success) {
-        //printf("test_expr error: expr() failed for expression: %s\n", e);
-        //assert(0); 
-    //}
+    if (!success) {
+        printf("test_expr error: expr() failed for expression: %s\n", e);
+        assert(0); 
+    }
 
     if (res != correct_res) {
         printf("test_expr error: expression: %s\n", e);
@@ -250,6 +247,7 @@ void init_sdb() {
   init_regex();
   /* test math expression calculation */
 test_expr();
+printf("测试用例数:%d\n",pass_count);
 printf("通过测试数:%d\n",pass_count);
   /* Initialize the watchpoint pool. */
   init_wp_pool();
