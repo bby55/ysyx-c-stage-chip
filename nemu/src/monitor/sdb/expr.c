@@ -214,6 +214,7 @@ static bool make_token(char *e) {
 		int Tokens_PM[320] = {};
 		int Tokens_OP[320] = {};
 		int Tokens_LG[320] = {};
+		int seal =0;
 		int i = 0;
 		int j = 0;
 		int m = 0;
@@ -222,23 +223,29 @@ static bool make_token(char *e) {
 		int y = 0;
 		int z = 0;
 		 for (; p < q; p++) {
-			if (tokens[p].type == TK_PLUS || tokens[p].type == TK_DIV || tokens[p].type == TK_DOT || tokens[p].type == TK_MINUS || tokens[p].type == TK_EQ ||tokens[p].type == TK_NOR_EQ ||tokens[p].type == TK_AND ){
-					if(tokens[p].type == TK_DOT || tokens[p].type == TK_DIV){
+			if (tokens[p].type == TK_PLUS || tokens[p].type == TK_DIV || tokens[p].type == TK_DOT || tokens[p].type == TK_MINUS || tokens[p].type == TK_EQ ||tokens[p].type == TK_NOR_EQ ||tokens[p].type == TK_AND || tokens[p].type == TK_LFBKT || tokens[p].type == TK_RGBKT){
+					if((tokens[p].type == TK_DOT || tokens[p].type == TK_DIV) && seal == 0){
 						if(i < 320){
 						Tokens_DD[i] = p;
 						i++;
 						}
 					}
-					if(tokens[p].type == TK_PLUS || tokens[p].type == TK_MINUS){
+					if((tokens[p].type == TK_PLUS|| tokens[p].type == TK_MINUS) && seal == 0){
 						if(j < 320){
 						Tokens_PM[j] = p;
 						j++;
 						}
 					}
-					if(tokens[p].type == TK_AND || tokens[p].type == TK_NOR_EQ || tokens[p].type == TK_EQ){
+					if((tokens[p].type == TK_AND|| tokens[p].type == TK_NOR_EQ  || tokens[p].type == TK_EQ) && seal == 0){
 						if(m < 320){
 							Tokens_LG[m] = p;
 							m++;
+					}
+					if(tokens[p].type == TK_LFBKT || seal == 1){
+						seal = 1;
+					}
+					if(tokens[p].type == TK_RGBKT){
+						seal = 0;
 					}
 			}
 		}
