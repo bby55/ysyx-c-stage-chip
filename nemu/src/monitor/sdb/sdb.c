@@ -102,7 +102,8 @@ static int cmd_p(char *args){
     return 0;
   }
 
-  word_t result1 = expr(args, &success);
+  word_t result1 = 0; 
+	result1 = expr(args, &success);
 
   if (success) {
     printf("Result:  %u\n", result1);
@@ -248,8 +249,8 @@ void init_sdb() {
   /* Compile the regular expressions. */
   init_regex();
   /* test math expression calculation */
-//test_expr();
-//printf("通过测试数:%d\n",pass_count);
+test_expr();
+printf("通过测试数:%d\n",pass_count);
   /* Initialize the watchpoint pool. */
   init_wp_pool();
 }
