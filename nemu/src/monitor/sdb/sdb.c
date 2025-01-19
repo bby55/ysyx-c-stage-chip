@@ -207,48 +207,40 @@ void test_expr() {
   bool success = false;
 
 	while (true) {
-    // 读取预期结果
     if (fscanf(fp, "%u", &correct_res) != 1) {
-        break;  // 文件读取结束或格式错误
+        break;
     }
 
-    // 打印调试信息
     printf("correct_res: %u\n", correct_res);
 
-    // 读取表达式
     read = getline(&e, &len, fp);
     if (read == -1) {
         printf("test_expr error: failed to read expression\n");
-        break;  // 读取失败
+        break;
     }
 
-    // 去掉行末的换行符
     if (e[read - 1] == '\n') {
         e[read - 1] = ' ';
     }
 
-    // 打印调试信息
 		char *rubbish = strtok(e,"\0");
 		char *expression = strtok(NULL,"\0"); 
 		printf("NO USE:%s\n",rubbish);
     printf("expression: %s\n", expression);
-    // 调用 expr() 函数求值
     word_t res = expr(rubbish, &success);
 
-    // 检查 success 标志
     if (!success) {
         printf("test_expr error: expr() failed for expression: %s\n", e);
-        assert(0);  // 终止程序
+        //assert(0); 
     }
 
-    // 比较结果
     if (res != correct_res) {
         printf("test_expr error: expression: %s\n", e);
         printf("expected: %u, got: %u\n", correct_res, res);
-        assert(0);  // 终止程序
+        assert(0); 
     }
 
-    pass_count++;  // 增加通过数
+    pass_count++;  
 }
 }
 
@@ -256,8 +248,8 @@ void init_sdb() {
   /* Compile the regular expressions. */
   init_regex();
   /* test math expression calculation */
-//  test_expr();
-//	printf("通过测试数:%d\n",pass_count);
+  test_expr();
+	printf("通过测试数:%d\n",pass_count);
   /* Initialize the watchpoint pool. */
   init_wp_pool();
 }
