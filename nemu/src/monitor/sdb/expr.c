@@ -151,6 +151,7 @@ static bool make_token(char *e) {
 							}
 							else{
 								tokens[nr_token].type =	TK_NUM; 
+								strncpy(tokens[nr_token].str, "0", sizeof(tokens[nr_token].str));
 								strncpy(tokens[nr_token].str, substr_start, substr_len);
 								nr_token++;
 								break;
