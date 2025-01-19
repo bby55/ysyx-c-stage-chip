@@ -206,26 +206,6 @@ void test_expr() {
   ssize_t read;
   bool success = false;
 
-  /*while (true) {
-    if(fscanf(fp, "%u ", &correct_res) == -1) break;
-    read = getline(&e, &len, fp);
-    e[read-1] = '\0';
-    
-    word_t res = expr(e, &success);
-    
-    assert(success);
-    if (res != correct_res) {
-      puts(e);
-      printf("expected: %u, got: %u\n", correct_res, res);
-      assert(0);
-    }
-  }
-
-  fclose(fp);
-  if (e) free(e);
-
-  Log("expr test pass");
-	*/
 	while (true) {
     // 读取预期结果
     if (fscanf(fp, "%u", &correct_res) != 1) {
@@ -253,7 +233,7 @@ void test_expr() {
 		printf("NO USE:%s\n",rubbish);
     printf("expression: %s\n", expression);
     // 调用 expr() 函数求值
-    word_t res = expr(expression, &success);
+    word_t res = expr(expression-1, &success);
 
     // 检查 success 标志
     if (!success) {
