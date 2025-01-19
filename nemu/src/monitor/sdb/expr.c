@@ -124,27 +124,32 @@ static bool make_token(char *e) {
 							}
 							else{
 								tokens[nr_token].type =	TK_DOT; 
+								strncpy(tokens[nr_token].str, "0", sizeof(tokens[nr_token].str));
 								strncpy(tokens[nr_token].str, "*", sizeof(tokens[nr_token].str));
 								nr_token++;
 								break;
 							}
 					case TK_DIV:
 							tokens[nr_token].type =	TK_DIV; 
+								strncpy(tokens[nr_token].str, "0", sizeof(tokens[nr_token].str));
 							strncpy(tokens[nr_token].str, "/", sizeof(tokens[nr_token].str));
 							nr_token++;
 							break;
 					case TK_LFBKT:
 							tokens[nr_token].type =	TK_LFBKT; 
+								strncpy(tokens[nr_token].str, "0", sizeof(tokens[nr_token].str));
 							strncpy(tokens[nr_token].str, "(", sizeof(tokens[nr_token].str));
 							nr_token++;
 							break;
 					case TK_RGBKT:
 							tokens[nr_token].type =	TK_RGBKT; 
+								strncpy(tokens[nr_token].str, "0", sizeof(tokens[nr_token].str));
 							strncpy(tokens[nr_token].str, ")", sizeof(tokens[nr_token].str));
 							nr_token++;
 							break;
 					case TK_NUM:
 							if(tokens[nr_token].type == TK_PTR){
+								strncpy(tokens[nr_token].str, "0", sizeof(tokens[nr_token].str));
 								strncpy(tokens[nr_token].str, substr_start, substr_len);
 								nr_token++;
 								break;
@@ -158,28 +163,33 @@ static bool make_token(char *e) {
 							}
 					case TK_AND:
 							tokens[nr_token].type = TK_AND;
+								strncpy(tokens[nr_token].str, "0", sizeof(tokens[nr_token].str));
 							strncpy(tokens[nr_token].str, "&&" , sizeof(tokens[nr_token].str));
 							nr_token++;
 							break;
 					case TK_NOR_EQ:
 							tokens[nr_token].type = TK_NOR_EQ;
+								strncpy(tokens[nr_token].str, "0", sizeof(tokens[nr_token].str));
 							strncpy(tokens[nr_token].str, "!=" , sizeof(tokens[nr_token].str));
 							nr_token++;
 							break;
 					case TK_XNUM:
 							if(tokens[nr_token].type == TK_PTR){
+								strncpy(tokens[nr_token].str, "0", sizeof(tokens[nr_token].str));
 								strncpy(tokens[nr_token].str, substr_start, substr_len);
 								nr_token++;
 								break;
 							}
 							else{
 								tokens[nr_token].type = TK_XNUM;
+								strncpy(tokens[nr_token].str, "0", sizeof(tokens[nr_token].str));
 								strncpy(tokens[nr_token].str, substr_start , substr_len);
 								nr_token++;
 								break;
 							}
 					case TK_REG:
 							tokens[nr_token].type = TK_REG;
+								strncpy(tokens[nr_token].str, "0", sizeof(tokens[nr_token].str));
 							strncpy(tokens[nr_token].str,substr_start+1,substr_len);
 							nr_token++;
 							break;
