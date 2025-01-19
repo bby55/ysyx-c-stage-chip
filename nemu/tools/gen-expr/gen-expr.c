@@ -161,7 +161,7 @@ int main(int argc, char *argv[]) {
     ret = fscanf(fp, "%u", &result);
     pclose(fp);
 
-    printf("%u %s\n", result, buf);
+    printf("%u@%s\n", result, buf);
 	}  
   return 0;
 }
