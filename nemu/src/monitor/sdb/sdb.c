@@ -228,7 +228,7 @@ void test_expr() {
     }
 
     // 打印调试信息
-		char *rubbish = strtok(e,"");
+		char *rubbish = strtok(e," ");
 		char *expression = strtok(NULL,"\0"); 
 		printf("NO USE:%s\n",rubbish);
     printf("expression: %s\n", expression);
