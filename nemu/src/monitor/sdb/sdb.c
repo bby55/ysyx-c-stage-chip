@@ -250,7 +250,7 @@ void test_expr() {
     // 打印调试信息
 		char *rubbish = strtok(e,"@");
 		char *expression = strtok(NULL,"@"); 
-		(void)rubbish;
+		printf("NO USE:%s\n",rubbish);
     printf("expression: %s\n", expression);
     // 调用 expr() 函数求值
     word_t res = expr(expression, &success);
@@ -277,7 +277,7 @@ void init_sdb() {
   init_regex();
   /* test math expression calculation */
   test_expr();
-	printf("通过测试数:%d",pass_count);
+	printf("通过测试数:%d\n",pass_count);
   /* Initialize the watchpoint pool. */
   init_wp_pool();
 }
