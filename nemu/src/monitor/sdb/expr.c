@@ -28,7 +28,6 @@ word_t paddr_read(paddr_t addr, int len);
 enum {
   TK_NOTYPE = 256, TK_NOR_EQ,TK_PLUS,TK_MINUS,TK_DOT,TK_DIV,TK_LFBKT,TK_RGBKT,TK_NUM,TK_AND,TK_EQ,TK_ADDR,TK_XNUM,TK_REG,TK_PTR
 
-  /* TODO: Add more token types */
 
 };
 
@@ -36,10 +35,6 @@ static struct rule {
   const char *regex;
   int token_type;
 } rules[] = {
-
-  /* TODO: Add more rules.
-   * Pay attention to the precedence level of different rules.
-   */
 
   {" +", TK_NOTYPE},    // spaces
   {"\\+", TK_PLUS},         // plus
