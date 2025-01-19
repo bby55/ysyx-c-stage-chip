@@ -212,7 +212,6 @@ void test_expr() {
         break;
     }
 
-    printf("correct_res: %u\n", correct_res);
 
     read = getline(&e, &len, fp);
     if (read == -1) {
