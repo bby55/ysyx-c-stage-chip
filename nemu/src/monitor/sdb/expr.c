@@ -79,10 +79,10 @@ void init_regex() {
 
 typedef struct token {
   int type;
-  char str[320];
+  char str[3200];
 } Token;
 
-static Token tokens[320] __attribute__((used)) = {};
+static Token tokens[3200] __attribute__((used)) = {};
 static int nr_token __attribute__((used))  = 0;
 
 static bool make_token(char *e) {
@@ -108,7 +108,7 @@ static bool make_token(char *e) {
          * to record the token in the array `tokens'. For certain types
          * of tokens, some extra actions should be performed.
          */
-			if(nr_token < 320){
+			if(nr_token < 3200){
         switch (rules[i].token_type) {
 					case TK_NOTYPE:
 							break;
@@ -210,10 +210,10 @@ static bool make_token(char *e) {
 }
 
 	word_t select_main_token(int p, int q){
-		int Tokens_DD[320] = {};	
-		int Tokens_PM[320] = {};
-		int Tokens_OP[320] = {};
-		int Tokens_LG[320] = {};
+		int Tokens_DD[3200] = {};	
+		int Tokens_PM[3200] = {};
+		int Tokens_OP[3200] = {};
+		int Tokens_LG[3200] = {};
 		int seal =0;
 		int i = 0;
 		int j = 0;
@@ -225,19 +225,19 @@ static bool make_token(char *e) {
 		 for (; p < q; p++) {
 			if (tokens[p].type == TK_PLUS || tokens[p].type == TK_DIV || tokens[p].type == TK_DOT || tokens[p].type == TK_MINUS || tokens[p].type == TK_EQ ||tokens[p].type == TK_NOR_EQ ||tokens[p].type == TK_AND || tokens[p].type == TK_LFBKT || tokens[p].type == TK_RGBKT){
 					if((tokens[p].type == TK_DOT || tokens[p].type == TK_DIV) && seal == 0){
-						if(i < 320){
+						if(i < 3200){
 						Tokens_DD[i] = p;
 						i++;
 						}
 					}
 					if((tokens[p].type == TK_PLUS|| tokens[p].type == TK_MINUS) && seal == 0){
-						if(j < 320){
+						if(j < 3200){
 						Tokens_PM[j] = p;
 						j++;
 						}
 					}
 					if((tokens[p].type == TK_AND|| tokens[p].type == TK_NOR_EQ  || tokens[p].type == TK_EQ) && seal == 0){
-						if(m < 320){
+						if(m < 3200){
 							Tokens_LG[m] = p;
 							m++;
 					}
