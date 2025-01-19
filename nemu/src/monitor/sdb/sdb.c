@@ -228,12 +228,12 @@ void test_expr() {
     }
 
     // 打印调试信息
-		char *rubbish = strtok(e," ");
+		char *rubbish = strtok(e,"");
 		char *expression = strtok(NULL,"\0"); 
 		printf("NO USE:%s\n",rubbish);
     printf("expression: %s\n", expression);
     // 调用 expr() 函数求值
-    word_t res = expr(expression-1, &success);
+    word_t res = expr(expression, &success);
 
     // 检查 success 标志
     if (!success) {
