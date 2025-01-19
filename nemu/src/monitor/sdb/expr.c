@@ -100,8 +100,8 @@ static bool make_token(char *e) {
 
 			if(nr_token < 3200){
         switch (rules[i].token_type) {
-					//case TK_NOTYPE:
-							//break;
+					case TK_NOTYPE:
+							break;
 					case TK_EQ:
 							tokens[nr_token].type =	TK_EQ; 
 							strncpy(tokens[nr_token].str, "==", sizeof(tokens[nr_token].str));
@@ -353,7 +353,6 @@ word_t eval(int p, int q) {
     /* The expression is surrounded by a matched pair of parentheses.
      * If that is the case, just throw away the parentheses.
      */
-			printf("TRUE");
 			return eval(p + 1, q - 1);
 		}
 		else {
