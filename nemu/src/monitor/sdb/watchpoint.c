@@ -84,7 +84,8 @@ void delete_watchpoint(int NO){
 	WP *wp = NULL;
 	for(i = 0; i < NR_WP; i++){
 		if(wp_pool[i].NO == NO){
-			wp = wp_pool;
+			wp = &wp_pool[i];
+	
 		}
 	}
 	if(wp == NULL){
