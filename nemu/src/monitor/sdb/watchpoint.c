@@ -86,17 +86,19 @@ void display_watchpoint(){
 
 void delete_watchpoint(int NO){
 	WP *h = head;
+	int s = 0;
 //	WP *wp = NULL;
 	while(h != NULL){
 		if(h->NO == NO){
 		//	wp = h;
+			s = 1;
 			free_wp(h);
 		}
 		h = h->next;
 	}
-	if(h == NULL){
+	if(s==0){
 			printf("找不到序号为%d的监视点",NO);
-			//assert(0);
+			assert(0);
 	}
 }
 
