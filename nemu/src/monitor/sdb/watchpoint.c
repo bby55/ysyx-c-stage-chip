@@ -72,10 +72,13 @@ void free_wp(WP *wp){
 }
 
 void display_watchpoint(){
-	int i;
-	for(i = 0;i < NR_WP;i++){
-		if(strlen(wp_pool[i].expression) > 0)
-			printf("第%d个监视点:\n 表达式:%s\n 旧值为:%u\n 新值为:%u\n",wp_pool[i].NO,wp_pool[i].expression,wp_pool[i].old_val,wp_pool[i].new_val); 
+	//int i;
+	while(head != NULL){
+	//for(i = 0;i < NR_WP;i++){
+	//	if(strlen(wp_pool[i].expression) > 0)
+		head = head->next;
+		if(strlen(head->expression)>0)
+			printf("第%d个监视点:\n 表达式:%s\n 旧值为:%u\n 新值为:%u\n",head->NO,head->expression,head->old_val,head->new_val); 
 	}
 
 }
@@ -86,8 +89,7 @@ void delete_watchpoint(int NO){
 	for(i = 0; i < NR_WP; i++){
 		if(wp_pool[i].NO == NO){
 			wp = &wp_pool[i];
-			free_wp(wp_pool[i-1].next);
-	
+			free_wp(wp);
 		}
 	}
 	if(wp == NULL){
