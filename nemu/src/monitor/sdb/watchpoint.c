@@ -20,7 +20,9 @@
 typedef struct watchpoint {
   int NO;
   struct watchpoint *next;
-
+	char *expression;
+	unsigned int old_val;
+	unsigned int new_val;
   /* TODO: Add more members if necessary */
 
 } WP;
@@ -69,5 +71,34 @@ void free_wp(WP *wp){
   free_ = wp;
 }
 
+void display_watchpoint(){
+	int i;
+	for(i = 0;i < NR_WP;i++){
+		printf("第%d个监视点:\n 表达式:%s\n 旧值为:%u\n 新值为:%u\n",wp_pool[i].NO,wp_pool[i].expression,wp_pool[i].old_val,wp_pool[i].new_val); 
+	}
 
+}
 
+void delete_watchpoint(int NO){
+	int i;	
+	WP *wp = NULL;
+	for(i = 0; i < NR_WP; i++){
+		if(wp_pool[i].NO == NO){
+			wp = wp_pool;
+		}
+	}
+	if(wp == NULL){
+			printf("找不到序号为%d的监视点",NO);
+			assert(0);
+	}
+	free_wp(wp);
+}
+
+void create_watchpoint(char *args){
+	WP *wp = new_wp();
+	bool success = true;
+	
+	strncpy(wp->expression,args, sizeof(wp->expression)-1);
+	wp -> old_val = expr(args,&success);
+	printf("成功创建序号为%d的监视点",wp->NO);
+}
