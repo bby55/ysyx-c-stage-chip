@@ -122,6 +122,7 @@ void update_watchpoint(){
 }
 
 #ifdef CONFIG_WATCHPOINT
+void check_watchpoint(){
 	WP *h = head;
 	while(h != NULL){
 		if(h->old_val != h->new_val){
@@ -131,5 +132,6 @@ void update_watchpoint(){
 			h->old_val = h->new_val;
 	}
 		h = h->next;
+}
 }
 #endif

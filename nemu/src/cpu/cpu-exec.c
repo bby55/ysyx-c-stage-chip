@@ -30,6 +30,9 @@ void display_watchpoint();
 void update_watchpoint();
 void device_update();
 
+#ifdef CONFIG_WATCHPOINT
+	void check_watchpoint();
+#endif
 static void trace_and_difftest(Decode *_this, vaddr_t dnpc) {
 #ifdef CONFIG_ITRACE_COND
   if (ITRACE_COND) { log_write("%s\n", _this->logbuf); }
@@ -39,16 +42,7 @@ static void trace_and_difftest(Decode *_this, vaddr_t dnpc) {
 	
 	update_watchpoint();
 #ifdef CONFIG_WATCHPOINT
-	WP *h = head;
-	while(h != NULL){
-		if(h->old_val != h->new_val){
-			nemu_state.state = NEMU_STOP;
-			display_watchpoint();
-			printf("触发监视点，程序暂停\n");
-			h->old_val = h->new_val;
-	}
-		h = h->next;
-}
+	check_watchpoint();
 #endif
 
 	}
