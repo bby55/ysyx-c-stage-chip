@@ -20,7 +20,7 @@
 typedef struct watchpoint {
   int NO;
   struct watchpoint *next;
-	char *expression;
+	char expression[320];
 	unsigned int old_val;
 	unsigned int new_val;
   /* TODO: Add more members if necessary */
