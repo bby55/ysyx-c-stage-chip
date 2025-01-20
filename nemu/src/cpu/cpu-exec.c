@@ -62,7 +62,7 @@ static void trace_and_difftest(Decode *_this, vaddr_t dnpc) {
 		}	
 }
 	printf("%u",wp_pool[0].new_val);
-	display_watchpoint();
+	//display_watchpoint();
 	}
 static void exec_once(Decode *s, vaddr_t pc) {
   s->pc = pc;
