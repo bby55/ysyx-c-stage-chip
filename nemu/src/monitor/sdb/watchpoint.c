@@ -40,4 +40,34 @@ void init_wp_pool() {
 }
 
 /* TODO: Implement the functionality of watchpoint */
+WP* new_wp(){
+	WP *wp = NULL;
+	 if (free_ == NULL) {
+      printf("Error: 没有空闲的监视点\n");
+			assert(0);
+    }
+	wp = free_;
+	free_ = free_ -> next;
+	wp -> next = head;
+	head = wp;	
+	return wp;
+}
+
+void free_wp(WP *wp){
+	WP* h = head;
+  if (h == wp){
+	 	head = NULL;
+	}
+  else {
+    while (h && h->next != wp){ 
+			h = h->next;
+	}
+    assert(h);
+    h->next = wp->next;
+  }
+  wp->next = free_;
+  free_ = wp;
+}
+
+
 

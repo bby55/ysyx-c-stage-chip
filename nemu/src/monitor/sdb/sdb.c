@@ -113,6 +113,14 @@ static int cmd_p(char *args){
 
   return 0;
 }	
+
+//static int cmd_w(char *args){
+//	char *expression = args;
+//}
+
+//static int cmd_d(char *args){
+//}
+	
 static struct {
   const char *name;
   const char *description;
@@ -124,7 +132,9 @@ static struct {
 	{ "si","Execute the program",cmd_si},
 	{ "info","Printf the reg or monitor",cmd_info},
 	{ "x","scan the pmem",cmd_x},
-	{ "p","test",cmd_p}
+	{ "p","get result of expression",cmd_p}
+//	{ "w","set the watchpoint",cmd_w},
+//	{ "d","delete the watchpoint",cmd_d}
   /* TODO: Add more commands */
 
 };
