@@ -28,6 +28,7 @@ void init_regex();
 void init_wp_pool();
 void create_watchpoint(char *args);
 void delete_watchpoint(int NO);
+void display_watchpoint();
 
 /* We use the `readline' library to provide more flexibility to read from stdin. */
 static char* rl_gets() {
@@ -80,6 +81,8 @@ static int cmd_info(char *args){
 	}
 	if(strcmp(args,"r")==0)
 	 isa_reg_display();
+	if(strcmp(args,"w")==0)
+		display_watchpoint();
 	return 0;
 }
 
