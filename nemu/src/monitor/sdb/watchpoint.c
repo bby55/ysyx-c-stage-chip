@@ -86,7 +86,7 @@ void delete_watchpoint(int NO){
 	for(i = 0; i < NR_WP; i++){
 		if(wp_pool[i].NO == NO){
 			wp = &wp_pool[i];
-			free_wp(wp_pool[i].next);
+			free_wp(wp_pool[i-1].next);
 	
 		}
 	}
