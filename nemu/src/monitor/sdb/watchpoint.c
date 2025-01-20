@@ -121,7 +121,7 @@ void update_watchpoint(){
 }
 }
 
-void check_watchpoint(){
+#ifdef CONFIG_WATCHPOINT
 	WP *h = head;
 	while(h != NULL){
 		if(h->old_val != h->new_val){
@@ -131,8 +131,5 @@ void check_watchpoint(){
 			h->old_val = h->new_val;
 	}
 		h = h->next;
-		//else{
-		//	nemu_state.state = NEMU_RUNNING;
-		//}
 }
-}
+#endif
