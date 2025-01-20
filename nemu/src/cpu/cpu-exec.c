@@ -54,13 +54,13 @@ static void trace_and_difftest(Decode *_this, vaddr_t dnpc) {
   if (g_print_step) { IFDEF(CONFIG_ITRACE, puts(_this->logbuf)); }
   IFDEF(CONFIG_DIFFTEST, difftest_step(_this->pc, dnpc));
 	
-	int i;
+//	int i;
 	bool success = true;
-	for(i = 0;i < 1;i++){
+	//for(i = 0;i < 1;i++){
 		//if(strlen(wp_pool[i].expression) > 0){
-			wp_pool[i].new_val = expr(wp_pool[i].expression,&success);
+			wp_pool[0].new_val = expr(wp_pool[0].expression,&success);
 		//}	
-}
+//}
 	printf("%u\n",wp_pool[0].new_val);
 	display_watchpoint();
 	}
