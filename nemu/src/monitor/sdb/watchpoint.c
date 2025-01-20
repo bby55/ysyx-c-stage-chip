@@ -86,6 +86,7 @@ void delete_watchpoint(int NO){
 	for(i = 0; i < NR_WP; i++){
 		if(wp_pool[i].NO == NO){
 			wp = &wp_pool[i];
+			free_wp(wp_pool[i].next);
 	
 		}
 	}
@@ -93,7 +94,6 @@ void delete_watchpoint(int NO){
 			printf("找不到序号为%d的监视点",NO);
 			assert(0);
 	}
-	free_wp(wp);
 }
 
 void create_watchpoint(char *args){
