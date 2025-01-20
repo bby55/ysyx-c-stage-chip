@@ -31,7 +31,7 @@ void update_watchpoint();
 void device_update();
 
 #ifdef CONFIG_WATCHPOINT
-	void check_watchpoint();
+	int check_watchpoint();
 #endif
 static void trace_and_difftest(Decode *_this, vaddr_t dnpc) {
 #ifdef CONFIG_ITRACE_COND
@@ -42,7 +42,11 @@ static void trace_and_difftest(Decode *_this, vaddr_t dnpc) {
 	
 	update_watchpoint();
 #ifdef CONFIG_WATCHPOINT
-	check_watchpoint();
+	int a = 0; 
+	a =check_watchpoint();
+	if(a == 1){
+		nemu_state.state = NEMU_STOP;
+	}
 #endif
 
 	}
