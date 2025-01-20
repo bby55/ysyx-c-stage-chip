@@ -121,7 +121,7 @@ void check_watchpoint(){
 	for(i = 0;i < NR_WP;i++){
 		if(wp_pool[i].old_val != wp_pool[i].new_val){
 			nemu_state.state = NEMU_STOP;
-			printf("触发监视点，程序暂停");
+			printf("触发监视点，程序暂停\n");
 	}
 }
 }
