@@ -126,6 +126,7 @@ void check_watchpoint(){
 	while(h != NULL){
 		if(h->old_val != h->new_val){
 			nemu_state.state = NEMU_STOP;
+			display_watchpoint();
 			printf("触发监视点，程序暂停\n");
 			h->old_val = h->new_val;
 	}

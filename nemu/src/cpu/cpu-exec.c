@@ -40,7 +40,6 @@ static void trace_and_difftest(Decode *_this, vaddr_t dnpc) {
   IFDEF(CONFIG_DIFFTEST, difftest_step(_this->pc, dnpc));
 	
 	update_watchpoint();
-	display_watchpoint();
 	check_watchpoint();
 
 	}
