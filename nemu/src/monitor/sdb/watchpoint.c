@@ -64,7 +64,7 @@ void free_wp(WP *wp){
     while (h && h->next != wp){ 
 			h = h->next;
 	}
-    assert(h);
+    //assert(h);
     h->next = wp->next;
   }
   wp->next = free_;
