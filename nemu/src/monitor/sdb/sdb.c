@@ -130,7 +130,7 @@ static int cmd_d(char *args){
     printf("No NO provided\n");
     return 0;
 	}
-	int NO = atoi(args);
+	int NO = atoi(args) + 1;
 	delete_watchpoint(NO);
 	return 0;
 }
