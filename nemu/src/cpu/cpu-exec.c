@@ -57,9 +57,9 @@ static void trace_and_difftest(Decode *_this, vaddr_t dnpc) {
 	int i;
 	bool success = true;
 	for(i = 0;i < NR_WP;i++){
-		if(strlen(wp_pool[i].expression) > 0){
+		//if(strlen(wp_pool[i].expression) > 0){
 			wp_pool[i].new_val = expr(wp_pool[i].expression,&success);
-		}	
+		//}	
 }
 	printf("%u\n",wp_pool[0].new_val);
 	display_watchpoint();
