@@ -19,23 +19,6 @@
 #include <locale.h>
 
 #include "../monitor/sdb/sdb.h" 
-//#define NR_WP 32
-
-/*typedef struct watchpoint {
-	 int NO;
-  struct watchpoint *next;
-	char expression[320];
-	unsigned int old_val;
-	unsigned int new_val;
-
-} WP;
-static WP wp_pool[NR_WP] = {};
-*/
-/* The assembly code of instructions executed is only output to the screen
- * when the number of instructions executed is less than this value.
- * This is useful when you use the `si' command.
- * You can modify this value as you want.
- */
 #define MAX_INST_TO_PRINT 10
 
 CPU_state cpu = {};
@@ -43,11 +26,11 @@ uint64_t g_nr_guest_inst = 0;
 static uint64_t g_timer = 0; // unit: us
 static bool g_print_step = false;
 
-void display_watchpoint();
+/*void display_watchpoint();
 void update_watchpoint();
 void check_watchpoint();
 void device_update();
-
+*/
 static void trace_and_difftest(Decode *_this, vaddr_t dnpc) {
 #ifdef CONFIG_ITRACE_COND
   if (ITRACE_COND) { log_write("%s\n", _this->logbuf); }
@@ -55,18 +38,10 @@ static void trace_and_difftest(Decode *_this, vaddr_t dnpc) {
   if (g_print_step) { IFDEF(CONFIG_ITRACE, puts(_this->logbuf)); }
   IFDEF(CONFIG_DIFFTEST, difftest_step(_this->pc, dnpc));
 	
-/*	int i;
-	bool success = true;
-for(i = 0;i < 1;i++){
-		if(strlen(wp_pool[i].expression) > 0){
-			wp_pool[0].new_val = expr(wp_pool[0].expression,&success);
-		}	
-}
-	printf("%u\n",wp_pool[0].new_val);
-	*/
-	update_watchpoint();
+/*	update_watchpoint();
 	display_watchpoint();
 	check_watchpoint();
+	*/
 	}
 static void exec_once(Decode *s, vaddr_t pc) {
   s->pc = pc;
