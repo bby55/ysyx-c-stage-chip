@@ -73,12 +73,13 @@ void free_wp(WP *wp){
 
 void display_watchpoint(){
 	//int i;
-	while(head != NULL){
+	WP *h = head;
+	while(h != NULL){
 	//for(i = 0;i < NR_WP;i++){
 	//	if(strlen(wp_pool[i].expression) > 0)
-		head = head->next;
-		if(strlen(head->expression)>0)
-			printf("第%d个监视点:\n 表达式:%s\n 旧值为:%u\n 新值为:%u\n",head->NO,head->expression,head->old_val,head->new_val); 
+		h = h->next;
+		if(strlen(h->expression)>0)
+			printf("第%d个监视点:\n 表达式:%s\n 旧值为:%u\n 新值为:%u\n",h->NO,h->expression,h->old_val,h->new_val); 
 	}
 
 }
