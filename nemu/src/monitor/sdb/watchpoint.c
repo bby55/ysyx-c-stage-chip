@@ -77,9 +77,9 @@ void display_watchpoint(){
 	while(h != NULL){
 	//for(i = 0;i < NR_WP;i++){
 	//	if(strlen(wp_pool[i].expression) > 0)
-		h = h->next;
 		if(strlen(h->expression)>0)
 			printf("第%d个监视点:\n 表达式:%s\n 旧值为:%u\n 新值为:%u\n",h->NO,h->expression,h->old_val,h->new_val); 
+		h = h->next;
 	}
 
 }
