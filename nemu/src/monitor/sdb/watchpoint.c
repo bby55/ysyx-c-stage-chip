@@ -123,5 +123,8 @@ void check_watchpoint(){
 			nemu_state.state = NEMU_STOP;
 			printf("触发监视点，程序暂停\n");
 	}
+		else{
+			nemu_state.state = NEMU_RUNNING;
+		}
 }
 }
