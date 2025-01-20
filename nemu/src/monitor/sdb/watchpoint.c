@@ -104,3 +104,14 @@ void create_watchpoint(char *args){
 	wp -> old_val = expr(args,&success);
 	printf("成功创建序号为%d的监视点\n",wp->NO);
 }
+
+
+void update_watchpoint(){
+	int i;
+	bool success = true;
+for(i = 0;i < NR_WP;i++){
+		if(strlen(wp_pool[i].expression) > 0){
+			wp_pool[i].new_val = expr(wp_pool[i].expression,&success);
+		}	
+}
+}
