@@ -22,7 +22,7 @@
 #define NR_WP 32
 
 typedef struct watchpoint {
-  int NO;
+	 int NO;
   struct watchpoint *next;
 	char expression[320];
 	unsigned int old_val;
@@ -61,6 +61,7 @@ static void trace_and_difftest(Decode *_this, vaddr_t dnpc) {
 			wp_pool[i].new_val = expr(wp_pool[i].expression,&success);
 		}	
 }
+	printf("%u",wp_pool[0].new_val);
 	display_watchpoint();
 	}
 static void exec_once(Decode *s, vaddr_t pc) {
