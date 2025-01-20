@@ -64,7 +64,7 @@ void free_wp(WP *wp){
     while (h && h->next != wp){ 
 			h = h->next;
 	}
-    //assert(h);
+		assert(h);
     h->next = wp->next;
   }
   wp->next = free_;
@@ -96,7 +96,7 @@ void delete_watchpoint(int NO){
 	}
 	if(h == NULL){
 			printf("找不到序号为%d的监视点",NO);
-			assert(0);
+			//assert(0);
 	}
 }
 
