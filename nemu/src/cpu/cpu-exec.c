@@ -18,6 +18,19 @@
 #include <cpu/difftest.h>
 #include <locale.h>
 
+#include "../monitor/sdb/sdb.h" 
+#define NR_WP 32
+
+typedef struct watchpoint {
+  int NO;
+  struct watchpoint *next;
+	char expression[320];
+	unsigned int old_val;
+	unsigned int new_val;
+  /* TODO: Add more members if necessary */
+
+} WP;
+static WP wp_pool[NR_WP] = {};
 /* The assembly code of instructions executed is only output to the screen
  * when the number of instructions executed is less than this value.
  * This is useful when you use the `si' command.
@@ -41,9 +54,15 @@ static void trace_and_difftest(Decode *_this, vaddr_t dnpc) {
   if (g_print_step) { IFDEF(CONFIG_ITRACE, puts(_this->logbuf)); }
   IFDEF(CONFIG_DIFFTEST, difftest_step(_this->pc, dnpc));
 	
-	display_watchpoint();
+	int i;
+	bool success = true;
+	for(i = 0;i < NR_WP;i++){
+		if(strlen(wp_pool[i].expression) > 0){
+			wp_pool[i].new_val = expr(wp_pool[i].expression,&success);
+		}	
 }
-
+	display_watchpoint();
+	}
 static void exec_once(Decode *s, vaddr_t pc) {
   s->pc = pc;
   s->snpc = pc;
