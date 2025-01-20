@@ -91,6 +91,7 @@ void delete_watchpoint(int NO){
 		if(h->NO == NO){
 			wp = h;
 			free_wp(wp);
+			h = h->next;
 		}
 	}
 	if(h == NULL){
