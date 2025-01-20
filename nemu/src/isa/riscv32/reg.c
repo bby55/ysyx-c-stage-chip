@@ -42,6 +42,7 @@ word_t isa_reg_str2val(const char *s, bool *success) {
 				return cpu.gpr[j];
 		}
 	}
-	printf("寄存器输入错误，请重试");
+	printf("寄存器输入错误，请重试\n");
+	success = false;
 	return 0;
 }
