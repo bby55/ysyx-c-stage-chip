@@ -61,8 +61,8 @@ static void trace_and_difftest(Decode *_this, vaddr_t dnpc) {
 			wp_pool[i].new_val = expr(wp_pool[i].expression,&success);
 		}	
 }
-	printf("%u",wp_pool[0].new_val);
-	//display_watchpoint();
+	printf("%u\n",wp_pool[0].new_val);
+	display_watchpoint();
 	}
 static void exec_once(Decode *s, vaddr_t pc) {
   s->pc = pc;
