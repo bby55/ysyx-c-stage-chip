@@ -74,7 +74,8 @@ void free_wp(WP *wp){
 void display_watchpoint(){
 	int i;
 	for(i = 0;i < NR_WP;i++){
-		printf("第%d个监视点:\n 表达式:%s\n 旧值为:%u\n 新值为:%u\n",wp_pool[i].NO,wp_pool[i].expression,wp_pool[i].old_val,wp_pool[i].new_val); 
+		if(strlen(wp_pool[i].expression) > 0)
+			printf("第%d个监视点:\n 表达式:%s\n 旧值为:%u\n 新值为:%u\n",wp_pool[i].NO,wp_pool[i].expression,wp_pool[i].old_val,wp_pool[i].new_val); 
 	}
 
 }
