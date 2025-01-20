@@ -34,9 +34,12 @@ void isa_reg_display() {
 }
 word_t isa_reg_str2val(const char *s, bool *success) {
 	int j;
-	for(j=0;j<32;j++){
+	for(j=0;j<=32;j++){
 		if(strcmp(s, regs[j]) == 0){
-			return cpu.gpr[j];
+			if(j == 32)
+				return cpu.pc;
+			else
+				return cpu.gpr[j];
 		}
 	}
 	printf("寄存器输入错误，请重试");
