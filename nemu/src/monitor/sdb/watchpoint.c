@@ -86,11 +86,11 @@ void display_watchpoint(){
 
 void delete_watchpoint(int NO){
 	WP *h = head;
-	WP *wp = NULL;
+//	WP *wp = NULL;
 	while(h != NULL){
 		if(h->NO == NO){
-			wp = h;
-			free_wp(wp);
+		//	wp = h;
+			free_wp(h);
 		}
 		h = h->next;
 	}
