@@ -27,6 +27,7 @@ word_t paddr_read(paddr_t addr, int len);
 void init_regex();
 void init_wp_pool();
 void create_watchpoint(char *args);
+void delete_watchpoint(int NO);
 
 /* We use the `readline' library to provide more flexibility to read from stdin. */
 static char* rl_gets() {
@@ -116,12 +117,23 @@ static int cmd_p(char *args){
 }	
 
 static int cmd_w(char *args){
+  if (args == NULL) {
+    printf("No expression provided\n");
+    return 0;
+	}
 	create_watchpoint(args);
 	return 0;
 }
 
-//static int cmd_d(char *args){
-//}
+static int cmd_d(char *args){
+  if (args == NULL) {
+    printf("No NO provided\n");
+    return 0;
+	}
+	int NO = atoi(args);
+	delete_watchpoint(NO);
+	return 0;
+}
 	
 static struct {
   const char *name;
@@ -135,8 +147,8 @@ static struct {
 	{ "info","Printf the reg or monitor",cmd_info},
 	{ "x","scan the pmem",cmd_x},
 	{ "p","get result of expression",cmd_p},
-	{ "w","set the watchpoint",cmd_w}
-//	{ "d","delete the watchpoint",cmd_d}
+	{ "w","set the watchpoint",cmd_w},
+	{ "d","delete the watchpoint",cmd_d}
   /* TODO: Add more commands */
 
 };
