@@ -45,6 +45,7 @@ static bool g_print_step = false;
 
 void display_watchpoint();
 void update_watchpoint();
+void check_watchpoint();
 void device_update();
 
 static void trace_and_difftest(Decode *_this, vaddr_t dnpc) {
@@ -65,6 +66,7 @@ for(i = 0;i < 1;i++){
 	*/
 	update_watchpoint();
 	display_watchpoint();
+	check_watchpoint();
 	}
 static void exec_once(Decode *s, vaddr_t pc) {
   s->pc = pc;
