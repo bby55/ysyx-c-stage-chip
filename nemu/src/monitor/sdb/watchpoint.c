@@ -102,7 +102,10 @@ void create_watchpoint(char *args){
 	
 	strncpy(wp->expression,args, sizeof(wp->expression)-1);
 	wp -> old_val = expr(args,&success);
-	printf("成功创建序号为%d的监视点\n",wp->NO);
+	if(success == true)
+		printf("成功创建序号为%d的监视点\n",wp->NO);
+	else
+		printf("监视点创建失败，表达式不合法");
 }
 
 
