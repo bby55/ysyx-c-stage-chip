@@ -123,17 +123,13 @@ void update_watchpoint(){
 
 void check_watchpoint(){
 	WP *h = head;
-	int seal = 0;
 	while(h != NULL){
 		if(h->old_val != h->new_val){
-			seal = 1;
 			nemu_state.state = NEMU_STOP;
+			display_watchpoint();
 			printf("触发监视点，程序暂停\n");
 			h->old_val = h->new_val;
 	}
-		if(seal == 1){
-			display_watchpoint();
-		}
 		h = h->next;
 		//else{
 		//	nemu_state.state = NEMU_RUNNING;
