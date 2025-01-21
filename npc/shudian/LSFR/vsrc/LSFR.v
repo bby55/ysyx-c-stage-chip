@@ -32,13 +32,7 @@ module LSFR(
 		input seal,
     output reg [7:0] q,
 		output reg [6:0]h1,
-		output reg [6:0]h0,
-		output reg [6:0]h2,
-		output reg [6:0]h3,
-		output reg [6:0]h4,
-		output reg [6:0]h5,
-		output reg [6:0]h6,
-		output reg [6:0]h7
+		output reg [6:0]h0
 ); 
 		reg feedback;
 
@@ -51,13 +45,7 @@ module LSFR(
 					q[6:0] <= q[7:1];
 				end	
     end
-		bcd7seg seg0({3'b000,q[0]},h0);
-		bcd7seg seg1({3'b000,q[1]},h1);
-		bcd7seg seg2({3'b000,q[2]},h2);
-		bcd7seg seg3({3'b000,q[3]},h3);
-		bcd7seg seg4({3'b000,q[4]},h4);
-		bcd7seg seg5({3'b000,q[5]},h5);
-		bcd7seg seg6({3'b000,q[6]},h6);
-		bcd7seg seg7({3'b000,q[7]},h7);
+		bcd7seg seg0({q[3],q[2],q[1],q[0]},h0);
+		bcd7seg seg1({q[7],q[6],q[5],q[4]},h1);
 endmodule
 
