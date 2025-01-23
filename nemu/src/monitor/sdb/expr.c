@@ -189,7 +189,7 @@ static bool make_token(char *e) {
 							}
 					case TK_REG:
 							tokens[nr_token].type = TK_REG;
-							strncpy(tokens[nr_token].str,substr_start+1,substr_len);
+							strncpy(tokens[nr_token].str,substr_start,substr_len);
 							nr_token++;
 							break;
           default: printf("No rules is com.\n");
