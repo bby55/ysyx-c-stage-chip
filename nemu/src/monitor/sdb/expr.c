@@ -313,7 +313,7 @@ bool check_parentheses(int p, int q){
 }
 
 int temp;
-char *REG[1];
+char REG[3];
 word_t eval(int p, int q) {
 		if (p > q){ 
 			/* Bad expression */
@@ -330,9 +330,9 @@ word_t eval(int p, int q) {
 			}
 			else if(tokens[p].type == TK_REG){
 				bool success = true;
-				REG[0][0] = tokens[p].str[1];
-				REG[0][1] = tokens[p].str[2];
-				temp = isa_reg_str2val(REG[0],&success);
+				REG[0] = tokens[p].str[1];
+				REG[1] = tokens[p].str[2];
+				temp = isa_reg_str2val(REG,&success);
 				return temp;
 			}
 			else if(tokens[p].type == TK_PTR){
