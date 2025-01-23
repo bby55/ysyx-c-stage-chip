@@ -361,7 +361,12 @@ word_t eval(int p, int q) {
 				case TK_PLUS: return val1 + val2;
 				case TK_MINUS:	return val1 - val2; 
 				case TK_DOT:	return val1 * val2; 
-				case TK_DIV:	return val1 / val2; 
+				case TK_DIV:
+										if(val2 == 0){
+											printf("表达式错误，出现除0行为\n");	
+											assert(0);}
+										else
+											return val1 / val2; 
 				case TK_EQ:   return val1 == val2;
 				case TK_NOR_EQ:	return val1 != val2;
 				case TK_AND:	return val1 && val2;
