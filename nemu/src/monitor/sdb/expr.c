@@ -313,7 +313,7 @@ bool check_parentheses(int p, int q){
   return false;
 }
 
-unsigned int temp;
+int temp;
 word_t eval(int p, int q) {
 		if (p > q){ 
 			/* Bad expression */
