@@ -88,12 +88,18 @@ static int cmd_info(char *args){
 
 static int cmd_x(char *args){
 	int i = 0;
+	bool success = true;
 	int N = atoi(strtok(args, " "));
-	long addr =strtol(strtok(NULL," "),NULL,16);
-	for(i = 0 ; i < N ; i++){
-		printf("0x%lx:\n	0x%.8x\n",addr,paddr_read(addr,4));//addr len
-    addr = addr + 4;
+	long addr =expr(strtok(NULL," "),&success);
+	if(success){
+		for(i = 0 ; i < N ; i++){
+			printf("0x%lx:\n	0x%.8x\n",addr,paddr_read(addr,4));//addr len
+			addr = addr + 4;
+		}
 	}
+	else{
+    printf("Expression evaluation failed\n");
+		}
 	return 0;
 }
 
