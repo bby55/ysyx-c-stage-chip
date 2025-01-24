@@ -282,27 +282,27 @@ static bool make_token(char *e) {
 
 bool check_expr_parentheses(int p, int q){
   int i;
-  int stack_top = -1;
-  bool flag = true;
+  int top = -1;
+  bool seal = true;
  
   for (i = p; i <= q ; i++){
     if (tokens[i].type == TK_LFBKT){
-        stack_top++;
+        top++;
     } else if (tokens[i].type == TK_RGBKT){    
-      if (stack_top >= 0){
-        stack_top--;          
+      if (top >= 0){
+        top--;          
       } else {
-        flag = false;
+        seal = false;
         break;
       }
     }
   }
-  if (stack_top < 0 && flag == true){
-    flag = true;
+  if (top < 0 && seal == true){
+    seal = true;
   } else {
-    flag = false;
+    seal = false;
   }
-  return flag;
+  return seal;
 }
  
 bool check_parentheses(int p, int q){

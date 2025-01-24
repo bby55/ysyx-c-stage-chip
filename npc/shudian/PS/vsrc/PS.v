@@ -155,8 +155,10 @@ module PS_control(
 											num <= num + 1;
 										if(state == 2'b10 || seal ==2'b00)begin
 											cur_key <= buffer;
+											update <= 0;
 										end else begin
 											cur_key <= 0;
+											update <= 1;
 										end
                end
                 count <= 0;     // for next
@@ -178,68 +180,21 @@ module PS(input clk,
 	output reg [6:0]h0,h1,h2,h3,h4,h5
 );
 
-
+	reg [6:0]hh0,hh1,hh2,hh3;
 	reg [3:0] count;
 	reg update;
 	//reg [6:0]hh0,hh1,hh2,hh3,hh4,hh5;
 	PS_control MY_PS(clk,rst,ps2_clk,ps2_data,cur_key,count,num,update); 
 	rom rom1 (cur_key[8:1],ascii);
-	bcd7seg seg0(cur_key[4:1],h0);
-	bcd7seg seg1(cur_key[8:5],h1);
-	bcd7seg seg2(ascii[3:0],h2);
-	bcd7seg seg3(ascii[7:4],h3);
+	bcd7seg seg0(cur_key[4:1],hh0);
+	bcd7seg seg1(cur_key[8:5],hh1);
+	bcd7seg seg2(ascii[3:0],hh2);
+	bcd7seg seg3(ascii[7:4],hh3);
 	bcd7seg seg4(num[3:0],h4);
 	bcd7seg seg5(num[7:4],h5);
-	//$strobe("strobe top cur_key %x",cur_key[8:1]);
-/*
-	parameter A = 1,B = 0;
-	reg state,next_state;
-	reg seal;
-	always @(posedge clk, posedge rst)begin
-		if(rst)begin
-			state <= B;
-		end
-		else begin
-			state <= next_state;	
-			end
-		end
-	always @(*)begin
-		case(state)
-			A: next_state = (nextdata_n)? B:A;
-			B: next_state = (nextdata_n)? A:B;
-		endcase
-	end
-	always @(*) begin
-    case(state)
-			A:seal = A;
-      B:seal = B;
-    endcase
-    end
-*/
-/*		
-	always @(posedge clk)begin
-			h0 = 7'b1000000;
-			h1 = 7'b1000000;
-			h2 = 7'b1000000;
-		 	h3 = 7'b1000000;
-			h4 = 7'b1000000;
-			h5 = 7'b1000000;
-		if(cur_key[8:1] == 8'hF0)begin
-			h0 = 7'b1000000;
-			h1 = 7'b1000000;
-			h2 = 7'b1000000;
-		 	h3 = 7'b1000000;
-			h4 = 7'b1000000;
-			h5 = 7'b1000000;
-		end else begin
-			h0 = hh0;
-			h1 = hh1;
-			h2 = hh2;
-			h3 = hh3;
-			h4 = hh4;
-			h5 = hh5;
-	end
-end
-*/
+	assign h0 = (update)? 7'b1111111 : hh0;
+	assign h1 = (update)? 7'b1111111 : hh1;
+	assign h2 = (update)? 7'b1111111 : hh2;
+	assign h3 = (update)? 7'b1111111 : hh3;
 	endmodule
 
