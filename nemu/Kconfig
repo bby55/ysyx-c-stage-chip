@@ -214,10 +214,4 @@ config RT_CHECK
   bool "Enable runtime checking"
   default y
 
-config WATCHPOINT
-    bool "Enable watchpoints"
-    default y
-    help
-      Enable watchpoints to monitor expressions during execution.
-
 endmenu

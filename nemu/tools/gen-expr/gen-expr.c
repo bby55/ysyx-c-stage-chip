@@ -31,96 +31,8 @@ static char *code_format =
 "  return 0; "
 "}";
 
-int choose(int n) {
-    return rand() % n;
-}
-
-
-int gen_num(){
-	return rand() % 100;
-}
-
-int space = 0;
-void gen_space(){
-	switch(choose(2)){
-		case 0: 
-			strcat(buf, " "); 
-			space = 1;
-		}
-}
-char gen_rand_op(){
-	switch(choose(4)){
-		case 0: return '+';
-		case 1: return '-';
-		case 2: return '*';
-		case 3: return '/';
-		default: return 0;
-	}
-}
-int num = 0;
-int lbkt = 0;
-int rbkt = 0;
-int opp = 0;
-int count = 0;
-int nums = 1;
-int MAXCOUNT;
-void gen_rand_expr() {
-	if(count >= MAXCOUNT){
-		return;
-	}
-  switch (choose(3)) {
-    case 0: 
-			if(rbkt != 1 && nums != 0 && space != 1){
-			nums = gen_num();
-			sprintf(buf + strlen(buf), "%d", nums);
-			gen_space();
-			space = 1;
-			num = 1;
-			lbkt = 0;
-			opp = 0;
-			count++;
-			gen_rand_expr();
-			break;
-			}
-    case 1:
-			if(num != 1 && lbkt != 1){
-				gen_space();
-				strcat(buf, "(");
-				space = 0;
-				lbkt = 1;
-				nums = 1;
-				num = 0;
-				opp = 0;
-				rbkt = 0;
-				gen_rand_expr(); 
-				strcat(buf, ")");
-				space = 0;
-				rbkt = 1;
-				lbkt = 0;
-				nums = 1;
-				num = 0;
-				opp = 0;
-				gen_rand_expr();
-				break;
-			}
-    default:
-			 if (num == 1 || rbkt == 1) {
-					gen_space();
-          char op = gen_rand_op(); 
-          sprintf(buf + strlen(buf), " %c ", op);
-					space = 0;
-					opp = 1;
-					num = 0;
-					nums = 1;
-					lbkt = 0;
-					gen_rand_expr();
-					break;
-			}
-			 else{
-				 gen_rand_expr();
-					break;
-			 }
-	}
+static void gen_rand_expr() {
+  buf[0] = '\0';
 }
 
 int main(int argc, char *argv[]) {
@@ -132,15 +44,6 @@ int main(int argc, char *argv[]) {
   }
   int i;
   for (i = 0; i < loop; i ++) {
-		 buf[0] = '\0';
-		 space = 0;
-		 num = 0;
-		 nums = 1;
-		 lbkt = 0;
-		 rbkt = 0;
-		 opp = 0;
-		 count = 0;
-		MAXCOUNT = rand()%10 + 1;
     gen_rand_expr();
 
     sprintf(code_buf, code_format, buf);
@@ -150,18 +53,17 @@ int main(int argc, char *argv[]) {
     fputs(code_buf, fp);
     fclose(fp);
 
-    int ret = system("gcc /tmp/.code.c -Wall -Werror -o /tmp/.expr 2>/dev/null");
+    int ret = system("gcc /tmp/.code.c -o /tmp/.expr");
     if (ret != 0) continue;
 
     fp = popen("/tmp/.expr", "r");
-
     assert(fp != NULL);
 
-    unsigned int result;
-    ret = fscanf(fp, "%u", &result);
+    int result;
+    ret = fscanf(fp, "%d", &result);
     pclose(fp);
 
     printf("%u %s\n", result, buf);
-	}  
+  }
   return 0;
 }

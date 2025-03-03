@@ -18,7 +18,11 @@
 #include <cpu/difftest.h>
 #include <locale.h>
 
-#include "../monitor/sdb/sdb.h" 
+/* The assembly code of instructions executed is only output to the screen
+ * when the number of instructions executed is less than this value.
+ * This is useful when you use the `si' command.
+ * You can modify this value as you want.
+ */
 #define MAX_INST_TO_PRINT 10
 
 CPU_state cpu = {};
@@ -26,30 +30,16 @@ uint64_t g_nr_guest_inst = 0;
 static uint64_t g_timer = 0; // unit: us
 static bool g_print_step = false;
 
-void display_watchpoint();
-void update_watchpoint();
 void device_update();
 
-#ifdef CONFIG_WATCHPOINT
-	int check_watchpoint();
-#endif
 static void trace_and_difftest(Decode *_this, vaddr_t dnpc) {
 #ifdef CONFIG_ITRACE_COND
   if (ITRACE_COND) { log_write("%s\n", _this->logbuf); }
 #endif
   if (g_print_step) { IFDEF(CONFIG_ITRACE, puts(_this->logbuf)); }
   IFDEF(CONFIG_DIFFTEST, difftest_step(_this->pc, dnpc));
-	
-	update_watchpoint();
-#ifdef CONFIG_WATCHPOINT
-	int a = 0; 
-	a =check_watchpoint();
-	if(a == 1){
-		nemu_state.state = NEMU_STOP;
-	}
-#endif
+}
 
-	}
 static void exec_once(Decode *s, vaddr_t pc) {
   s->pc = pc;
   s->snpc = pc;
@@ -124,7 +114,7 @@ void cpu_exec(uint64_t n) {
   g_timer += timer_end - timer_start;
 
   switch (nemu_state.state) {
-		case NEMU_RUNNING:  nemu_state.state = NEMU_STOP;break;
+    case NEMU_RUNNING: nemu_state.state = NEMU_STOP; break;
 
     case NEMU_END: case NEMU_ABORT:
       Log("nemu: %s at pc = " FMT_WORD,

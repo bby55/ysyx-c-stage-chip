@@ -15,34 +15,17 @@
 
 #include <isa.h>
 #include "local-include/reg.h"
-#include <string.h>
-
 
 const char *regs[] = {
   "$0", "ra", "sp", "gp", "tp", "t0", "t1", "t2",
   "s0", "s1", "a0", "a1", "a2", "a3", "a4", "a5",
   "a6", "a7", "s2", "s3", "s4", "s5", "s6", "s7",
-  "s8", "s9", "s10", "s11", "t3", "t4", "t5", "t6","pc"
+  "s8", "s9", "s10", "s11", "t3", "t4", "t5", "t6"
 };
 
 void isa_reg_display() {
-	int i;
-	for(i = 0;i<32;i++){
-		printf("%-10s 0x%-10.8x 0x%-10.8x\n",regs[i],cpu.gpr[i],cpu.gpr[i]);
-	}
-	printf("pc         0x%-10.8x\n", cpu.pc);
 }
+
 word_t isa_reg_str2val(const char *s, bool *success) {
-	int j;
-	for(j=0;j<=32;j++){
-		if(strcmp(s, regs[j]) == 0){
-			if(j == 32)
-				return cpu.pc;
-			else
-				return cpu.gpr[j];
-		}
-	}
-	//printf("寄存器输入错误\n");
-	//assert(0);
-	return 0;
+  return 0;
 }
