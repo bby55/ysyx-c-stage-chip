@@ -20,7 +20,9 @@
 typedef struct watchpoint {
   int NO;
   struct watchpoint *next;
-
+	char expression[320];
+	unsigned int old_val;
+	unsigned int new_val;
   /* TODO: Add more members if necessary */
 
 } WP;
@@ -40,4 +42,98 @@ void init_wp_pool() {
 }
 
 /* TODO: Implement the functionality of watchpoint */
+WP* new_wp(){
+	WP *wp = NULL;
+	 if (free_ == NULL) {
+      printf("Error: 没有空闲的监视点\n");
+			assert(0);
+    }
+	wp = free_;
+	free_ = free_ -> next;
+	wp -> next = head;
+	head = wp;	
+	return wp;
+}
 
+void free_wp(WP *wp){
+	WP* h = head;
+  if (h == wp){
+	 	head = NULL;
+	}
+  else {
+    while (h && h->next != wp){ 
+			h = h->next;
+	}
+		assert(h);
+    h->next = wp->next;
+  }
+  wp->next = free_;
+  free_ = wp;
+}
+
+void display_watchpoint(){
+	WP *h = head;
+	while(h != NULL){
+		if(strlen(h->expression)>0)
+			printf("第%d个监视点:\n 表达式:%s\n 旧值为:%u\n 新值为:%u\n",h->NO,h->expression,h->old_val,h->new_val); 
+		h = h->next;
+	}
+
+}
+
+void delete_watchpoint(int NO){
+	WP *h = head;
+	int s = 0;
+	while(h != NULL){
+		if(h->NO == NO){
+			s = 1;
+			free_wp(h);
+		}
+		h = h->next;
+	}
+	if(s==0){
+			printf("找不到序号为%d的监视点",NO);
+			assert(0);
+	}
+}
+
+void create_watchpoint(char *args){
+	WP *wp = new_wp();
+	bool success = true;
+	
+	strncpy(wp->expression,args, sizeof(wp->expression)-1);
+	wp -> old_val = expr(args,&success);
+	if(success == true)
+		printf("成功创建序号为%d的监视点\n",wp->NO);
+	else
+		printf("监视点创建失败，表达式不合法\n");
+}
+
+
+void update_watchpoint(){
+	WP *h = head;
+	bool success = true;
+	while(h != NULL){
+		if(strlen(h->expression) > 0){
+			h->new_val = expr(h->expression,&success);
+		}	
+		h = h->next;
+}
+}
+
+#ifdef CONFIG_WATCHPOINT
+int check_watchpoint(){
+	WP *h = head;
+	while(h != NULL){
+		if(h->old_val != h->new_val){
+			//nemu_state.state = NEMU_STOP;
+			display_watchpoint();
+			printf("触发监视点，程序暂停\n");
+			h->old_val = h->new_val;
+			return 1;
+	}
+		h = h->next;
+}
+		return 0;
+}
+#endif
