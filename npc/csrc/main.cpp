@@ -1,12 +1,12 @@
 #include <nvboard.h>
 #include "verilated.h"
-#include "Vysyx_25010028_cpu.h"
+#include "Vcpu.h"
 #include "verilated_vcd_c.h"
 
 //static TOP_NAME dut;
 
-static Vysyx_25010028_cpu* top;
-void nvboard_bind_all_pins(Vysyx_25010028_cpu* top);
+static Vcpu* top;
+void nvboard_bind_all_pins(Vcpu* top);
 
 static void single_cycle() {
      top->clk = 0; top->eval();
@@ -36,7 +36,7 @@ void step_and_dump_wave(){
 void sim_init(){
   contextp = new VerilatedContext;
   tfp = new VerilatedVcdC;
-  top = new Vysyx_25010028_cpu;
+  top = new Vcpu;
   contextp->traceEverOn(true);
   top->trace(tfp, 5);
   tfp->open("dump.vcd");

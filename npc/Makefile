@@ -9,8 +9,8 @@ sim:
 	./obj_dir/Vtop
 include ../Makefile
 
-TOPNAME = ysyx_25010028_cpup
-NXDC_FILES = constr/ysyx_25010028_cpu.nxdc
+TOPNAME = cpu
+NXDC_FILES = constr/cpu.nxdc
 INC_PATH ?=
 
 VERILATOR = verilator
