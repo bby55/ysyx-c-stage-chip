@@ -1,69 +1,51 @@
-#include <nvboard.h>
+#include "Vcpu.h"  // Verilator自动生成的顶层模块头文件（前缀V）
 #include "verilated.h"
-#include "Vcpu.h"
-#include "verilated_vcd_c.h"
+#include "verilated_vcd_c.h"  // 用于生成波形
 
-//static TOP_NAME dut;
+int main(int argc, char**argv) {
+    // 初始化Verilator上下文
+    VerilatedContext* ctx = new VerilatedContext;
+    ctx->commandArgs(argc, argv);
 
-static Vcpu* top;
-void nvboard_bind_all_pins(Vcpu* top);
+    // 实例化CPU顶层模块
+    Vcpu* cpu = new Vcpu(ctx);
 
-static void single_cycle() {
-     top->clk = 0; top->eval();
-     top->clk = 1; top->eval();
-  }
+    // 配置波形跟踪（生成waveform.vcd，可用gtkwave查看）
+    VerilatedVcdC* vcd = new VerilatedVcdC;
+    ctx->traceEverOn(true);
+    cpu->trace(vcd, 99);  // 跟踪深度99
+    vcd->open("waveform.vcd");
 
-static void reset(int n) {
-   top->rst = 1;
-   while (n -- > 0) single_cycle();
-   top->rst = 0;
- }
+    // 仿真参数
+    int cycles = 0;
+    const int MAX_CYCLES = 50;  // 仿真50个时钟周期
 
-vluint64_t sim_time = 0;
+    // 仿真主循环
+    while (!ctx->gotFinish() && cycles < MAX_CYCLES) {
+        // 生成时钟信号（0→1→0为一个周期）
+        cpu->clk = 0;
+        cpu->reset = (cycles < 2);  // 前2个周期复位（高电平有效）
+        ctx->timeInc(1);  // 时间+1ns
+        cpu->eval();      // 评估组合逻辑
+        vcd->dump(ctx->time());  // 记录波形
 
-VerilatedContext* contextp = NULL;
-VerilatedVcdC* tfp = NULL;
+        cpu->clk = 1;     // 时钟高电平
+        ctx->timeInc(1);
+        cpu->eval();
+        vcd->dump(ctx->time());
 
+        // 打印关键信号（方便调试）
+        if (cycles >= 2) {  // 复位结束后
+            printf("Cycle %d: PC = 0x%08x\n", cycles, cpu->pc);
+        }
 
-void step_and_dump_wave(){
-  top->clk ^= 1;
-  top->eval();
-  contextp->timeInc(1);
-  tfp->dump(contextp->time());
-}
+        cycles++;
+    }
 
-
-void sim_init(){
-  contextp = new VerilatedContext;
-  tfp = new VerilatedVcdC;
-  top = new Vcpu;
-  contextp->traceEverOn(true);
-  top->trace(tfp, 5);
-  tfp->open("dump.vcd");
-}
-
-void sim_exit(){
-  step_and_dump_wave();
-  tfp->close();
-}
-
-int main(int argc, char *argv[]){
-	sim_init();
-  nvboard_bind_all_pins(top);
-  nvboard_init();
- 
-  reset(10);
-
-	while (/*sim_time < 1000000 sim_time < 100000000/2*/1){ 
-
-		/*int x = rand()&1;
-		int y = rand()&1;
-		top->clk ^= 1;
-		top->rst = 1;*/
-	  nvboard_update();
-
-		step_and_dump_wave();
-		sim_time++;
-	}
-		sim_exit();
+    // 清理资源
+    vcd->close();
+    delete cpu;
+    delete vcd;
+    delete ctx;
+    return 0;
 }
