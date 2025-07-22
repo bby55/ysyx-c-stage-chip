@@ -1,4 +1,4 @@
-module ysyx_25010028_cpu(
+module cpu(
     input clk,
     input reset
 );
