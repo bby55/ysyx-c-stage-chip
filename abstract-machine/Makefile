@@ -1,6 +1,7 @@
 # Makefile for AbstractMachine Kernels and Libraries
 
 ### *Get a more readable version of this Makefile* by `make html` (requires python-markdown)
+### 将 Makefile 转换为 HTML 格式，方便阅读（通过sed缩进非注释内容，再用markdown_py转换）
 html:
 	cat Makefile | sed 's/^\([^#]\)/    \1/g' | markdown_py > Makefile.html
 .PHONY: html
