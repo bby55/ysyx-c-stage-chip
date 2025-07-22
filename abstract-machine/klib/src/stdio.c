@@ -51,42 +51,44 @@ static int int_to_str(int num, char *buf) {
 }
 
 int sprintf(char *out, const char *fmt, ...) {
-
     va_list args;
     va_start(args, fmt);
-    int j = 0;
-    int len = 0;
-    char int_buf[20];
-    char *p = out;
-    for(size_t i = 0; i < strlen(fmt); i++){
-        if(fmt[i] == '%'){
-            switch(fmt[i+1]){
-                case 'd':
-                    len = int_to_str(va_arg(args, int), int_buf);
-                    for(int k = 0; k < len; k++){
-                        out[j] = int_buf[k];
-                        j++;
-                    }
-                    i++;
-                    break;
 
-                case 's':
-                    p = va_arg(args, char*);
-                    for(int k = 0; k < strlen(p); k++){
-                        out[j] = p[k];
-                        j++;
+    int j = 0; 
+    char int_buf[20]; 
+    char *p;
+
+    for (size_t i = 0; fmt[i] != '\0'; i++) {
+        if (fmt[i] == '%') {
+            i++; 
+            switch (fmt[i]) {
+                case 'd': {
+                    int len = int_to_str(va_arg(args, int), int_buf);
+                    for (int k = 0; k < len; k++) {
+                        out[j++] = int_buf[k];
                     }
-                    i++;
                     break;
-                default:
-                    out[j++] = '%';
-                    out[j] = fmt[i+1];
-                    j++;
-                    i++;
+                }
+                case 's': {
+                    p = va_arg(args, char*);
+                    if (p != NULL) {
+                        for (int k = 0; p[k] != '\0'; k++) {
+                            out[j++] = p[k];
+                        }
+                    }
                     break;
+                }
+                default: {
+                    out[j++] = '%';   
+                    out[j++] = fmt[i];
+                    break;
+                }
             }
+        } else {
+            out[j++] = fmt[i];
+        }
     }
-    }
+
     out[j] = '\0';
     va_end(args);
     return j;
