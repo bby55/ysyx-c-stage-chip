@@ -24,10 +24,9 @@ module top(
   
   Rom #(
     .ADDR_WIDTH(32),    // 地址位宽32
-    .DATA_WIDTH(32),    // 32位指令
-    .file("code.txt")
+    .DATA_WIDTH(32)   // 32位指令
   ) u_rom (
-    .addr(pc),          // 地址接当前PC值
+    .addr(pc),       // 地址接当前PC值
     .dout(instr)        // 输出接指令寄存器instr
   );
 
@@ -160,15 +159,22 @@ module RegisterFile #(ADDR_WIDTH = 1, DATA_WIDTH = 1) (
 endmodule
 
 //指令存储器
-module Rom #(ADDR_WIDTH = 1, DATA_WIDTH = 1, file = "code.txt") (
+module Rom #(ADDR_WIDTH = 24, DATA_WIDTH = 32) (
     input [ADDR_WIDTH-1:0] addr,
     output [DATA_WIDTH-1:0] dout
 );
     reg [DATA_WIDTH-1:0] rom [2**ADDR_WIDTH-1:0];
     initial begin
-        $readmemh("code.txt", rom);
+        rom[0] = 32'h26098993;
+        rom[1] = 32'h1bc48493;
+        rom[2] = 32'h26098993;
+        rom[3] = 32'h1bc48493;
     end
-    assign dout = rom[(addr -  32'h80000000) >> 2];
+    wire [31:0] addr_extended = {{32-ADDR_WIDTH{1'b0}}, addr};  // 符号扩展为32位 
+    localparam ROM_DEPTH = 1 << ADDR_WIDTH;  // ROM总容量(索引数量)
+    wire [31:0] offset = addr_extended - 32'h80000000;  // 相对基地址的偏移量
+    wire [ADDR_WIDTH-1:0] rom_index = (offset >> 2) & (ROM_DEPTH - 1);  // 限制索引在有效范围内
+    assign dout = rom[rom_index];
 endmodule
 
 

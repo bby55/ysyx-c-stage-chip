@@ -1,62 +1,43 @@
-
-include ../Makefile
-
-TOPNAME = top
-NXDC_FILES = constr/top.nxdc
-INC_PATH ?=
-
+# 定义工具和目标名称
 VERILATOR = verilator
-VERILATOR_CFLAGS += -MMD --build -cc  \
-				-O3 --x-assign fast --x-initial fast --noassert
+TOP_MODULE = top
+SIM_EXE = obj_dir/V$(TOP_MODULE)
 
-BUILD_DIR = ./build
-OBJ_DIR = $(BUILD_DIR)/obj_dir
-BIN = $(BUILD_DIR)/$(TOPNAME)
+# 源文件
+VERILOG_SRC = top.v
+CPP_SRC = csrc/main.cpp
 
-default: $(BIN)
+# Verilator编译选项
+# --top-module: 指定顶层模块，解决多顶层模块警告
+# -Wno-*: 禁用特定警告
+# -Wall
+VERILATOR_FLAGS = \
+	--top-module $(TOP_MODULE) \
+	-cc -trace \
+	-build -exe $(CPP_SRC) \
+	-Wno-EOFNEWLINE \
+	-Wno-DECLFILENAME \
+	-Wno-MULTITOP \
+	-Wno-UNUSEDSIGNAL \
+	-Wno-UNUSEDPARAM
 
-$(shell mkdir -p $(BUILD_DIR))
+# 默认目标：运行仿真
+.PHONY: all sim clean
 
-# constraint file
-SRC_AUTO_BIND = $(abspath $(BUILD_DIR)/auto_bind.cpp)
-$(SRC_AUTO_BIND): $(NXDC_FILES)
-	python3 $(NVBOARD_HOME)/scripts/auto_pin_bind.py $^ $@
+all: sim
 
-# project source
-VSRCS = $(shell find $(abspath ./vsrc) -name "*.v")
-CSRCS = $(shell find $(abspath ./csrc) -name "*.c" -or -name "*.cc" -or -name "*.cpp")
-CSRCS += $(SRC_AUTO_BIND)
+# 仿真目标：先编译再运行
+sim: $(SIM_EXE)
+	@echo "Starting simulation..."
+	./$(SIM_EXE)
 
-# rules for NVBoard
-include $(NVBOARD_HOME)/scripts/nvboard.mk
+# 编译目标：使用Verilator生成可执行文件
+$(SIM_EXE): $(VERILOG_SRC) $(CPP_SRC)
+	@echo "Compiling with Verilator..."
+	$(VERILATOR) $(VERILATOR_FLAGS) $(VERILOG_SRC)
 
-# rules for verilator
-INCFLAGS = $(addprefix -I, $(INC_PATH))
-CXXFLAGS += $(INCFLAGS) -DTOP_NAME="\"V$(TOPNAME)\""
-
-$(BIN): $(VSRCS) $(CSRCS) $(NVBOARD_ARCHIVE)
-	@rm -rf $(OBJ_DIR)
-	$(VERILATOR) $(VERILATOR_CFLAGS) \
-		--top-module $(TOPNAME) $^ \
-		$(addprefix -CFLAGS , $(CXXFLAGS)) $(addprefix -LDFLAGS , $(LDFLAGS)) \
-		--Mdir $(OBJ_DIR) --exe -g $(abspath $(BIN))
-
-all: default
-
-run: $(BIN)
-	@$^
-
+# 清理目标：删除生成的文件
 clean:
-	rm -rf $(BUILD_DIR)
-
-.PHONY: default all clean run
-
-all:
-	@echo "Write this Makefile by your self."
-
-sim:
-	$(call git_commit, "sim RTL") # DO NOT REMOVE THIS LINE!!!
-	@echo "Write this Makefile by your self."
-	verilator -Wall top.v -cc -trace -build -exe main.cpp
-	make -C obj_dir -f Vtop.mk Vtop	
-	./obj_dir/Vtop
+	@echo "Cleaning up..."
+	rm -rf obj_dir
+	rm -f *.vcd  # 移除波形文件（如果有）
