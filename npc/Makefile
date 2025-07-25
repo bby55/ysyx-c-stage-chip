@@ -4,7 +4,7 @@ TOP_MODULE = top
 SIM_EXE = obj_dir/V$(TOP_MODULE)
 
 # 源文件
-VERILOG_SRC = top.v
+VERILOG_SRC = vsrc/top.v
 CPP_SRC = csrc/main.cpp
 
 # Verilator编译选项

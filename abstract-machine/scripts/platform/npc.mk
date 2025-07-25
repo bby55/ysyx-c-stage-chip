@@ -25,7 +25,12 @@ image: image-dep
 	@echo + OBJCOPY "->" $(IMAGE_REL).bin
 	@$(OBJCOPY) -S --set-section-flags .bss=alloc,contents -O binary $(IMAGE).elf $(IMAGE).bin
 
-run: insert-arg
-	echo "TODO: add command here to run simulation"
+NPC_HOME ?= /home/ysyxbby/ysyx-workbench/npc
+run:
+	@echo "Running $(NAME) on minirv-npc..."
+	@$(MAKE) -C $(NPC_HOME) clean
+	@mkdir -p $(NPC_HOME)/rom
+	@cp $(IMAGE).bin $(NPC_HOME)/rom/text.bin
+	@$(MAKE) -C $(NPC_HOME)
+	@$(NPC_HOME)/obj_dir/Vtop
 
-.PHONY: insert-arg
