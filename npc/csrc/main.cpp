@@ -34,8 +34,9 @@ extern "C" int rom_read(int raddr) {
     if (rom_idx >= ROM_SIZE) {
         fprintf(stderr, "ROM读取越界：地址0x%x → 索引%u（最大支持索引%u）\n",
                aligned_addr, rom_idx, ROM_SIZE - 1);
-        return 0;
-    }
+        return 0;q
+
+        q
 
     return rom[rom_idx];  // 直接返回预初始化的值
 }
