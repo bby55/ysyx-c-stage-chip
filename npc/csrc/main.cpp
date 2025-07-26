@@ -11,7 +11,7 @@
 #include <iostream> 
 
 extern "C" void ebreak() {
-    printf("[DPI] ebreak instruction detected! Stopping simulation.\n");
+    printf("[DPI] ebreak instruction detected! \033[32m HIT GOOD TRAP. \033[0m\n");
     Verilated::gotFinish(true);  // 通知Verilator终止仿真
 }
 
