@@ -8,12 +8,14 @@
 #include "Vtop__Syms.h"
 #include "Vtop___024unit.h"
 
-extern "C" void ebreak();
+extern "C" void ebreak(int a0_val);
 
-VL_INLINE_OPT void Vtop___024unit____Vdpiimwrap_ebreak_TOP____024unit() {
+VL_INLINE_OPT void Vtop___024unit____Vdpiimwrap_ebreak_TOP____024unit(IData/*31:0*/ a0_val) {
     VL_DEBUG_IF(VL_DBG_MSGF("+        Vtop___024unit____Vdpiimwrap_ebreak_TOP____024unit\n"); );
     // Body
-    ebreak();
+    int a0_val__Vcvt;
+    for (size_t a0_val__Vidx = 0; a0_val__Vidx < 1; ++a0_val__Vidx) a0_val__Vcvt = a0_val;
+    ebreak(a0_val__Vcvt);
 }
 
 extern "C" int rom_read(int addr);

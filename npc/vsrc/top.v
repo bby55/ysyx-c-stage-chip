@@ -1,4 +1,4 @@
-import "DPI-C" function void ebreak();
+import "DPI-C" function void ebreak(input int a0_val);
 import "DPI-C" function int rom_read(input int addr);
 module top(
     input clk,
@@ -32,11 +32,11 @@ module top(
   wire [31:0] rd_data;
   wire [31:0] rom_index;
   wire wen;
-  wire [9:0] opcode_funct3; 
-  //nitial begin
-    //$monitor("PC=%h rom_index=%d instr=%h", pc, u_rom.rom_index, instr);
- // end
-  //assign pc_next = pc + 32'd4;
+  wire [9:0] opcode_funct3;
+  wire [31:0] a0_val; 
+  //initial begin
+    //$monitor("PC=%h instr=%h raddr=%h", pc,instr,raddr);
+  //end
   PC #(.PC_START(32'h80000000)
   )u_pc (
     .clk(clk),
@@ -48,7 +48,7 @@ module top(
   
 
   
-  assign rom_index = (pc - 32'h80000000) >> 2;
+  assign rom_index = (pc < 32'h80000000)? (pc >> 2) : (pc - 32'h80000000) >> 2;
   /*Rom #(
     .ADDR_WIDTH(3),    // 地址位宽32
     .DATA_WIDTH(32)   // 32位指令
@@ -57,7 +57,7 @@ module top(
     .dout(instr)        // 输出接指令寄存器instr
   );*/
 
-  assign instr = rom_read(rom_index);
+  assign instr = rom_read(rom_index*4);
 
 /* verilator lint_off UNOPTFLAT */
   reg [31:0] rdata;
@@ -68,15 +68,23 @@ module top(
   wire [7:0]  wmask;
   wire valid;
   wire wen_ram;
-  assign raddr = ({27'd0,rs1})*4;
-  assign waddr = ({27'd0,rs1})*4;
-  assign wdata = rd_data;
+  assign raddr = (valid==1)?rs1_data+imm:32'h80000000;
+  assign waddr = (wen_ram==1)?rs1_data+imm:32'h80000000;
+
+  assign wdata = (instr_type == 12'd3) ? rd_data :      // SW: 完整32位
+                 (instr_type == 12'd7) ?                // SB: 字节存储
+                 (waddr[1:0] == 2'd0) ? {24'd0, rd_data[7:0]} :
+                 (waddr[1:0] == 2'd1) ? {16'd0, rd_data[7:0], 8'd0} :
+                 (waddr[1:0] == 2'd2) ? {8'd0, rd_data[7:0], 16'd0} :
+                 {rd_data[7:0], 24'd0} :
+                 32'd0;  
 
     MuxKeyWithDefault #(4, 12, 1) i4 (valid, instr_type, 1'd0, {
     12'd2, 1'b1, //lw
     12'd8, 1'b1,  //lbu
     12'd3, 1'b1, //SW
     12'd7, 1'b1 //sb
+    //
     //.....
   });
 
@@ -86,19 +94,20 @@ module top(
     //.....
   });
 
-  assign wmask = (imm[1:0] == 2'd0) ? 8'h01 :
-                   (imm[1:0] == 2'd1) ? 8'h02 :
-                   (imm[1:0] == 2'd2) ? 8'h04 :
-                   (imm[1:0] == 2'd3) ? 8'h08 : 8'h00;
+  assign wmask = (instr_type == 12'd3)? 8'h0f:
+                   (waddr[1:0] == 2'd0) ? 8'h01 :
+                   (waddr[1:0] == 2'd1) ? 8'h02 :
+                   (waddr[1:0] == 2'd2) ? 8'h04 :
+                   (waddr[1:0] == 2'd3) ? 8'h08 : 8'h00;
 
-  import "DPI-C" function int pmem_read(input int raddr);
+  import "DPI-C" function int pmem_read(input int raddr, input int valid, input int pc);
   import "DPI-C" function void pmem_write(
-  input int waddr, input int wdata, input byte wmask);
+  input int waddr, input int wdata, input byte wmask, input int pc);
   always @(*) begin
     if (valid) begin // 有读写请求时
-      rdata = pmem_read(raddr);
+      rdata = pmem_read(raddr-32'h80000000, {32{valid}}, pc);
       if (wen_ram) begin // 有写请求时
-        pmem_write(waddr, wdata, wmask);
+        pmem_write(waddr-32'h80000000, wdata, wmask, pc);
       end
     end
     else begin
@@ -150,8 +159,8 @@ module top(
 
 
   always @(posedge clk) begin
-      if(opcode == 7'b1110011) begin
-        ebreak();
+      if(instr == 32'h00100073)begin
+        ebreak(a0_val);
       end
   end
 
@@ -177,7 +186,7 @@ module top(
   });
 
   MuxKeyWithDefault #(1, 12, 32) i3 (pc_next, instr_type, pc + 32'd4, {
-    12'd1, (rs1_data < 32'h80000000) ? 32'h80000000 + rs1_data + imm : rs1_data + imm//JALR
+    12'd1, (rs1_data < 32'h80000000) ? 32'h80000000 + (rs1_data + imm) : (rs1_data + imm)//JALR
     //.....
   });
 
@@ -192,7 +201,8 @@ module top(
     .raddr1(rs1),        // 读地址
     .rdata1(rs1_data),
     .raddr2(rs2),
-    .rdata2(rs2_data)    // 读出数据
+    .rdata2(rs2_data),
+    .a0_val(a0_val)    // 读出数据
   );
 
   ALU #(
@@ -201,6 +211,7 @@ module top(
     .rs1_data(rs1_data),       
     .rs2_data(rs2_data),        
     .imm(imm),
+    .raddr(raddr),
     .pc(pc),
     .rdata(rdata),
     .alu_ctrl(instr_type),  // 12位控制码
@@ -292,11 +303,13 @@ module RegisterFile #(ADDR_WIDTH = 1, DATA_WIDTH = 1) (
   input [ADDR_WIDTH-1:0] raddr1,
   output  [DATA_WIDTH-1:0] rdata1,
   input [ADDR_WIDTH-1:0] raddr2,
-  output [DATA_WIDTH-1:0] rdata2
+  output [DATA_WIDTH-1:0] rdata2,
+  output [DATA_WIDTH-1:0] a0_val
 );
   reg [DATA_WIDTH-1:0] rf [2**ADDR_WIDTH-1:0];
   assign rdata1 = (raddr1 == 0)? 0 : rf[raddr1];
   assign rdata2 = (raddr2 == 0)? 0 : rf[raddr2];
+  assign a0_val = rf[10];
   always @(posedge clk) begin
     if (wen & (waddr != 0)) rf[waddr] <= wdata;
   end
@@ -360,6 +373,7 @@ module ALU #(
 ) (
     input [DATA_WIDTH-1:0] rs1_data,
     input [DATA_WIDTH-1:0] rs2_data,
+    input [DATA_WIDTH-1:0] raddr,
     input [DATA_WIDTH-1:0] imm,
     input [DATA_WIDTH-1:0] pc,
     input [DATA_WIDTH-1:0] rdata,
@@ -367,7 +381,7 @@ module ALU #(
     output reg [DATA_WIDTH-1:0] alu_out
 );
 
-wire [1:0] byte_idx = imm[1:0];
+wire [1:0] byte_idx = raddr[1:0];
 
 always @(*) begin
     case (alu_ctrl)

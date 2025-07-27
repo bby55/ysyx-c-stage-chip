@@ -22,6 +22,7 @@ class Vtop___024root final : public VerilatedModule {
     CData/*0:0*/ top__DOT__wen;
     CData/*0:0*/ top__DOT__valid;
     CData/*0:0*/ top__DOT__wen_ram;
+    CData/*1:0*/ top__DOT____VdfgTmp_ha2850746__0;
     CData/*0:0*/ top__DOT__i4__DOT__i0__DOT__lut_out;
     CData/*0:0*/ top__DOT__i4__DOT__i0__DOT__hit;
     CData/*0:0*/ top__DOT__i5__DOT__i0__DOT__lut_out;
@@ -31,6 +32,7 @@ class Vtop___024root final : public VerilatedModule {
     CData/*0:0*/ top__DOT__i2__DOT__i0__DOT__lut_out;
     CData/*0:0*/ top__DOT__i2__DOT__i0__DOT__hit;
     CData/*0:0*/ top__DOT__i3__DOT__i0__DOT__hit;
+    CData/*1:0*/ top__DOT__u_alu__DOT__byte_idx;
     CData/*0:0*/ __VstlDidInit;
     CData/*0:0*/ __Vtrigrprev__TOP__clk;
     CData/*0:0*/ __VactDidInit;
@@ -51,12 +53,11 @@ class Vtop___024root final : public VerilatedModule {
     IData/*31:0*/ top__DOT__rs2_data;
     IData/*31:0*/ top__DOT__rd_data;
     IData/*31:0*/ top__DOT__rdata;
-    IData/*31:0*/ top__DOT____VdfgExtracted_h4a41356a__0;
     IData/*31:0*/ top__DOT____VdfgTmp_h2f2dbb37__0;
     IData/*31:0*/ top__DOT__i1__DOT__i0__DOT__lut_out;
     IData/*31:0*/ top__DOT__i3__DOT__i0__DOT__lut_out;
     IData/*31:0*/ __Vfunc_rom_read__0__Vfuncout;
-    IData/*31:0*/ __Vfunc_top__DOT__pmem_read__3__Vfuncout;
+    IData/*31:0*/ __Vfunc_top__DOT__pmem_read__1__Vfuncout;
     IData/*31:0*/ __Vtrigrprev__TOP__top__DOT__rdata;
     IData/*31:0*/ __VstlIterCount;
     IData/*31:0*/ __VactIterCount;

@@ -23,7 +23,7 @@ void putch(char ch) {
 void halt(int code) {
   printf("Exit with code = %d\n", code);
   htif_poweroff();
-
+  
   // should not reach here
   while (1);
 }

@@ -1,23 +1,36 @@
-# text.S - 简单的 RISC-V 汇编程序，用于生成 .bin 验证 ROM 加载
-
-    .text
-    .global _start
+.section .text
+.global _start
 
 _start:
-    # 示例 1：设置寄存器 x10 = 42（a0），x11 = 100（a1）
-    li x10, 42
-    li x11, 100
+    lui sp, 0x80051           # sp = 0x80051000
+    addi sp, sp, -16          # sp = 0x80050ff0
+    lui a0, 0                 # a0 = 0
+    addi a0, a0, 5            # a0 = 5
+    lui a1, 0                 # a1 = 0
+    addi a1, a1, 10           # a1 = 10
+    add a2, a0, a1            # a2 = 15
+    sw a2, 0(sp)              # [sp] = 15
+    sb a0, 4(sp)              # [sp + 4] = 5
+    lw a3, 0(sp)              # a3 = 15
+    lbu a4, 4(sp)             # a4 = 5
+    add a0, a3, a4            # a0 = 20
+    lui a5, 0                 # a5 = 0
+    addi a5, a5, 20           # a5 = 20
+    sub a6, a0, a5            # a6 = a0 - a5 (代替 beq)
+    addi a6, a6, 0            # 检查 a6 是否为 0
+    lui t0, 0x80000           # t0 = 0x80000000
+    addi t0, t0, 0x34         # t0 = 0x80000034 (fail)
+    jalr x0, t0, 0            # 跳转到 fail (a6 != 0)
 
-    # 示例 2：简单计算 x12 = x10 + x11
-    add x12, x10, x11
+pass:
+    lui a0, 0                 # a0 = 0 (success)
+    lui t0, 0x80000           # t0 = 0x80000000
+    addi t0, t0, 0x41c        # t0 = 0x8000041c (halt)
+    jalr x0, t0, 0            # 跳转到 halt
 
-    # 示例 3：使用 ecall 退出（模拟系统调用）
-    # 在 Spike 或 QEMU 中，ecall 可用于退出
-    # x17 = 93 表示 exit 系统调用
-    li x17, 93         # SYS_exit
-    li x10, 0          # exit(0)
-    ecall
-
-    # 防止无限执行
-hang:
-    jal hang           # 死循环
+fail:
+    lui a0, 0                 # a0 = 0
+    addi a0, a0, 1            # a0 = 1 (fail)
+    lui t0, 0x80000           # t0 = 0x80000000
+    addi t0, t0, 0x41c        # t0 = 0x8000041c (halt)
+    jalr x0, t0, 0            # 跳转到 halt

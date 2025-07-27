@@ -233,8 +233,8 @@ VL_ATTR_COLD void Vtop___024root___ctor_var_reset(Vtop___024root* vlSelf) {
     vlSelf->top__DOT__valid = VL_RAND_RESET_I(1);
     vlSelf->top__DOT__wen_ram = VL_RAND_RESET_I(1);
     vlSelf->top__DOT__instr_type_tmp = VL_RAND_RESET_I(12);
-    vlSelf->top__DOT____VdfgExtracted_h4a41356a__0 = 0;
     vlSelf->top__DOT____VdfgTmp_h2f2dbb37__0 = 0;
+    vlSelf->top__DOT____VdfgTmp_ha2850746__0 = 0;
     for (int __Vi0 = 0; __Vi0 < 4; ++__Vi0) {
         vlSelf->top__DOT__i4__DOT__i0__DOT__pair_list[__Vi0] = VL_RAND_RESET_I(13);
     }
@@ -304,8 +304,9 @@ VL_ATTR_COLD void Vtop___024root___ctor_var_reset(Vtop___024root* vlSelf) {
     for (int __Vi0 = 0; __Vi0 < 32; ++__Vi0) {
         vlSelf->top__DOT__u_regfile__DOT__rf[__Vi0] = VL_RAND_RESET_I(32);
     }
+    vlSelf->top__DOT__u_alu__DOT__byte_idx = VL_RAND_RESET_I(2);
     vlSelf->__Vfunc_rom_read__0__Vfuncout = 0;
-    vlSelf->__Vfunc_top__DOT__pmem_read__3__Vfuncout = 0;
+    vlSelf->__Vfunc_top__DOT__pmem_read__1__Vfuncout = 0;
     vlSelf->__Vtrigrprev__TOP__top__DOT__rdata = VL_RAND_RESET_I(32);
     vlSelf->__VstlDidInit = 0;
     vlSelf->__Vtrigrprev__TOP__clk = VL_RAND_RESET_I(1);
