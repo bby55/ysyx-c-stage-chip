@@ -34,15 +34,7 @@ enum {
 #define immU() do { *imm = SEXT(BITS(i, 31, 12), 20) << 12; } while(0)
 #define immS() do { *imm = (SEXT(BITS(i, 31, 25), 7) << 5) | BITS(i, 11, 7); } while(0)
 #define immJ() do { *imm = (SEXT(BITS(i, 31, 31), 1) << 19) | (BITS(i, 19, 12) << 11) | ((BITS(i, 20, 20)) << 10)| BITS(i,30,21); } while(0)
-//#define immB() do { *imm = (SEXT(BITS(i, 31, 31), 1) << 11) | (BITS(i, 7, 7) << 10) | (BITS(i, 30, 25) << 5) | (BITS(i, 11, 8)) << 1; } while(0)
-#define immB() do { \
-  uint32_t imm12 = \
-    ((BITS(i, 31, 31) << 11) |  /* imm[12] -> bit11 */ \
-     (BITS(i, 7, 7) << 10) |    /* imm[11] -> bit10 */ \
-     (BITS(i, 30, 25) << 5) |   /* imm[10:5] -> bit9-4 */ \
-     (BITS(i, 11, 8) << 1));    /* imm[4:1] -> bit3-0，再左移1位实现字对齐 */ \
-  *imm = SEXT(imm12, 12);       /* 基于12位立即数的符号位（bit11）扩展到目标位宽 */ \
-} while(0)
+#define immB() do { *imm = (SEXT(BITS(i, 31, 31), 1) << 11) | (BITS(i, 7, 7) << 10) | (BITS(i, 30, 25) << 5) | (BITS(i, 11, 8)) << 1; } while(0)
 
 static void decode_operand(Decode *s, int *rd, word_t *src1, word_t *src2, word_t *imm, int type) {
   uint32_t i = s->isa.inst;
