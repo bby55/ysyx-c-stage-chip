@@ -34,8 +34,8 @@ bool isa_difftest_checkregs(CPU_state *ref_r, vaddr_t pc) {
     printf("\n");
     printf("\033[1;31m--------!Difftest!--------\n\033[0m");
     printf("\033[1;31m//////////////////////////\n\033[0m");   
-    printf("\033[1;31m//\033[0m\033[1;33mref_r->pc = 0x%x\033[1;31m//\033[0m\n",ref_r->pc);
-    printf("\033[1;31m//\033[0m\033[1;35m cpu ->pc = 0x%x\033[1;31m//\033[0m\n",cpu.pc);
+    printf("\033[1;31m//  \033[0m\033[1;33mref_r->pc = 0x%x \033[1;31m//\033[0m\n",ref_r->pc);
+    printf("\033[1;31m//  \033[0m\033[1;35m cpu ->pc = 0x%x \033[1;31m//\033[0m\n",cpu.pc);
     printf("\033[1;31m//////////////////////////\n\033[0m");
     return false;
   }
