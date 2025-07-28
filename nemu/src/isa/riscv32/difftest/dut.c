@@ -21,12 +21,11 @@ bool isa_difftest_checkregs(CPU_state *ref_r, vaddr_t pc) {
    int reg_num = ARRLEN(cpu.gpr);
   for (int i = 0; i < reg_num; i++) {
     if (ref_r->gpr[i] != cpu.gpr[i]) {
-      printf("\n");
-      printf("\033[1;31m----Difftest!!!----\n\033[0m");
-      printf("\033[1;31m////////////////////////\n\033[0m");     
-      printf("\033[1;33mref_r->gpr[%d] = 0x%x\n\033[0m",i,ref_r->gpr[i]);
-      printf("\033[1;35m cpu ->gpr[%d] = 0x%x\n\033[0m",i,cpu.gpr[i]);
-      printf("\033[1;31m////////////////////////\n\033[0m");
+      printf("\033[1;31m----------!Difftest!----------\n\033[0m");
+      printf("\033[1;31m//////////////////////////////\n\033[0m");   
+      printf("\033[1;31m//  \033[0m\033[1;33mref_r->gpr[%d] = 0x%x  \033[1;31m//\033[0m\n",i,ref_r->gpr[i]);
+      printf("\033[1;31m//  \033[0m\033[1;35m cpu ->gpr[%d] = 0x%x  \033[1;31m//\033[0m\n",i,cpu.gpr[i]);
+      printf("\033[1;31m//////////////////////////////\n\033[0m");
       return false;
     }
   }
