@@ -18,22 +18,18 @@
 #include "../local-include/reg.h"
 
 bool isa_difftest_checkregs(CPU_state *ref_r, vaddr_t pc) {
-
-  if (cpu.pc != ref_r->pc) {
-    Log("PC mismatch: DUT=0x%x, REF=0x%x", cpu.pc, ref_r->pc);
-    return false;
-  }
-
+  int reg_num = 32;
   for (int i = 0; i < 32; i++) {
-    word_t dut = cpu.gpr[i];
-    word_t ref = ref_r->gpr[i];
-    if (dut != ref) {
-      Log("x%d mismatch: DUT=0x%x, REF=0x%x", i, dut, ref);
+    if (ref_r->gpr[i] != cpu.gpr[i]) {
       return false;
     }
   }
+  if (ref_r->pc != cpu.pc) {
+    return false;
+  }
   return true;
 }
+
 
 void isa_difftest_attach() {
 }
