@@ -41,6 +41,7 @@ enum {
      (BITS(i, 7, 7) << 10) |    /* imm[11] -> bit10 */ \
      (BITS(i, 30, 25) << 5) |   /* imm[10:5] -> bit9-4 */ \
      (BITS(i, 11, 8) << 1));    /* imm[4:1] -> bit3-0，再左移1位实现字对齐 */ \
+     printf("Extracted imm12: 0x%x\n", imm12); \
   *imm = SEXT(imm12, 12);       /* 基于12位立即数的符号位（bit11）扩展到目标位宽 */ \
 } while(0)
 static void decode_operand(Decode *s, int *rd, word_t *src1, word_t *src2, word_t *imm, int type) {
