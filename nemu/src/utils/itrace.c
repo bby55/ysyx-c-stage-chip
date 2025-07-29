@@ -1,90 +1,39 @@
 #include <common.h>
-#include <utils.h>
-#include <cpu/cpu.h>
-#include <isa.h>
-#define IRINGBUF_LEN  16
-/*
-char *pHead = NULL;			//环形缓冲区首地址
-char *pValidRead = NULL;	//已使用环形缓冲区首地址
-char *pValidWrite = NULL;	//已使用环形缓冲区尾地址
-char *pTail = NULL;			//环形缓冲区尾地址
 
-void init_iringbuf(){
-    if(pHead == NULL){
-        pHead = (char*)(iringbuf * sizeof(char))
-    }
+#define MAX_IRINGBUF 16
 
-    memset(pHead, 0 , sizeof(IRINGBUF_LEN)); //申请内存清0
-	
-	pValidRead = pHead;
-	pValidWrite = pHead;
-	pTail = pHead + IRINGBUF_LEN;  
+typedef struct {
+  word_t pc;
+  uint32_t inst;
+} ItraceNode;
+
+ItraceNode iringbuf[MAX_IRINGBUF];
+int p_cur = 0;
+bool full = false;
+
+void trace_inst(word_t pc, uint32_t inst) {
+  iringbuf[p_cur].pc = pc;
+  iringbuf[p_cur].inst = inst;
+  p_cur = (p_cur + 1) % MAX_IRINGBUF;
+  full = full || p_cur == 0;
 }
 
-void FreeRingBuff()
-{
-	if(NULL != pHead)
-	{
-		free(pHead);
-	}
-}
+void display_inst() {
+  if (!full && !p_cur) return;
 
-void Write_iringbuf( , int DATA_LENTH){
-    if(NULL == pHead){
-        printf("NO INIT IRINGBUF!!!\n");
-        return -1;
-    }
+  int end = p_cur;
+  int i = full?p_cur:0;
 
-    if(DATA_LENTH > pTail - pHead){
-        printf("DATA LENGTH TOO LONG!!!\n");
-        return -1;
-    }
+  void disassemble(char *str, int size, uint64_t pc, uint8_t *code, int nbyte);
+  char buf[128];
+  char *p;
+  do {
+    p = buf;
+    p += sprintf(buf, "%s" FMT_WORD ": %08x ", (i+1)%MAX_IRINGBUF==end?" --> ":"     ", iringbuf[i].pc, iringbuf[i].inst);
+    disassemble(p, buf+sizeof(buf)-p, iringbuf[i].pc, (uint8_t *)&iringbuf[i].inst, 4);
 
-    
-
-
-    
-}
-*/
-
-typedef struct iringbuf
-{
-    vaddr_t pc[IRINGBUF_LEN];
-    uint32_t inst[IRINGBUF_LEN];
-    //uint32_t read_count;
-    uint32_t write_count;
-}iringbuf_t;
-
-iringbuf_t iringbuf;
-
-void iringbuf_write(vaddr_t pc, uint32_t inst){
-    if(iringbuf.write_count >= IRINGBUF_LEN){
-        iringbuf.write_count = 0;
-    }
-
-    iringbuf.pc[iringbuf.write_count] = pc;
-    iringbuf.inst[iringbuf.write_count] = inst;
-    iringbuf.write_count++;
-}
-
-void iringbuf_display(){
-    for(int i = 0; i < IRINGBUF_LEN; i++){
-        printf("    0x%x: %x\n", iringbuf.pc[i], iringbuf.inst[i]);
-    }
-
-}
-
-
-void itrace(){
-    //#ifdef CONFIG_ITRACE
-
-   // void disassemble(char *str, int size, uint64_t pc, uint8_t *code, int nbyte);
-
-    //while(nemu_state.state != NEMU_ABORT){
-   //     iringbuf_write(cpu->pc,cpu->inst);
-   // }
-
-    iringbuf_display();
-
-    //#endif
+    if ((i+1)%MAX_IRINGBUF==end) printf(ANSI_FG_RED);
+    puts(buf);
+  } while ((i = (i+1)%MAX_IRINGBUF) != end);
+  puts(ANSI_NONE);
 }
