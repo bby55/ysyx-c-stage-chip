@@ -76,12 +76,15 @@ void iringbuf_display(){
 
 
 void itrace(){
-    #ifdef CONFIG_ITRACE
-    while(nemu_state.state != NEMU_ABORT){
-        iringbuf_write(cpu->pc,cpu->inst);
-    }
+    //#ifdef CONFIG_ITRACE
+
+   // void disassemble(char *str, int size, uint64_t pc, uint8_t *code, int nbyte);
+
+    //while(nemu_state.state != NEMU_ABORT){
+   //     iringbuf_write(cpu->pc,cpu->inst);
+   // }
 
     iringbuf_display();
 
-    #endif
+    //#endif
 }
