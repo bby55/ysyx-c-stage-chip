@@ -15,7 +15,7 @@ LDFLAGS   += --gc-sections -e _start
 
 MAINARGS_MAX_LEN = 64
 MAINARGS_PLACEHOLDER = the_insert-arg_rule_in_Makefile_will_insert_mainargs_here
-CFLAGS += -DMAINARGS_MAX_LEN=$(MAINARGS_MAX_LEN) -DMAINARGS_PLACEHOLDER=$(MAINARGS_PLACEHOLDER)
+CFLAGS += -DMAINARGS_MAX_LEN=$(MAINARGS_MAX_LEN) -DMAINARGS_PLACEHOLDER="$(MAINARGS_PLACEHOLDER)"  # 这里建议加引号，避免空格问题
 
 insert-arg: image
 	@python $(AM_HOME)/tools/insert-arg.py $(IMAGE).bin $(MAINARGS_MAX_LEN) $(MAINARGS_PLACEHOLDER) "$(mainargs)"
@@ -26,11 +26,10 @@ image: image-dep
 	@$(OBJCOPY) -S --set-section-flags .bss=alloc,contents -O binary $(IMAGE).elf $(IMAGE).bin
 
 NPC_HOME ?= /home/ysyxbby/ysyx-workbench/npc
-run:
+run: insert-arg
 	@echo "Running $(NAME) on minirv-npc..."
 	@$(MAKE) -C $(NPC_HOME) clean
 	@mkdir -p $(NPC_HOME)/rom
-	@cp $(IMAGE).bin $(NPC_HOME)/rom/text.bin
+	@cp $(IMAGE).bin $(NPC_HOME)/rom/text.bin  # 此时的.bin已经被insert-arg替换过
 	@$(MAKE) -C $(NPC_HOME)
 	@$(NPC_HOME)/obj_dir/Vtop
-

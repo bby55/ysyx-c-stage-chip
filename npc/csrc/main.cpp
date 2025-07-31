@@ -9,11 +9,15 @@
 #include <ctype.h>
 #include <fstream>   
 #include <iostream> 
-#include <am.h>
 
-# define DEVICE_BASE 0xa0000000
-#define SERIAL_PORT     (DEVICE_BASE + 0x00003f8)
-#define RTC_ADDR        (DEVICE_BASE + 0x0000048)
+#define DEVICE_BASE 0xa0000000UL
+#define SERIAL_PORT (DEVICE_BASE + 0x00003f8UL)  // 无符号地址
+#define RTC_ADDR    (DEVICE_BASE + 0x0000048UL)
+
+void putch(int c) {
+  // 将字符c的低8位写入串口地址
+  *(volatile uint8_t *)SERIAL_PORT = c & 0xff;
+}
 
 extern "C" void ebreak(int exit_code) {
     if(exit_code == 0){
@@ -27,7 +31,7 @@ extern "C" void ebreak(int exit_code) {
     // if(Verilated::gotFinish()) return;
 }
 
-#define ROM_SIZE 4194304 
+#define ROM_SIZE 4194304
 #define RAM_SIZE 4194304
 static uint32_t rom[ROM_SIZE];/* = {
     0x800011b7,  // rom[0]
@@ -57,14 +61,21 @@ static uint32_t ram[RAM_SIZE];
 
 extern "C" int pmem_read(int raddr, int valid, int pc) {
     int addr = (raddr & ~0x3u) >> 2;
-    if(addr == RTC_ADDR){
-        int time = inl(RTC_ADDR);
-        return time;
+    //printf("%x\n",raddr);
+    if (raddr == 0x200003f8) {
+        return 0;
     }
+
+     if (raddr == RTC_ADDR) { 
+         struct timespec ts;
+        clock_gettime(CLOCK_MONOTONIC, &ts);
+        uint32_t us = ts.tv_sec * 1000000 + ts.tv_nsec / 1000;
+        return us;
+     }
     uint32_t data = ram[addr];
     if(valid){
-        printf("PC=%x:\n",pc);
-        printf("成功读取地址处:%x的数据:%x\n",addr*4,data);
+        //printf("PC=%x:\n",pc);
+        //printf("成功读取地址处:%x的数据:%x\n",addr*4,data);
     }
     return data;
 
@@ -72,11 +83,13 @@ extern "C" int pmem_read(int raddr, int valid, int pc) {
 }
 
 extern "C" void pmem_write(int waddr, int wdata, char wmask, int pc) {
-
+    //printf("%x\n",waddr);
   int addr = (waddr & ~0x3u) >> 2;
-  if (addr == SERIAL_PORT) {
+  if (waddr == 0x200003f8) {
     if (wmask == 0x1) { 
-      //putchar(wdata & 0xff); 
+    //printf("yyyyyyyyyyyyyyyssssssssssssssssssssssyyyyyyyyyyyyyyyyyyyyyyyxxxxxxxxxxxxx");
+      putchar(wdata & 0xff); 
+      fflush(stdout); 
     }
     return;
   }
@@ -96,12 +109,12 @@ extern "C" void pmem_write(int waddr, int wdata, char wmask, int pc) {
     else{
         new_val = wdata;
     }
-    printf("PC=%x:\n",pc);
-    printf("地址处数据:%x\n",ram[addr]);
+    //printf("PC=%x:\n",pc);
+    //printf("地址处数据:%x\n",ram[addr]);
     
     ram[addr] = new_val;
 
-    printf("成功将数据:%x写入地址处:%x\n",ram[addr],addr*4);
+    //printf("成功将数据:%x写入地址处:%x\n",ram[addr],addr*4);
 }
 
 bool load_rom_bin(const char* filename) {

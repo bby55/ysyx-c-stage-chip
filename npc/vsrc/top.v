@@ -34,9 +34,9 @@ module top(
   wire wen;
   wire [9:0] opcode_funct3;
   wire [31:0] a0_val; 
-  //initial begin
-    //$monitor("PC=%h instr=%h raddr=%h", pc,instr,raddr);
-  //end
+  /*initial begin
+    $monitor("PC=%h instr=%h raddr=%h", pc,instr,raddr);
+  end*/
   PC #(.PC_START(32'h80000000)
   )u_pc (
     .clk(clk),
