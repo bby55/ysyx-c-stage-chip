@@ -21,7 +21,7 @@ void __am_gpu_config(AM_GPU_CONFIG_T *cfg) {
 }
 
 void __am_gpu_fbdraw(AM_GPU_FBDRAW_T *ctl) {
-  uint32_t screen_wid = 400;
+  uint32_t screen_wid = inl(VGACTL_ADDR) >> 16;
   int x = ctl->x;
   int y = ctl->y;
   int w = ctl->w;
