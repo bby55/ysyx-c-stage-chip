@@ -74,16 +74,29 @@ int vsprintf(char *out, const char *fmt, va_list ap) {
                 out += itoa(va_arg(ap, int), out);  // 调用itoa转换
                 break;
             case 's': {
-                char *s = va_arg(ap, char*);
-                if (s == NULL) {
-                 // 可输出"(null)"等占位符，避免崩溃
-                 const char *null_str = "(null)";
-                    while (*null_str != '\0') *out++ = *null_str++;
-                } else {
-                    while (*s != '\0') *out++ = *s++;
-                }
-                break;
-                }
+    char *s = va_arg(ap, char*);
+    // 临时检查：若指针指向低地址（可能无效），输出标记并退出
+    if ((uintptr_t)s < 0x80000000) {  // 假设有效地址从0x80000000开始
+        *out++ = '[';
+        *out++ = 'I';
+        *out++ = 'N';
+        *out++ = 'V';
+        *out++ = 'A';
+        *out++ = 'L';
+        *out++ = 'I';
+        *out++ = 'D';
+        *out++ = ']';
+        break;
+    }
+    // 正常处理（同时添加NULL检查）
+    if (s == NULL) {
+        const char *null_str = "(null)";
+        while (*null_str) *out++ = *null_str++;
+    } else {
+        while (*s) *out++ = *s++;
+    }
+    break;
+}
             // 可扩展其他格式符（如%x、%c等）
             default:
                 *out++ = *fmt;  // 未知格式符直接输出
