@@ -155,6 +155,7 @@ config DTRACE
     depends on XXXX
     bool "XXX"
     default y
+    
 config DTRACE_COND
     depends on DTRACE
     string "XXX"
