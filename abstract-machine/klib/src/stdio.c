@@ -77,7 +77,6 @@ int vsprintf(char *out, const char *fmt, va_list ap) {
     char *s = va_arg(ap, char*);
     // 临时检查：若指针指向低地址（可能无效），输出标记并退出
         if ((uintptr_t)s < 0x80000000) {  // 假设有效地址从0x80000000开始
-            
             break;
         }
     // 正常处理（同时添加NULL检查）
