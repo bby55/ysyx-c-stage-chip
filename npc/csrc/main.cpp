@@ -76,7 +76,7 @@ extern "C" void pmem_write(int waddr, int wdata, char wmask, int pc) {
   int addr = (waddr & ~0x3u) >> 2;
   if (addr == SERIAL_PORT) {
     if (wmask == 0x1) { 
-      putchar(wdata & 0xff); 
+      //putchar(wdata & 0xff); 
     }
     return;
   }
