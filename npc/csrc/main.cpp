@@ -74,12 +74,12 @@ extern "C" int pmem_read(int raddr, int valid, int pc) {
 extern "C" void pmem_write(int waddr, int wdata, char wmask, int pc) {
 
   int addr = (waddr & ~0x3u) >> 2;
-  if (addr == SERIAL_PORT) {
-    if (wmask == 0x1) { 
+  //if (addr == SERIAL_PORT) {
+    //if (wmask == 0x1) { 
       //putchar(wdata & 0xff); 
-    }
-    return;
-  }
+   // }
+   // return;
+  //}
   uint32_t new_val = ram[addr];
     if (wmask == 0x1) {  // 第0字节（最低8位）
         new_val = (new_val & ~0x000000FFu) | (wdata & 0x000000FFu);
