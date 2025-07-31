@@ -10,6 +10,10 @@
 #include <fstream>   
 #include <iostream> 
 
+# define DEVICE_BASE 0xa0000000
+#define SERIAL_PORT     (DEVICE_BASE + 0x00003f8)
+#define RTC_ADDR        (DEVICE_BASE + 0x0000048)
+
 extern "C" void ebreak(int exit_code) {
     if(exit_code == 0){
         printf("[DPI] ebreak instruction detected! \033[32m HIT GOOD TRAP. \033[0m\n");
@@ -52,6 +56,9 @@ static uint32_t ram[RAM_SIZE];
 
 extern "C" int pmem_read(int raddr, int valid, int pc) {
     int addr = (raddr & ~0x3u) >> 2;
+    if(addr == RTC_ADDR){
+
+    }
     uint32_t data = ram[addr];
     if(valid){
         printf("PC=%x:\n",pc);
@@ -65,6 +72,12 @@ extern "C" int pmem_read(int raddr, int valid, int pc) {
 extern "C" void pmem_write(int waddr, int wdata, char wmask, int pc) {
 
   int addr = (waddr & ~0x3u) >> 2;
+  if (addr == SERIAL_PORT) {
+    if (wmask == 0x1) { 
+      putchar(wdata & 0xff); 
+    }
+    return;
+  }
   uint32_t new_val = ram[addr];
     if (wmask == 0x1) {  // 第0字节（最低8位）
         new_val = (new_val & ~0x000000FFu) | (wdata & 0x000000FFu);
