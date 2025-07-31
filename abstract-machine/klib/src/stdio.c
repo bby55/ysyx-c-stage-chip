@@ -27,20 +27,25 @@ int printf(const char *fmt, ...) {
 // 辅助函数：将整数转换为字符串（以10进制为例）
 static int itoa(int num, char *buf) {
     char *start = buf;
+    unsigned int n;  // 声明无符号变量n，用于统一处理正负整数
+
     if (num < 0) {  // 处理负数
         *buf++ = '-';
-        num = -num;
+        n = (unsigned int)(-num);  // 负数转为无符号正数（避免INT_MIN溢出）
+    } else {
+        n = (unsigned int)num;  // 正数直接转为无符号
     }
+
     // 处理0的特殊情况
-    if (num == 0) {
+    if (n == 0) {  // 这里改用n判断（因为num可能已被修改）
         *buf++ = '0';
     } else {
         // 逆序写入数字（后续需反转）
         char temp[16];
         int i = 0;
-        while (num > 0) {
-            temp[i++] = '0' + (num % 10);
-            num /= 10;
+        while (n > 0) {  // 用n遍历（代替原来的num）
+            temp[i++] = '0' + (n % 10);
+            n /= 10;
         }
         // 反转恢复正确顺序
         while (i > 0) {
@@ -68,12 +73,17 @@ int vsprintf(char *out, const char *fmt, va_list ap) {
             case 'd':  // 处理整数
                 out += itoa(va_arg(ap, int), out);  // 调用itoa转换
                 break;
-            case 's':  // 处理字符串
+            case 's': {
                 char *s = va_arg(ap, char*);
-                while (*s != '\0') {
-                    *out++ = *s++;  // 逐个字符写入缓冲区
+                if (s == NULL) {
+                 // 可输出"(null)"等占位符，避免崩溃
+                 const char *null_str = "(null)";
+                    while (*null_str != '\0') *out++ = *null_str++;
+                } else {
+                    while (*s != '\0') *out++ = *s++;
                 }
                 break;
+                }
             // 可扩展其他格式符（如%x、%c等）
             default:
                 *out++ = *fmt;  // 未知格式符直接输出
