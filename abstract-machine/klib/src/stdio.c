@@ -76,27 +76,19 @@ int vsprintf(char *out, const char *fmt, va_list ap) {
             case 's': {
     char *s = va_arg(ap, char*);
     // 临时检查：若指针指向低地址（可能无效），输出标记并退出
-    if ((uintptr_t)s < 0x80000000) {  // 假设有效地址从0x80000000开始
-        *out++ = '[';
-        *out++ = 'I';
-        *out++ = 'N';
-        *out++ = 'V';
-        *out++ = 'A';
-        *out++ = 'L';
-        *out++ = 'I';
-        *out++ = 'D';
-        *out++ = ']';
-        break;
-    }
+        if ((uintptr_t)s < 0x80000000) {  // 假设有效地址从0x80000000开始
+            
+            break;
+        }
     // 正常处理（同时添加NULL检查）
-    if (s == NULL) {
-        const char *null_str = "(null)";
-        while (*null_str) *out++ = *null_str++;
-    } else {
-        while (*s) *out++ = *s++;
-    }
-    break;
-}
+        if (s == NULL) {
+            const char *null_str = "(null)";
+            while (*null_str) *out++ = *null_str++;
+        } else {
+            while (*s) *out++ = *s++;
+        }
+        break;
+        }
             // 可扩展其他格式符（如%x、%c等）
             default:
                 *out++ = *fmt;  // 未知格式符直接输出
