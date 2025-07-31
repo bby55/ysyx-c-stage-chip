@@ -151,4 +151,14 @@ config SDCARD_IMG_PATH
 endif # HAS_SDCARD
 endif
 
+config DTRACE
+    depends on XXXX
+    bool "XXX"
+    default y
+config DTRACE_COND
+    depends on DTRACE
+    string "XXX"
+    default "true"
+
+
 endif # DEVICE
