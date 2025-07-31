@@ -9,6 +9,7 @@
 #include <ctype.h>
 #include <fstream>   
 #include <iostream> 
+#include <am.h>
 
 # define DEVICE_BASE 0xa0000000
 #define SERIAL_PORT     (DEVICE_BASE + 0x00003f8)
@@ -57,7 +58,8 @@ static uint32_t ram[RAM_SIZE];
 extern "C" int pmem_read(int raddr, int valid, int pc) {
     int addr = (raddr & ~0x3u) >> 2;
     if(addr == RTC_ADDR){
-
+        int time = inl(RTC_ADDR);
+        return time;
     }
     uint32_t data = ram[addr];
     if(valid){
