@@ -38,3 +38,13 @@ void display_inst() {
   } while ((i = (i+1)%MAX_IRINGBUF) != end);
   puts(ANSI_NONE);
 }
+
+void memory_read_dis(paddr_t addr, int len)
+{
+    printf(ANSI_FMT("Read in memory: ", ANSI_FG_BLUE) FMT_PADDR ", the len is %d\n", addr, len);
+}
+
+void memory_write_dis(paddr_t addr, int len, word_t data)
+{
+    printf(ANSI_FMT("Write in memory: ", ANSI_FG_YELLOW) FMT_PADDR ", the len is %d,  write data is " FMT_WORD "\n", addr, len, data);
+}
