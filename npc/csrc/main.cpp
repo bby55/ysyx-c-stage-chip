@@ -58,7 +58,6 @@ extern "C" void ebreak(int exit_code) {
 #define RAM_SIZE 4194304
 static uint32_t rom[ROM_SIZE];
 static uint32_t ram[RAM_SIZE];
-
 extern "C" int rom_read(int raddr) {
     uint32_t aligned_addr = raddr & ~0x3u;
     uint32_t rom_idx = aligned_addr >> 2;
