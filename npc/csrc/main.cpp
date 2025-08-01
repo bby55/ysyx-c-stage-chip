@@ -9,10 +9,31 @@
 #include <ctype.h>
 #include <fstream>   
 #include <iostream> 
+#include <time.h>
+#include <stdint.h>
 
-#define DEVICE_BASE 0xa0000000UL
-#define SERIAL_PORT (DEVICE_BASE + 0x00003f8UL)  // 无符号地址
-#define RTC_ADDR    (DEVICE_BASE + 0x0000048UL)
+#define DEVICE_BASE 0xa0000000
+#define SERIAL_PORT (DEVICE_BASE + 0x00003f8)  // 无符号地址
+#define RTC_ADDR    (DEVICE_BASE + 0x0000048)
+
+static uint64_t virtual_us = 0;       // 虚拟微秒数
+static uint32_t cycle_counter = 0;    // 仿真周期计数器
+static const uint32_t CYCLES_PER_US = 100;  // 100个周期 = 1微秒（100MHz时钟）
+
+// 更新虚拟时间（与仿真周期同步）
+void update_virtual_time() {
+  cycle_counter++;
+  if (cycle_counter >= CYCLES_PER_US) {
+    virtual_us++;          // 每100个周期，虚拟时间+1微秒
+    cycle_counter = 0;
+  }
+}
+
+// 替代原有的get_uptime_us，返回虚拟时间
+uint64_t get_uptime_us() {
+  return virtual_us;
+}
+
 
 void putch(int c) {
   // 将字符c的低8位写入串口地址
@@ -66,19 +87,24 @@ extern "C" int pmem_read(int raddr, int valid, int pc) {
         return 0;
     }
 
-     if (raddr == RTC_ADDR) { 
-         struct timespec ts;
-        clock_gettime(CLOCK_MONOTONIC, &ts);
-        uint32_t us = ts.tv_sec * 1000000 + ts.tv_nsec / 1000;
-        return us;
-     }
+    if (raddr == 0x20000048) {
+        uint64_t us = get_uptime_us();
+        printf("Timer us: %llu\n", us);
+        return (uint32_t)(us & 0xFFFFFFFF);  // 低32位
+    } else if (raddr == 0x2000004c) {
+        uint64_t us = get_uptime_us();
+        printf("Timer us: %llu\n", us);
+        return (uint32_t)(us >> 32); // 高32位
+    } 
+    else{
+        
     uint32_t data = ram[addr];
     if(valid){
         //printf("PC=%x:\n",pc);
         //printf("成功读取地址处:%x的数据:%x\n",addr*4,data);
     }
     return data;
-
+    }
 
 }
 
@@ -91,6 +117,9 @@ extern "C" void pmem_write(int waddr, int wdata, char wmask, int pc) {
       putchar(wdata & 0xff); 
       fflush(stdout); 
     }
+    return;
+  }
+  if(waddr == 0x20000048 || waddr == 0x2000004c){
     return;
   }
   uint32_t new_val = ram[addr];
@@ -264,6 +293,7 @@ int main(int argc, char**argv) {
     // 仿真主循环
     while (!ctx->gotFinish() /*&& cycles < MAX_CYCLES*/) {
     // 先更新复位信号（在时钟边沿前稳定）
+    update_virtual_time();
     top->reset = (cycles < 1);  // 提前设置复位
     
     // 时钟低电平
