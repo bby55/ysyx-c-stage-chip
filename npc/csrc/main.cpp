@@ -1,7 +1,7 @@
-#include "Vtop.h"  // Verilator自动生成的顶层模块头文件（前缀V）
+#include "Vtop.h"
 #include "verilated.h"
-#include "verilated_vcd_c.h"  // 用于生成波形
-#include <svdpi.h>  // DPI-C头文件
+#include "verilated_vcd_c.h"
+#include <svdpi.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <stdint.h>
@@ -10,308 +10,206 @@
 #include <fstream>   
 #include <iostream> 
 #include <time.h>
-#include <stdint.h>
 
-#define DEVICE_BASE 0xa0000000
-#define SERIAL_PORT (DEVICE_BASE + 0x00003f8)  // 无符号地址
-#define RTC_ADDR    (DEVICE_BASE + 0x0000048)
+#define DEVICE_BASE 0x20000000
+#define SERIAL_PORT (DEVICE_BASE + 0x00003f8)  // 串口地址：0xa00003f8
+#define TIMER_LO    (DEVICE_BASE + 0x0000048)  // 定时器低32位
+#define TIMER_HI    (DEVICE_BASE + 0x000004c)  // 定时器高32位
+#define RTC_SECOND  (DEVICE_BASE + 0x0000074)  // RTC秒（供测试读取）
 
-static uint64_t virtual_us = 0;       // 虚拟微秒数
-static uint32_t cycle_counter = 0;    // 仿真周期计数器
-static const uint32_t CYCLES_PER_US = 100;  // 100个周期 = 1微秒（100MHz时钟）
+static struct tm *rtc_tm;
+static time_t rtc_timep;
 
-// 更新虚拟时间（与仿真周期同步）
+static uint64_t virtual_us = 0;
+static uint32_t cycle_counter = 0;
+static const uint32_t CYCLES_PER_US = 13;
+void update_rtc() {
+    static uint64_t last_sec = 0;
+    if (virtual_us - last_sec >= 1000000) {  // 每1秒更新
+        time(&rtc_timep);
+        rtc_tm = gmtime(&rtc_timep);  // 获取GMT时间
+        last_sec = virtual_us;
+    }
+}
 void update_virtual_time() {
-  cycle_counter++;
-  if (cycle_counter >= CYCLES_PER_US) {
-    virtual_us++;          // 每100个周期，虚拟时间+1微秒
-    cycle_counter = 0;
-  }
+    cycle_counter++;
+    if (cycle_counter >= CYCLES_PER_US) {
+        virtual_us++;
+        cycle_counter = 0;
+    }
 }
-
-// 替代原有的get_uptime_us，返回虚拟时间
-uint64_t get_uptime_us() {
-  return virtual_us;
-}
-
 
 void putch(int c) {
-  // 将字符c的低8位写入串口地址
-  *(volatile uint8_t *)SERIAL_PORT = c & 0xff;
+    *(volatile uint8_t *)SERIAL_PORT = c & 0xff;
 }
 
+// ebreak处理
 extern "C" void ebreak(int exit_code) {
-    if(exit_code == 0){
-        printf("[DPI] ebreak instruction detected! \033[32m HIT GOOD TRAP. \033[0m\n");
+    if(exit_code == 0) {
+        printf("[DPI] ebreak: \033[32m GOOD TRAP \033[0m\n");
+    } else {
+        printf("[DPI] ebreak: \033[31m BAD TRAP \033[0m\n");
     }
-    else{
-        printf("[DPI] ebreak instruction detected! \033[31m HIT BAD TRAP. \033[0m\n");
-    }
-    // Verilated::gotFinish();  
     exit(0);
-    // if(Verilated::gotFinish()) return;
 }
 
+// ROM/RAM定义与读取
 #define ROM_SIZE 4194304
 #define RAM_SIZE 4194304
-static uint32_t rom[ROM_SIZE];/* = {
-    0x800011b7,  // rom[0]
-    0x12345237,  // rom[1]
-    0x4d200213,  // rom[2]
-    0xfe418ea3,  // rom[3]
-    0xffd1c283,  // rom[4]
-    0x00028513,  // rom[5]
-    0x00000073   // rom[6]
-};
-*/
+static uint32_t rom[ROM_SIZE];
+static uint32_t ram[RAM_SIZE];
 
 extern "C" int rom_read(int raddr) {
     uint32_t aligned_addr = raddr & ~0x3u;
     uint32_t rom_idx = aligned_addr >> 2;
-
     if (rom_idx >= ROM_SIZE) {
-        fprintf(stderr, "ROM读取越界：地址0x%x → 索引%u（最大支持索引%u）\n",
-               aligned_addr, rom_idx, ROM_SIZE - 1);
+        fprintf(stderr, "ROM越界: 0x%x\n", aligned_addr);
         return 0;
     }
-
-    return rom[rom_idx];  // 直接返回预初始化的值
+    return rom[rom_idx];
 }
 
-static uint32_t ram[RAM_SIZE];
-
+// 内存/设备读取（核心修复）
 extern "C" int pmem_read(int raddr, int valid, int pc) {
-    int addr = (raddr & ~0x3u) >> 2;
-    //printf("%x\n",raddr);
-    if (raddr == 0x200003f8) {
-        return 0;
-    }
-    if(raddr == 0x20000048 || raddr == 0x2000004c){
-        printf("%d-%02d-%02d %02d:%02d:%02d GMT (%d seconds).\n", 
-        rtc.year, rtc.month, rtc.day, 
-        rtc.hour, rtc.minute, rtc.second, 
-        sec);
-        if (raddr == 0x20000048) {
-            uint64_t us = get_uptime_us();
-            return (uint32_t)(us & 0xFFFFFFFF);  // 低32位
-        } else if (raddr == 0x2000004c) {
-            uint64_t us = get_uptime_us();
-        r   eturn (uint32_t)(us >> 32); // 高32位
-        } 
-    }
-    else{
-        
-    uint32_t data = ram[addr];
-    if(valid){
-        //printf("PC=%x:\n",pc);
-        //printf("成功读取地址处:%x的数据:%x\n",addr*4,data);
-    }
-    return data;
+    if (raddr == SERIAL_PORT) {
+        return 0; 
     }
 
+    if (raddr == TIMER_LO) {
+        return (uint32_t)(virtual_us & 0xFFFFFFFF);  // 低32位
+    } else if (raddr == TIMER_HI) {
+        return (uint32_t)(virtual_us >> 32);  // 高32位
+    }
+    if (raddr == RTC_SECOND) {
+        return rtc_tm->tm_sec;
+    }
+
+    int addr = (raddr & ~0x3u) >> 2;
+    return ram[addr];
 }
 
 extern "C" void pmem_write(int waddr, int wdata, char wmask, int pc) {
-    //printf("%x\n",waddr);
-  int addr = (waddr & ~0x3u) >> 2;
-  if (waddr == 0x200003f8) {
-    if (wmask == 0x1) { 
-    //printf("yyyyyyyyyyyyyyyssssssssssssssssssssssyyyyyyyyyyyyyyyyyyyyyyyxxxxxxxxxxxxx");
-      putchar(wdata & 0xff); 
-      fflush(stdout); 
+    if (waddr == SERIAL_PORT) {
+        if (wmask & 0x1) {  // 最低字节有效
+            putchar(wdata & 0xff);
+            fflush(stdout);
+        }
+        return;
     }
-    return;
-  }
-  if(waddr == 0x20000048 || waddr == 0x2000004c){
-    return;
-  }
-  uint32_t new_val = ram[addr];
-    if (wmask == 0x1) {  // 第0字节（最低8位）
-        new_val = (new_val & ~0x000000FFu) | (wdata & 0x000000FFu);
-    }
-    else if (wmask == 0x2) {  // 第1字节（8-15位）
-        new_val = (new_val & ~0x0000FF00u) | ((wdata & 0x0000FF00u));
-    }
-    else if (wmask == 0x4) {  // 第2字节（16-23位）
-        new_val = (new_val & ~0x00FF0000u) | ((wdata & 0x00FF0000u));
-    }
-    else if (wmask == 0x8) {  // 第3字节（24-31位）
-        new_val = (new_val & ~0xFF000000u) | ((wdata & 0xFF000000u));
-    }
-    else{
-        new_val = wdata;
-    }
-    //printf("PC=%x:\n",pc);
-    //printf("地址处数据:%x\n",ram[addr]);
-    
-    ram[addr] = new_val;
 
-    //printf("成功将数据:%x写入地址处:%x\n",ram[addr],addr*4);
+    if (waddr == TIMER_LO || waddr == TIMER_HI) {
+        return;
+    }
+
+    int addr = (waddr & ~0x3u) >> 2;
+    uint32_t new_val = ram[addr];
+    if (wmask == 0x1) new_val = (new_val & ~0xFF) | (wdata & 0xFF);
+    else if (wmask == 0x2) new_val = (new_val & ~0xFF00) | (wdata & 0xFF00);
+    else if (wmask == 0x4) new_val = (new_val & ~0xFF0000) | (wdata & 0xFF0000);
+    else if (wmask == 0x8) new_val = (new_val & ~0xFF000000) | (wdata & 0xFF000000);
+    else new_val = wdata;
+    ram[addr] = new_val;
 }
 
 bool load_rom_bin(const char* filename) {
     FILE* fp = fopen(filename, "rb");
-    if (!fp) {
-        perror("无法打开二进制文件");
-        return false;
-    }
-
-    // 读取整个文件内容为32位整数（小端）
+    if (!fp) { perror("ROM bin打开失败"); return false; }
     size_t count = 0;
     uint32_t word;
     while (count < ROM_SIZE && fread(&word, 1, 4, fp) == 4) {
-        rom[count++] = word;  // 假设主机是小端（x86_64），否则需转换
+        rom[count++] = word;
     }
-
     fclose(fp);
-
-    printf("[INFO] 从二进制文件 '%s' 成功加载 %zu 条指令到 ROM\n", filename, count);
+    printf("[INFO] 加载ROM: %zu条指令\n", count);
     return true;
 }
 
 bool load_ram_bin(const char* filename) {
     FILE* fp = fopen(filename, "rb");
-    if (!fp) {
-        perror("无法打开RAM二进制文件");
-        return false;
-    }
-
+    if (!fp) { perror("RAM bin打开失败"); return false; }
     size_t count = 0;
     uint32_t word;
     while (count < RAM_SIZE && fread(&word, 1, 4, fp) == 4) {
         ram[count++] = word;
     }
-
     fclose(fp);
-    printf("[INFO] 从二进制文件 '%s' 成功加载 %zu 个数据到 RAM\n", filename, count);
+    printf("[INFO] 加载RAM: %zu个数据\n", count);
     return true;
 }
 
-
-// 从文本文件加载 ROM（每行一个 32 位十六进制数，如：0x12345678 或 12345678）
 bool load_rom_hex(const char* filename) {
     std::ifstream file(filename);
-    if (!file.is_open()) {
-        std::cerr << "无法打开文本文件: " << filename << std::endl;
-        return false;
-    }
-
+    if (!file.is_open()) { std::cerr << "ROM hex打开失败\n"; return false; }
     std::string line;
     size_t count = 0;
     while (std::getline(file, line) && count < ROM_SIZE) {
-        // 去除空白字符
         std::string cleaned;
-        for (char c : line) {
-            if (!isspace(c)) cleaned += c;
-        }
-        if (cleaned.empty() || cleaned[0] == '#') continue; // 忽略空行和注释
-
-        // 解析十六进制
+        for (char c : line) if (!isspace(c)) cleaned += c;
+        if (cleaned.empty() || cleaned[0] == '#') continue;
         try {
-            size_t pos;
-            uint32_t value = std::stoul(cleaned, &pos, 16);
-            if (pos != cleaned.size()) {
-                std::cerr << "解析失败（非法字符）: " << cleaned << std::endl;
-                continue;
-            }
-            rom[count++] = value;
-        } catch (...) {
-            std::cerr << "无法解析: " << cleaned << std::endl;
-        }
+            rom[count++] = std::stoul(cleaned, nullptr, 16);
+        } catch (...) { std::cerr << "解析失败: " << cleaned << "\n"; }
     }
     file.close();
-
-    printf("[INFO] 从文本文件 '%s' 成功加载 %zu 条指令到 ROM\n", filename, count);
+    printf("[INFO] 加载ROM hex: %zu条指令\n", count);
     return true;
 }
 
-// 初始化 ROM：尝试先加载 .bin，失败则加载 .txt
-bool init_rom(const char* rom_file_base) {
-    // 尝试 .bin
-    std::string bin_file = std::string(rom_file_base) + ".bin";
-    if (load_rom_bin(bin_file.c_str())) {
-        return true;
-    }
-
-    // 尝试 .txt
-    std::string txt_file = std::string(rom_file_base) + ".txt";
-    if (load_rom_hex(txt_file.c_str())) {
-        return true;
-    }
-
-    // 都失败
-    std::cerr << "错误：无法加载 ROM 文件。请确保 " << bin_file << " 或 " << txt_file << " 存在。\n";
+bool init_rom(const char* base) {
+    std::string bin = base + std::string(".bin");
+    if (load_rom_bin(bin.c_str())) return true;
+    std::string hex = base + std::string(".txt");
+    if (load_rom_hex(hex.c_str())) return true;
+    std::cerr << "ROM初始化失败\n";
     return false;
 }
 
-bool init_ram(const char* ram_file_base) {
-    // 尝试 .bin
-    std::string bin_file = std::string(ram_file_base) + ".bin";
-    if (load_ram_bin(bin_file.c_str())) {
-        return true;
-    }
-
-    // 尝试 .txt
-    std::string txt_file = std::string(ram_file_base) + ".txt";
-    if (load_rom_hex(txt_file.c_str())) {
-        return true;
-    }
-
-    // 都失败
-    std::cerr << "错误：无法加载 RAM 文件。请确保 " << bin_file << " 或 " << txt_file << " 存在。\n";
+bool init_ram(const char* base) {
+    std::string bin = base + std::string(".bin");
+    if (load_ram_bin(bin.c_str())) return true;
+    std::string hex = base + std::string(".txt");
+    if (load_rom_hex(hex.c_str())) return true;
+    std::cerr << "RAM初始化失败\n";
     return false;
 }
 
+// 主函数
 int main(int argc, char**argv) {
+    time(&rtc_timep);
+    rtc_tm = gmtime(&rtc_timep);
 
-    const char* rom_file_base = "/home/ysyxbby/ysyx-workbench/npc/rom/text";  // 文件名前缀（不含扩展名）
-    if (!init_rom(rom_file_base)) {
-        std::cerr << "ROM初始化失败，退出仿真。\n";
-        return 1;
-    }
+    // 加载ROM/RAM
+    const char* rom_base = "/home/ysyxbby/ysyx-workbench/npc/rom/text";
+    if (!init_rom(rom_base)) return 1;
+    const char* ram_base = "/home/ysyxbby/ysyx-workbench/npc/rom/text";
+    if (!init_ram(ram_base)) return 1;
 
-    const char* ram_file_base = "/home/ysyxbby/ysyx-workbench/npc/rom/text";
-    if (!init_ram(ram_file_base)) {
-    std::cerr << "RAM初始化失败，退出仿真。\n";
-    return 1;
-}
-    // 初始化Verilator上下文
+    // Verilator初始化
     VerilatedContext* ctx = new VerilatedContext;
     ctx->commandArgs(argc, argv);
-
-    // 实例化top顶层模块
     Vtop* top = new Vtop(ctx);
 
-    // 配置波形跟踪（生成waveform.vcd，可用gtkwave查看）
-    /*VerilatedVcdC* vcd = new VerilatedVcdC;
-    ctx->traceEverOn(true);
-    top->trace(vcd, 99);  // 跟踪深度99
-    vcd->open("waveform.vcd");*/
-
-    // 仿真参数
-    int cycles = 0;
-    //const int MAX_CYCLES = 100000
-    ;  // 仿真50个时钟周期
-
     // 仿真主循环
-    while (!ctx->gotFinish() /*&& cycles < MAX_CYCLES*/) {
-    // 先更新复位信号（在时钟边沿前稳定）
-    update_virtual_time();
-    top->reset = (cycles < 1);  // 提前设置复位
-    
-    // 时钟低电平
-    top->clk = 0;
-    ctx->timeInc(1);
-    top->eval();
-   // vcd->dump(ctx->time());
+    int cycles = 0;
+    while (!ctx->gotFinish()) {
+        update_virtual_time();  // 更新虚拟时间
+        update_rtc();           // 每秒更新RTC
 
-    // 时钟高电平（上升沿采样）
-    top->clk = 1;
-    ctx->timeInc(1);
-    top->eval();
-    //vcd->dump(ctx->time());
+        // 时钟边沿
+        top->reset = (cycles < 1);  // 初始复位
+        top->clk = 0;
+        ctx->timeInc(1);
+        top->eval();
 
-    cycles++;
+        top->clk = 1;
+        ctx->timeInc(1);
+        top->eval();
+
+        cycles++;
+    }
+
+    // 清理
+    delete top;
+    delete ctx;
+    return 0;
 }
-
-   }   // 清理资源
