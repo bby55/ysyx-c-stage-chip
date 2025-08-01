@@ -41,7 +41,7 @@ void display_inst() {
 
 void memory_read_dis(paddr_t addr, int len)
 {
-    printf(ANSI_FMT(" Read in memory: ", ANSI_FG_BLUE) FMT_PADDR ", Length: %d\n", addr, len);
+    printf(ANSI_FMT(" Read in memory: ", ANSI_FG_BLUE) FMT_PADDR "  Length: %d\n", addr, len);
 }
 
 void memory_write_dis(paddr_t addr, int len, word_t data)
