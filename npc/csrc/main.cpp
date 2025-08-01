@@ -54,8 +54,8 @@ extern "C" void ebreak(int exit_code) {
 }
 
 // ROM/RAM定义与读取
-#define ROM_SIZE 4294967296
-#define RAM_SIZE 4294967296
+#define ROM_SIZE 4194304
+#define RAM_SIZE 4194304
 static uint32_t rom[ROM_SIZE];
 static uint32_t ram[RAM_SIZE];
 
