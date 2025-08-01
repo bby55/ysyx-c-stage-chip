@@ -86,16 +86,19 @@ extern "C" int pmem_read(int raddr, int valid, int pc) {
     if (raddr == 0x200003f8) {
         return 0;
     }
-
-    if (raddr == 0x20000048) {
-        uint64_t us = get_uptime_us();
-        printf("Timer us: %llu\n", us);
-        return (uint32_t)(us & 0xFFFFFFFF);  // 低32位
-    } else if (raddr == 0x2000004c) {
-        uint64_t us = get_uptime_us();
-        printf("Timer us: %llu\n", us);
-        return (uint32_t)(us >> 32); // 高32位
-    } 
+    if(raddr == 0x20000048 || raddr == 0x2000004c){
+        printf("%d-%02d-%02d %02d:%02d:%02d GMT (%d seconds).\n", 
+        rtc.year, rtc.month, rtc.day, 
+        rtc.hour, rtc.minute, rtc.second, 
+        sec);
+        if (raddr == 0x20000048) {
+            uint64_t us = get_uptime_us();
+            return (uint32_t)(us & 0xFFFFFFFF);  // 低32位
+        } else if (raddr == 0x2000004c) {
+            uint64_t us = get_uptime_us();
+        r   eturn (uint32_t)(us >> 32); // 高32位
+        } 
+    }
     else{
         
     uint32_t data = ram[addr];
