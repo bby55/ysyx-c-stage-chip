@@ -29,7 +29,7 @@ void update_rtc() {
         time(&rtc_timep);
         rtc_tm = gmtime(&rtc_timep);  // 获取GMT时间
         last_sec = virtual_us;
-    }cd 
+    }
 }
 void update_virtual_time() {
     cycle_counter++;
