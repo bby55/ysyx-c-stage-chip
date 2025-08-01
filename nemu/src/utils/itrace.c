@@ -1,4 +1,4 @@
-#include <common.h>
+/*#include <common.h>
 
 #define MAX_IRINGBUF 16
 
@@ -38,3 +38,4 @@ void display_inst() {
   } while ((i = (i+1)%MAX_IRINGBUF) != end);
   puts(ANSI_NONE);
 }
+*/
