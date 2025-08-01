@@ -7,6 +7,7 @@ typedef struct {
   uint32_t inst;
 } ItraceNode;
 
+
 ItraceNode iringbuf[MAX_IRINGBUF];
 int p_cur = 0;
 bool full = false;
