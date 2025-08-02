@@ -63,6 +63,12 @@ extern "C" void ebreak(int exit_code) {
 #define RAM_SIZE 4194304
 static uint32_t rom[ROM_SIZE];
 static uint32_t ram[RAM_SIZE];
+const char *regs[] = {
+  "$0", "ra", "sp", "gp", "tp", "t0", "t1", "t2",
+  "s0", "s1", "a0", "a1", "a2", "a3", "a4", "a5",
+  "a6", "a7", "s2", "s3", "s4", "s5", "s6", "s7",
+  "s8", "s9", "s10", "s11", "t3", "t4", "t5", "t6"
+};
 static uint32_t ref[32];
 static uint32_t pc;
 static uint32_t instr;
@@ -108,6 +114,37 @@ extern "C" void pmem_write(int waddr, int wdata, char wmask, int pc) {
 extern "C" void display(int instr, int pc) {
     ::instr = instr;
     ::pc = pc;
+}
+
+extern "C" void display_ref(int rf[]){
+        ::ref[0] = 0;
+    for(int i = 1; i < 32; i++){
+        ::ref[i] = rf[i];
+    }
+}
+
+void printf_ref(){
+    printf("\033[1;34m======================================== 寄存器状态 ========================================\033[0m\n");
+         printf("%-8s   %-14s  %-8s    %-14s  %-8s    %-14s  %-8s    %-14s\n",
+               "名称", "值(十六进制)", 
+               "名称", "值(十六进制)", 
+               "名称", "值(十六进制)", 
+               "名称", "值(十六进制)");
+        printf("---------------------------------------------------------------------------------------------\n");
+        for (int i = 0; i < 32; i += 4) {
+            int end = (i + 4 < 32) ? i + 4 : 32;
+            for (int j = i; j < end; j++) {
+                if (j == 0) {
+                    printf("\033[1;32m%-8s\033[0m  0x%-10.8x  ", regs[j], ref[j]);
+                } else {
+                    printf("%-8s  0x%-10.8x  ", regs[j], ref[j]);
+                }
+            }
+            printf("\n");
+        }
+
+        printf("---------------------------------------------------------------------------------------------\n");
+        printf("\033[1;33mPC:        0x%-10.8x\033[0m\n", pc); // PC用黄色突出
 }
 
 bool load_rom_bin(const char* filename) {
@@ -196,6 +233,7 @@ static int cmd_help(char *args);
 static int cmd_q(char *args);
 static int cmd_c(char *args);
 static int cmd_si(char *args);
+static int cmd_info(char *args);
 
 static struct {
     const char *name;
@@ -205,7 +243,8 @@ static struct {
     { "help", "Display information about all supported commands", cmd_help },
     { "c", "Continue the execution of the program", cmd_c },
     { "q", "Exit NPC", cmd_q },
-    { "si", "Execute the program one or more steps", cmd_si }
+    { "si", "Execute the program one or more steps", cmd_si },
+    { "info","Printf the reg and pc",cmd_info}
 };
 
 #define ARRLEN(arr) (int)(sizeof(arr) / sizeof(arr[0]))
@@ -278,6 +317,7 @@ void cpu_exec(uint64_t n) {
 }
 
 static int cmd_si(char *args) {
+
     int i;
     if (args == NULL) {
         cpu_exec(1);
@@ -290,6 +330,19 @@ static int cmd_si(char *args) {
         cpu_exec(i);
     }
     return 0;
+}
+
+static int cmd_info(char *args){
+	if(args == NULL){
+		printf("Please input info r\n");
+		return 0;
+	}
+	if(strcmp(args,"r")==0){
+        printf_ref();
+    }
+	 
+	
+	return 0;
 }
 
 void sdb_mainloop() {

@@ -1,6 +1,7 @@
 import "DPI-C" function void ebreak(input int a0_val);
 import "DPI-C" function int rom_read(input int addr);
 import "DPI-C" function void display(input int instr, input int pc);
+import "DPI-C" function void display_ref(input int rf[]);
 
 module top(
     input clk,
@@ -315,7 +316,9 @@ module RegisterFile #(ADDR_WIDTH = 1, DATA_WIDTH = 1) (
   assign a0_val = rf[10];
   always @(posedge clk) begin
     if (wen & (waddr != 0)) rf[waddr] <= wdata;
+    display_ref(rf);
   end
+  
 endmodule
 
 //指令存储器

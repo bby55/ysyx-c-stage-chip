@@ -201,6 +201,7 @@ VL_INLINE_OPT void Vtop___024root___act_sequent__TOP__0(Vtop___024root* vlSelf) 
     }
 }
 
+void Vtop___024unit____Vdpiimwrap_display_ref__Vdpioc2_TOP____024unit(const VlUnpacked<IData/*31:0*/, 32> &rf);
 void Vtop___024unit____Vdpiimwrap_ebreak_TOP____024unit(IData/*31:0*/ a0_val);
 void Vtop___024unit____Vdpiimwrap_rom_read_TOP____024unit(IData/*31:0*/ addr, IData/*31:0*/ &rom_read__Vfuncrtn);
 
@@ -216,6 +217,7 @@ VL_INLINE_OPT void Vtop___024root___nba_sequent__TOP__0(Vtop___024root* vlSelf) 
     CData/*0:0*/ __Vdlyvset__top__DOT__u_regfile__DOT__rf__v0;
     __Vdlyvset__top__DOT__u_regfile__DOT__rf__v0 = 0;
     // Body
+    Vtop___024unit____Vdpiimwrap_display_ref__Vdpioc2_TOP____024unit(vlSelf->top__DOT__u_regfile__DOT__rf);
     if ((0x100073U == vlSelf->top__DOT__instr)) {
         Vtop___024unit____Vdpiimwrap_ebreak_TOP____024unit(
                                                            vlSelf->top__DOT__u_regfile__DOT__rf

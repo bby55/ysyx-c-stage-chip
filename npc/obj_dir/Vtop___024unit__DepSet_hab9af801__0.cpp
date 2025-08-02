@@ -41,3 +41,14 @@ VL_INLINE_OPT void Vtop___024unit____Vdpiimwrap_display_TOP____024unit(IData/*31
     for (size_t pc__Vidx = 0; pc__Vidx < 1; ++pc__Vidx) pc__Vcvt = pc;
     display(instr__Vcvt, pc__Vcvt);
 }
+
+extern "C" void display_ref(const svOpenArrayHandle rf);
+
+VL_INLINE_OPT void Vtop___024unit____Vdpiimwrap_display_ref__Vdpioc2_TOP____024unit(const VlUnpacked<IData/*31:0*/, 32> &rf) {
+    VL_DEBUG_IF(VL_DBG_MSGF("+        Vtop___024unit____Vdpiimwrap_display_ref__Vdpioc2_TOP____024unit\n"); );
+    // Body
+    static const int rf__Vopenprops__ulims[2] = {31, 0};
+    static const VerilatedVarProps rf__Vopenprops(VLVT_UINT32, VLVD_IN, VerilatedVarProps::Packed(), 31, 0, VerilatedVarProps::Unpacked(), 1, rf__Vopenprops__ulims);
+    VerilatedDpiOpenVar rf__Vopenarray (&rf__Vopenprops, &rf);
+    display_ref(&rf__Vopenarray);
+}
