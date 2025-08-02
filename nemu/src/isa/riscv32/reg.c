@@ -30,7 +30,7 @@ void isa_reg_display() {
 	for(i = 0;i<32;i++){
 		printf("%-10s 0x%-10.8x",regs[i],cpu.gpr[i]);
 		printf("	");
-		if(i % 8 == 0 && i != 0){
+		if(i % 4 == 0 && i != 0){
 			printf("\n");
 		}
 	}
