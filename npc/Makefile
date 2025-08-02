@@ -19,7 +19,8 @@ VERILATOR_FLAGS = \
 	-Wno-DECLFILENAME \
 	-Wno-MULTITOP \
 	-Wno-UNUSEDSIGNAL \
-	-Wno-UNUSEDPARAM
+	-Wno-UNUSEDPARAM \
+	--LDFLAGS "-lreadline"
 
 # 默认目标：运行仿真
 .PHONY: all sim clean

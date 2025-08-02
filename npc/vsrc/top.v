@@ -1,5 +1,7 @@
 import "DPI-C" function void ebreak(input int a0_val);
 import "DPI-C" function int rom_read(input int addr);
+import "DPI-C" function void display(input int instr, input int pc);
+
 module top(
     input clk,
     input reset
@@ -46,7 +48,7 @@ module top(
   );
 
   
-
+  
   
   assign rom_index = (pc < 32'h80000000)? (pc >> 2) : (pc - 32'h80000000) >> 2;
   /*Rom #(
@@ -104,6 +106,7 @@ module top(
   import "DPI-C" function void pmem_write(
   input int waddr, input int wdata, input byte wmask, input int pc);
   always @(*) begin
+    display(instr,pc);
     if (valid) begin // 有读写请求时
       rdata = pmem_read(raddr-32'h80000000, {32{valid}}, pc);
       if (wen_ram) begin // 有写请求时

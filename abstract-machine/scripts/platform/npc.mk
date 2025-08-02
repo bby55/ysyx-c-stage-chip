@@ -31,5 +31,5 @@ run: insert-arg
 	@$(MAKE) -C $(NPC_HOME) clean
 	@mkdir -p $(NPC_HOME)/rom
 	@cp $(IMAGE).bin $(NPC_HOME)/rom/text.bin  # 此时的.bin已经被insert-arg替换过
-	@$(MAKE) -C $(NPC_HOME)
+	@$(MAKE) -C $(NPC_HOME) LDFLAGS+=-lreadline
 	@$(NPC_HOME)/obj_dir/Vtop

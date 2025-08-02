@@ -16,11 +16,13 @@ extern "C" {
 
 
     // DPI IMPORTS
+    // DPI import at vsrc/top.v:3:30
+    extern void display(int instr, int pc);
     // DPI import at vsrc/top.v:1:30
     extern void ebreak(int a0_val);
-    // DPI import at vsrc/top.v:103:31
+    // DPI import at vsrc/top.v:105:31
     extern int pmem_read(int raddr, int valid, int pc);
-    // DPI import at vsrc/top.v:104:32
+    // DPI import at vsrc/top.v:106:32
     extern void pmem_write(int waddr, int wdata, char wmask, int pc);
     // DPI import at vsrc/top.v:2:29
     extern int rom_read(int addr);

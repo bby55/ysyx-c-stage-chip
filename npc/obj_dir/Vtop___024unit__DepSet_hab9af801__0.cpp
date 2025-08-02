@@ -29,3 +29,15 @@ VL_INLINE_OPT void Vtop___024unit____Vdpiimwrap_rom_read_TOP____024unit(IData/*3
     rom_read__Vfuncrtn__Vcvt = rom_read(addr__Vcvt);
     rom_read__Vfuncrtn = rom_read__Vfuncrtn__Vcvt;
 }
+
+extern "C" void display(int instr, int pc);
+
+VL_INLINE_OPT void Vtop___024unit____Vdpiimwrap_display_TOP____024unit(IData/*31:0*/ instr, IData/*31:0*/ pc) {
+    VL_DEBUG_IF(VL_DBG_MSGF("+        Vtop___024unit____Vdpiimwrap_display_TOP____024unit\n"); );
+    // Body
+    int instr__Vcvt;
+    for (size_t instr__Vidx = 0; instr__Vidx < 1; ++instr__Vidx) instr__Vcvt = instr;
+    int pc__Vcvt;
+    for (size_t pc__Vidx = 0; pc__Vidx < 1; ++pc__Vidx) pc__Vcvt = pc;
+    display(instr__Vcvt, pc__Vcvt);
+}
