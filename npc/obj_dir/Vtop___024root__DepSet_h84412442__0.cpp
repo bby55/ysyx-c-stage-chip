@@ -8,19 +8,15 @@
 #include "Vtop__Syms.h"
 #include "Vtop___024root.h"
 
-extern "C" int pmem_read(int raddr, int valid, int pc);
+extern "C" int pmem_read(int raddr);
 
-VL_INLINE_OPT void Vtop___024root____Vdpiimwrap_top__DOT__pmem_read_TOP(IData/*31:0*/ raddr, IData/*31:0*/ valid, IData/*31:0*/ pc, IData/*31:0*/ &pmem_read__Vfuncrtn) {
+VL_INLINE_OPT void Vtop___024root____Vdpiimwrap_top__DOT__pmem_read_TOP(IData/*31:0*/ raddr, IData/*31:0*/ &pmem_read__Vfuncrtn) {
     VL_DEBUG_IF(VL_DBG_MSGF("+    Vtop___024root____Vdpiimwrap_top__DOT__pmem_read_TOP\n"); );
     // Body
     int raddr__Vcvt;
     for (size_t raddr__Vidx = 0; raddr__Vidx < 1; ++raddr__Vidx) raddr__Vcvt = raddr;
-    int valid__Vcvt;
-    for (size_t valid__Vidx = 0; valid__Vidx < 1; ++valid__Vidx) valid__Vcvt = valid;
-    int pc__Vcvt;
-    for (size_t pc__Vidx = 0; pc__Vidx < 1; ++pc__Vidx) pc__Vcvt = pc;
     int pmem_read__Vfuncrtn__Vcvt;
-    pmem_read__Vfuncrtn__Vcvt = pmem_read(raddr__Vcvt, valid__Vcvt, pc__Vcvt);
+    pmem_read__Vfuncrtn__Vcvt = pmem_read(raddr__Vcvt);
     pmem_read__Vfuncrtn = pmem_read__Vfuncrtn__Vcvt;
 }
 
@@ -132,13 +128,6 @@ VL_INLINE_OPT void Vtop___024root___act_sequent__TOP__0(Vtop___024root* vlSelf) 
                                   : 0U);
     Vtop___024unit____Vdpiimwrap_display_TOP____024unit(vlSelf->top__DOT__instr, vlSelf->top__DOT__pc);
     if (vlSelf->top__DOT__valid) {
-        Vtop___024root____Vdpiimwrap_top__DOT__pmem_read_TOP(
-                                                             (((IData)(vlSelf->top__DOT__valid)
-                                                                ? vlSelf->top__DOT____VdfgTmp_h2f2dbb37__0
-                                                                : 0x80000000U) 
-                                                              - (IData)(0x80000000U)), 
-                                                             (- (IData)((IData)(vlSelf->top__DOT__valid))), vlSelf->top__DOT__pc, vlSelf->__Vfunc_top__DOT__pmem_read__2__Vfuncout);
-        vlSelf->top__DOT__rdata = vlSelf->__Vfunc_top__DOT__pmem_read__2__Vfuncout;
         if (vlSelf->top__DOT__wen_ram) {
             Vtop___024root____Vdpiimwrap_top__DOT__pmem_write_TOP(
                                                                   (((IData)(vlSelf->top__DOT__wen_ram)
@@ -196,6 +185,7 @@ VL_INLINE_OPT void Vtop___024root___act_sequent__TOP__0(Vtop___024root* vlSelf) 
                                                                         ? 8U
                                                                         : 0U))))), vlSelf->top__DOT__pc);
         }
+        vlSelf->top__DOT__rdata = vlSelf->top__DOT____VdfgExtracted_hb4a6ab34__0;
     } else {
         vlSelf->top__DOT__rdata = 0U;
     }
@@ -668,6 +658,13 @@ VL_INLINE_OPT void Vtop___024root___nba_sequent__TOP__0(Vtop___024root* vlSelf) 
                                                 (3U 
                                                  & vlSelf->top__DOT____VdfgTmp_h2f2dbb37__0)
                                                  : 0U);
+    Vtop___024root____Vdpiimwrap_top__DOT__pmem_read_TOP(
+                                                         (((IData)(vlSelf->top__DOT__valid)
+                                                            ? vlSelf->top__DOT____VdfgTmp_h2f2dbb37__0
+                                                            : 0x80000000U) 
+                                                          - (IData)(0x80000000U)), vlSelf->__Vfunc_top__DOT__pmem_read__4__Vfuncout);
+    vlSelf->top__DOT____VdfgExtracted_hb4a6ab34__0 
+        = vlSelf->__Vfunc_top__DOT__pmem_read__4__Vfuncout;
     vlSelf->top__DOT__u_alu__DOT__byte_idx = ((IData)(vlSelf->top__DOT__valid)
                                                ? (3U 
                                                   & vlSelf->top__DOT____VdfgTmp_h2f2dbb37__0)

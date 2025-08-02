@@ -33,6 +33,7 @@ VL_ATTR_COLD void Vtop___024root___eval_triggers__stl(Vtop___024root* vlSelf) {
 }
 
 void Vtop___024unit____Vdpiimwrap_rom_read_TOP____024unit(IData/*31:0*/ addr, IData/*31:0*/ &rom_read__Vfuncrtn);
+void Vtop___024root____Vdpiimwrap_top__DOT__pmem_read_TOP(IData/*31:0*/ raddr, IData/*31:0*/ &pmem_read__Vfuncrtn);
 
 VL_ATTR_COLD void Vtop___024root___stl_sequent__TOP__0(Vtop___024root* vlSelf) {
     if (false && vlSelf) {}  // Prevent unused
@@ -468,6 +469,13 @@ VL_ATTR_COLD void Vtop___024root___stl_sequent__TOP__0(Vtop___024root* vlSelf) {
                                                 (3U 
                                                  & vlSelf->top__DOT____VdfgTmp_h2f2dbb37__0)
                                                  : 0U);
+    Vtop___024root____Vdpiimwrap_top__DOT__pmem_read_TOP(
+                                                         (((IData)(vlSelf->top__DOT__valid)
+                                                            ? vlSelf->top__DOT____VdfgTmp_h2f2dbb37__0
+                                                            : 0x80000000U) 
+                                                          - (IData)(0x80000000U)), vlSelf->__Vfunc_top__DOT__pmem_read__4__Vfuncout);
+    vlSelf->top__DOT____VdfgExtracted_hb4a6ab34__0 
+        = vlSelf->__Vfunc_top__DOT__pmem_read__4__Vfuncout;
     vlSelf->top__DOT__u_alu__DOT__byte_idx = ((IData)(vlSelf->top__DOT__valid)
                                                ? (3U 
                                                   & vlSelf->top__DOT____VdfgTmp_h2f2dbb37__0)

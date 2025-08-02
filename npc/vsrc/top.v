@@ -103,13 +103,13 @@ module top(
                    (waddr[1:0] == 2'd2) ? 8'h04 :
                    (waddr[1:0] == 2'd3) ? 8'h08 : 8'h00;
 
-  import "DPI-C" function int pmem_read(input int raddr, input int valid, input int pc);
+  import "DPI-C" function int pmem_read(input int raddr);
   import "DPI-C" function void pmem_write(
   input int waddr, input int wdata, input byte wmask, input int pc);
   always @(*) begin
     display(instr,pc);
     if (valid) begin // 有读写请求时
-      rdata = pmem_read(raddr-32'h80000000, {32{valid}}, pc);
+      rdata = pmem_read(raddr-32'h80000000);
       if (wen_ram) begin // 有写请求时
         pmem_write(waddr-32'h80000000, wdata, wmask, pc);
       end

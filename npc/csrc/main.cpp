@@ -83,7 +83,7 @@ extern "C" int rom_read(int raddr) {
     return rom[rom_idx];
 }
 
-extern "C" int pmem_read(int raddr, int valid, int pc) {
+extern "C" int pmem_read(int raddr) {
     if (raddr == SERIAL_PORT) return 0;
     if (raddr == TIMER_LO) return (uint32_t)(virtual_us & 0xFFFFFFFF);
     if (raddr == TIMER_HI) return (uint32_t)(virtual_us >> 32);
@@ -344,6 +344,29 @@ static int cmd_info(char *args){
 	
 	return 0;
 }
+
+static int cmd_x(char *args) {
+  char *arg1 = strtok(NULL, " ");
+  if (arg1 == NULL) {
+    printf("Usage: x N EXPR\n");
+    return 0;
+  }
+  char *arg2 = strtok(NULL, " ");
+  if (arg2 == NULL) {
+    printf("Usage: x N EXPR\n");
+    return 0;
+  }
+
+  int n = strtol(arg1, NULL, 10);
+  int expr = strtol(arg2, NULL, 16);
+
+  int address = n + expr;
+  int data = pmem_read(address);
+  printf("0x%x  %x", address, data);
+  
+  return 0;
+}
+
 
 void sdb_mainloop() {
     for (char *str; (str = rl_gets()) != NULL; ) {
