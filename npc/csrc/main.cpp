@@ -63,6 +63,7 @@ extern "C" void ebreak(int exit_code) {
 #define RAM_SIZE 4194304
 static uint32_t rom[ROM_SIZE];
 static uint32_t ram[RAM_SIZE];
+static uint32_t ref[32];
 static uint32_t pc;
 static uint32_t instr;
 
@@ -267,7 +268,7 @@ void cpu_exec(uint64_t n) {
         steps++;
         update_virtual_time();
         update_rtc();
-        if(n <= 10) printf("\033[1;33mPC: 0x%x\033[0m    instr:  %x\n", pc, instr);
+        if(n <= 10) printf("\033[1;33mPC: 0x%x\033[0m    \033[1;34minstr:  0x%x\033[0m\n", pc, instr);
         
     }
     is_reset = false;
