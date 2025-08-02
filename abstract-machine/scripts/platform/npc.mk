@@ -16,7 +16,8 @@ LDFLAGS   += --gc-sections -e _start
 MAINARGS_MAX_LEN = 64
 MAINARGS_PLACEHOLDER = the_insert-arg_rule_in_Makefile_will_insert_mainargs_here
 CFLAGS += -DMAINARGS_MAX_LEN=$(MAINARGS_MAX_LEN) -DMAINARGS_PLACEHOLDER="$(MAINARGS_PLACEHOLDER)"  # 这里建议加引号，避免空格问题
-
+# 在NPC的Makefile中添加
+EXTRA_SRCS += $(NEMU_HOME)/src/utils/trace.c $(NEMU_HOME)/src/disasm.c
 insert-arg: image
 	@python $(AM_HOME)/tools/insert-arg.py $(IMAGE).bin $(MAINARGS_MAX_LEN) $(MAINARGS_PLACEHOLDER) "$(mainargs)"
 
@@ -31,5 +32,5 @@ run: insert-arg
 	@$(MAKE) -C $(NPC_HOME) clean
 	@mkdir -p $(NPC_HOME)/rom
 	@cp $(IMAGE).bin $(NPC_HOME)/rom/text.bin  # 此时的.bin已经被insert-arg替换过
-	@$(MAKE) -C $(NPC_HOME) LDFLAGS+=-lreadline
+	@$(MAKE) -C $(NPC_HOME) LDFLAGS+=-lreadline CFLAGS+=-I$(AM_HOME)/include CFLAGS+=-I$(NEMU_HOME)/include
 	@$(NPC_HOME)/obj_dir/Vtop

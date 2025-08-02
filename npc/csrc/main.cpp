@@ -11,6 +11,7 @@
 #include <iostream>
 #include <time.h>
 #include "sdb.h"
+//#include "../../nemu/src/utils/trace.c"
 
 #define DEVICE_BASE 0x20000000
 #define SERIAL_PORT (DEVICE_BASE + 0x00003f8)
@@ -224,16 +225,15 @@ static char* rl_gets() {
     return line_read;
 }
 
-static void welcome() {
-    printf("Welcome to \033[33;41mminirv\033[0m-NPC!\n");
-    printf("For help, type \"help\"\n");
-}
+void welcome();
 
 static int cmd_help(char *args);
 static int cmd_q(char *args);
 static int cmd_c(char *args);
 static int cmd_si(char *args);
 static int cmd_info(char *args);
+static int cmd_x(char *args);
+//void trace_inst(uint32_t pc, uint32_t instr);
 
 static struct {
     const char *name;
@@ -244,7 +244,8 @@ static struct {
     { "c", "Continue the execution of the program", cmd_c },
     { "q", "Exit NPC", cmd_q },
     { "si", "Execute the program one or more steps", cmd_si },
-    { "info","Printf the reg and pc",cmd_info}
+    { "info","Printf the reg and pc",cmd_info},
+    { "x","scan the pmem",cmd_x}
 };
 
 #define ARRLEN(arr) (int)(sizeof(arr) / sizeof(arr[0]))
@@ -298,6 +299,7 @@ void cpu_exec(uint64_t n) {
     while (steps < n && !ctx->gotFinish() && npc_state.state != NPC_END) {
         top->reset = is_reset && (cycles < 1);
         top->clk = 0;
+        //trace_inst(pc, instr);
         ctx->timeInc(1);
         top->eval();
         top->clk = 1;
@@ -356,16 +358,31 @@ static int cmd_x(char *args) {
     printf("Usage: x N EXPR\n");
     return 0;
   }
-
   int n = strtol(arg1, NULL, 10);
   int expr = strtol(arg2, NULL, 16);
 
-  int address = n + expr;
-  int data = pmem_read(address);
-  printf("0x%x  %x", address, data);
-  
+  if(n < 80000000 || n >= 90000000){
+    printf("\033[1;31m地址 0x%08d 超出RAM范围(起始地址:0x80000000)!\033[0m\n",n);
+    return 0;
+  }
+
+  printf("\033[1;34m======内存扫描======\033[0m\n");
+  printf("--------------------\n");
+  printf("%-10s    %-10s\n", 
+         "地址", "数值");
+  printf("--------------------\n");
+
+
+  for(int i = 0; i < expr; i++){
+    int address = n + i - 80000000;
+    int data = pmem_read(address);
+    printf("0x%d  %x\n", address + 80000000, data);
+  }
+
+  printf("--------------------\n");
   return 0;
 }
+
 
 
 void sdb_mainloop() {
@@ -392,6 +409,7 @@ void sdb_mainloop() {
             while (!ctx->gotFinish() && npc_state.state != NPC_END) {
                 top->reset = (cycles < 1);
                 top->clk = 0;
+                //trace_inst(pc, instr);
                 ctx->timeInc(1);
                 top->eval();
                 top->clk = 1;
@@ -410,7 +428,7 @@ void sdb_mainloop() {
         if (npc_state.state == NPC_QUIT) {
             break;
         }
-        printf("当前状态: %d\n", npc_state.state);
+        //printf("当前状态: %d\n", npc_state.state);
     }
 }
 

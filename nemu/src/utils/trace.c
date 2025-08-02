@@ -1,4 +1,4 @@
-#include <common.h>
+#include "../../include/common.h"
 
 #define MAX_IRINGBUF 16
 
@@ -12,7 +12,7 @@ ItraceNode iringbuf[MAX_IRINGBUF];
 int p_cur = 0;
 bool full = false;
 
-void trace_inst(word_t pc, uint32_t inst) {
+void trace_inst(uint32_t pc, uint32_t inst) {
   iringbuf[p_cur].pc = pc;
   iringbuf[p_cur].inst = inst;
   p_cur = (p_cur + 1) % MAX_IRINGBUF;
