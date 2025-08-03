@@ -87,14 +87,17 @@ void putch(int c) {
 }
 
 CPU_state get_npc_regs() {
-    top->eval();
     printf("get_npc_regs called\n");
     CPU_state cpu;
     for (int i = 0; i < 32; i++) {
-        cpu.gpr[i] = top->rootp->top__DOT__u_regfile__DOT__rf[i];
-        printf("Reg %s = 0x%x\n", regs[i], cpu.gpr[i]);
+        cpu.gpr[i] = ref[i];
     }
-    cpu.pc = top->rootp->top__DOT__pc;
+    if(pc == 0){
+        cpu.pc = 0x80000000;
+    }else{
+        cpu.pc = pc;
+    }
+    
     printf("PC = 0x%x\n", cpu.pc);
     return cpu;
 }
@@ -121,24 +124,26 @@ void init_difftest(const char* ref_so_file) {
         printf("无法加载 NEMU 共享库: %s\n", dlerror());
         exit(1);
     }
+
     ref_difftest_memcpy = (difftest_memcpy_t)dlsym(nemu_so, "difftest_memcpy");
     ref_difftest_regcpy = (difftest_regcpy_t)dlsym(nemu_so, "difftest_regcpy");
     ref_difftest_exec = (difftest_exec_t)dlsym(nemu_so, "difftest_exec");
     ref_difftest_init = (difftest_init_t)dlsym(nemu_so, "difftest_init");
+
     if (!ref_difftest_memcpy || !ref_difftest_regcpy || !ref_difftest_exec || !ref_difftest_init) {
         printf("无法找到 NEMU 共享库中的 DiffTest 函数\n");
         dlclose(nemu_so);
         exit(1);
     }
+
     printf("Calling ref_difftest_init\n");
-    ref_difftest_init(0);
+    ref_difftest_init(0); // 初始化 NEMU
     printf("Calling ref_difftest_memcpy\n");
-    ref_difftest_memcpy(RESET_VECTOR, rom, 5 * 4, DIFFTEST_TO_REF); // 仅拷贝 5 条指令
-    printf("ROM[0]=0x%x, ROM[1]=0x%x\n", rom[0], rom[1]);
+    ref_difftest_memcpy(RESET_VECTOR, rom, ROM_SIZE * 4, DIFFTEST_TO_REF); // 拷贝 ROM 到 NEMU
     printf("Calling get_npc_regs\n");
     CPU_state npc_cpu = get_npc_regs();
     printf("Calling ref_difftest_regcpy\n");
-    ref_difftest_regcpy(&npc_cpu, DIFFTEST_TO_REF);
+    ref_difftest_regcpy(&npc_cpu, DIFFTEST_TO_REF); // 拷贝初始寄存器状态
 }
 
 extern "C" void ebreak(int exit_code, int exit_pc) {
@@ -725,12 +730,7 @@ int main(int argc, char** argv) {
     ctx = new VerilatedContext;
     ctx->commandArgs(argc, argv);
     top = new Vtop(ctx);
-    if (!top || !top->rootp) {
-        printf("Error: Failed to initialize Vtop\n");
-        return 1;
-    }
-    printf("top=%p, rootp=%p\n", top, top->rootp);
-    top->eval(); // 初始评估
+
     npc_state.state = NPC_STOP;
     sdb_mainloop();
 
