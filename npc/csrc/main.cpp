@@ -11,7 +11,6 @@
 #include <iostream>
 #include <time.h>
 #include "sdb.h"
-//#include "../../nemu/src/utils/trace.c"
 
 #define DEVICE_BASE 0x20000000
 #define SERIAL_PORT (DEVICE_BASE + 0x00003f8)
@@ -29,6 +28,21 @@ static const uint32_t CYCLES_PER_US = 13;
 static VerilatedContext* ctx = NULL;
 static Vtop* top = NULL;
 static bool is_reset = true;
+static bool is_mtrace = false; // 默认关闭mtrace
+
+#define ROM_SIZE 4194304
+#define RAM_SIZE 4194304
+static uint32_t rom[ROM_SIZE];
+static uint32_t ram[RAM_SIZE];
+const char *regs[] = {
+    "$0", "ra", "sp", "gp", "tp", "t0", "t1", "t2",
+    "s0", "s1", "a0", "a1", "a2", "a3", "a4", "a5",
+    "a6", "a7", "s2", "s3", "s4", "s5", "s6", "s7",
+    "s8", "s9", "s10", "s11", "t3", "t4", "t5", "t6"
+};
+static uint32_t ref[32];
+static uint32_t pc;
+static uint32_t instr;
 
 void update_rtc() {
     static uint64_t last_sec = 0;
@@ -51,28 +65,27 @@ void putch(int c) {
     *(volatile uint8_t *)SERIAL_PORT = c & 0xff;
 }
 
-extern "C" void ebreak(int exit_code) {
+
+extern "C" void ebreak(int exit_code, int exit_pc) {
     if (exit_code == 0) {
-        printf("[DPI] ebreak: \033[1;32m HIT GOOD TRAP \033[0m\n");
+        printf("Exit PC: %x\n", exit_pc);
+        printf("[DPI] ebreak: \033[1;32m HIT GOOD TRAP \033[0m\n");        
     } else {
+        printf("Exit PC: %x\n", exit_pc);
         printf("[DPI] ebreak: \033[1;31m HIT BAD TRAP \033[0m\n");
     }
     npc_state.state = NPC_END;
+    exit(0);
+    print_iringbuf();
 }
 
-#define ROM_SIZE 4194304
-#define RAM_SIZE 4194304
-static uint32_t rom[ROM_SIZE];
-static uint32_t ram[RAM_SIZE];
-const char *regs[] = {
-  "$0", "ra", "sp", "gp", "tp", "t0", "t1", "t2",
-  "s0", "s1", "a0", "a1", "a2", "a3", "a4", "a5",
-  "a6", "a7", "s2", "s3", "s4", "s5", "s6", "s7",
-  "s8", "s9", "s10", "s11", "t3", "t4", "t5", "t6"
-};
-static uint32_t ref[32];
-static uint32_t pc;
-static uint32_t instr;
+
+
+// 环形缓冲区
+#define IRINGBUF_SIZE 16
+static InstTrace iringbuf[IRINGBUF_SIZE];
+static int iringbuf_idx = 0;
+static int iringbuf_count = 0;
 
 extern "C" int rom_read(int raddr) {
     uint32_t aligned_addr = raddr & ~0x3u;
@@ -84,15 +97,20 @@ extern "C" int rom_read(int raddr) {
     return rom[rom_idx];
 }
 
-extern "C" int pmem_read(int raddr) {
-    if (raddr == SERIAL_PORT) return 0;
-    if (raddr == TIMER_LO) return (uint32_t)(virtual_us & 0xFFFFFFFF);
-    if (raddr == TIMER_HI) return (uint32_t)(virtual_us >> 32);
-    if (raddr == RTC_SECOND) return rtc_tm->tm_sec;
-    int addr = (raddr & ~0x3u) >> 2;
-    return ram[addr];
-}
+extern "C" int pmem_read(int raddr, int valid) {
+    uint32_t data = 0;
+    if (raddr == SERIAL_PORT) data = 0;
+    if (raddr == TIMER_LO) data = (uint32_t)(virtual_us & 0xFFFFFFFF);
+    if (raddr == TIMER_HI) data = (uint32_t)(virtual_us >> 32);
+    if (raddr == RTC_SECOND) data = rtc_tm->tm_sec;
+    else {
+            int addr = (raddr & ~0x3u) >> 2;
+            data = ram[addr];
+    }
+    if(is_mtrace && (valid == 0xffffffff)) printf("\033[1;32mMtrace: 成功在地址: 0x%x 取出数据 0x%x\n\033[0m", raddr+0x80000000, data);
 
+    return data;
+}
 extern "C" void pmem_write(int waddr, int wdata, char wmask, int pc) {
     if (waddr == SERIAL_PORT) {
         if (wmask & 0x1) {
@@ -109,6 +127,7 @@ extern "C" void pmem_write(int waddr, int wdata, char wmask, int pc) {
     else if (wmask == 0x4) new_val = (new_val & ~0xFF0000) | (wdata & 0xFF0000);
     else if (wmask == 0x8) new_val = (new_val & ~0xFF000000) | (wdata & 0xFF000000);
     else new_val = wdata;
+    if(is_mtrace) printf("\033[1;32mMtrace: 成功在地址: 0x%x 存入数据 0x%x\n\033[0m", waddr+0x80000000, new_val);
     ram[addr] = new_val;
 }
 
@@ -117,35 +136,169 @@ extern "C" void display(int instr, int pc) {
     ::pc = pc;
 }
 
-extern "C" void display_ref(int rf[]){
-        ::ref[0] = 0;
-    for(int i = 1; i < 32; i++){
+extern "C" void display_ref(int rf[]) {
+    ::ref[0] = 0;
+    for(int i = 1; i < 32; i++) {
         ::ref[i] = rf[i];
     }
 }
 
-void printf_ref(){
+void printf_ref() {
     printf("\033[1;34m======================================== 寄存器状态 ========================================\033[0m\n");
-         printf("%-8s   %-14s  %-8s    %-14s  %-8s    %-14s  %-8s    %-14s\n",
-               "名称", "值(十六进制)", 
-               "名称", "值(十六进制)", 
-               "名称", "值(十六进制)", 
-               "名称", "值(十六进制)");
-        printf("---------------------------------------------------------------------------------------------\n");
-        for (int i = 0; i < 32; i += 4) {
-            int end = (i + 4 < 32) ? i + 4 : 32;
-            for (int j = i; j < end; j++) {
-                if (j == 0) {
-                    printf("\033[1;32m%-8s\033[0m  0x%-10.8x  ", regs[j], ref[j]);
-                } else {
-                    printf("%-8s  0x%-10.8x  ", regs[j], ref[j]);
-                }
+    printf("%-8s   %-14s  %-8s    %-14s  %-8s    %-14s  %-8s    %-14s\n",
+           "名称", "值(十六进制)", 
+           "名称", "值(十六进制)", 
+           "名称", "值(十六进制)", 
+           "名称", "值(十六进制)");
+    printf("---------------------------------------------------------------------------------------------\n");
+    for (int i = 0; i < 32; i += 4) {
+        int end = (i + 4 < 32) ? i + 4 : 32;
+        for (int j = i; j < end; j++) {
+            if (j == 0) {
+                printf("\033[1;32m%-8s\033[0m  0x%-10.8x  ", regs[j], ref[j]);
+            } else {
+                printf("%-8s  0x%-10.8x  ", regs[j], ref[j]);
             }
-            printf("\n");
         }
+        printf("\n");
+    }
+    printf("---------------------------------------------------------------------------------------------\n");
+    printf("\033[1;33mPC:       0x%-10.8x\033[0m\n", pc);
+}
 
-        printf("---------------------------------------------------------------------------------------------\n");
-        printf("\033[1;33mPC:        0x%-10.8x\033[0m\n", pc); // PC用黄色突出
+// 反汇编函数
+static const char* disassemble(uint32_t inst) {
+    char* disasm = (char*)malloc(64);
+    uint32_t opcode = inst & 0x7F;
+    uint32_t rd = (inst >> 7) & 0x1F;
+    uint32_t rs1 = (inst >> 15) & 0x1F;
+    uint32_t rs2 = (inst >> 20) & 0x1F;
+    uint32_t funct3 = (inst >> 12) & 0x7;
+    uint32_t funct7 = inst >> 25;
+    int32_t imm_i = (int32_t)(inst >> 20);
+    int32_t imm_s = ((inst >> 25) << 5) | ((inst >> 7) & 0x1F);
+    imm_s = (imm_s << 20) >> 20;
+    int32_t imm_b = ((inst >> 31) << 12) | ((inst >> 7) & 0x1) << 11 |
+                    ((inst >> 25) & 0x3F) << 5 | ((inst >> 8) & 0xF) << 1;
+    imm_b = (imm_b << 19) >> 19;
+    int32_t imm_u = inst & 0xFFFFF000;
+    int32_t imm_j = ((inst >> 31) << 20) | ((inst >> 12) & 0xFF) << 12 |
+                    ((inst >> 20) & 0x1) << 11 | ((inst >> 21) & 0x3FF) << 1;
+    imm_j = (imm_j << 11) >> 11;
+
+    switch (opcode) {
+        case 0x33: // R-type
+            switch (funct3) {
+                case 0x0:
+                    if (funct7 == 0x00) snprintf(disasm, 64, "add   %s, %s, %s", regs[rd], regs[rs1], regs[rs2]);
+                    else if (funct7 == 0x20) snprintf(disasm, 64, "sub   %s, %s, %s", regs[rd], regs[rs1], regs[rs2]);
+                    else snprintf(disasm, 64, "unknown");
+                    break;
+                case 0x1: snprintf(disasm, 64, "sll   %s, %s, %s", regs[rd], regs[rs1], regs[rs2]); break;
+                case 0x2: snprintf(disasm, 64, "slt   %s, %s, %s", regs[rd], regs[rs1], regs[rs2]); break;
+                case 0x3: snprintf(disasm, 64, "sltu  %s, %s, %s", regs[rd], regs[rs1], regs[rs2]); break;
+                case 0x4: snprintf(disasm, 64, "xor   %s, %s, %s", regs[rd], regs[rs1], regs[rs2]); break;
+                case 0x5:
+                    if (funct7 == 0x00) snprintf(disasm, 64, "srl   %s, %s, %s", regs[rd], regs[rs1], regs[rs2]);
+                    else if (funct7 == 0x20) snprintf(disasm, 64, "sra   %s, %s, %s", regs[rd], regs[rs1], regs[rs2]);
+                    else snprintf(disasm, 64, "unknown");
+                    break;
+                case 0x6: snprintf(disasm, 64, "or    %s, %s, %s", regs[rd], regs[rs1], regs[rs2]); break;
+                case 0x7: snprintf(disasm, 64, "and   %s, %s, %s", regs[rd], regs[rs1], regs[rs2]); break;
+                default: snprintf(disasm, 64, "unknown");
+            }
+            break;
+        case 0x13: // I-type (运算)
+            switch (funct3) {
+                case 0x0: snprintf(disasm, 64, "addi  %s, %s, %d", regs[rd], regs[rs1], imm_i); break;
+                case 0x2: snprintf(disasm, 64, "slti  %s, %s, %d", regs[rd], regs[rs1], imm_i); break;
+                case 0x3: snprintf(disasm, 64, "sltiu %s, %s, %d", regs[rd], regs[rs1], imm_i); break;
+                case 0x4: snprintf(disasm, 64, "xori  %s, %s, %d", regs[rd], regs[rs1], imm_i); break;
+                case 0x6: snprintf(disasm, 64, "ori   %s, %s, %d", regs[rd], regs[rs1], imm_i); break;
+                case 0x7: snprintf(disasm, 64, "andi  %s, %s, %d", regs[rd], regs[rs1], imm_i); break;
+                case 0x1:
+                    if (funct7 == 0x00) snprintf(disasm, 64, "slli  %s, %s, %d", regs[rd], regs[rs1], imm_i & 0x1F);
+                    else snprintf(disasm, 64, "unknown");
+                    break;
+                case 0x5:
+                    if (funct7 == 0x00) snprintf(disasm, 64, "srli  %s, %s, %d", regs[rd], regs[rs1], imm_i & 0x1F);
+                    else if (funct7 == 0x20) snprintf(disasm, 64, "srai  %s, %s, %d", regs[rd], regs[rs1], imm_i & 0x1F);
+                    else snprintf(disasm, 64, "unknown");
+                    break;
+                default: snprintf(disasm, 64, "unknown");
+            }
+            break;
+        case 0x03: // I-type (加载)
+            switch (funct3) {
+                case 0x0: snprintf(disasm, 64, "lb    %s, %d(%s)", regs[rd], imm_i, regs[rs1]); break;
+                case 0x1: snprintf(disasm, 64, "lh    %s, %d(%s)", regs[rd], imm_i, regs[rs1]); break;
+                case 0x2: snprintf(disasm, 64, "lw    %s, %d(%s)", regs[rd], imm_i, regs[rs1]); break;
+                case 0x4: snprintf(disasm, 64, "lbu   %s, %d(%s)", regs[rd], imm_i, regs[rs1]); break;
+                case 0x5: snprintf(disasm, 64, "lhu   %s, %d(%s)", regs[rd], imm_i, regs[rs1]); break;
+                default: snprintf(disasm, 64, "unknown");
+            }
+            break;
+        case 0x23: // S-type
+            switch (funct3) {
+                case 0x0: snprintf(disasm, 64, "sb    %s, %d(%s)", regs[rs2], imm_s, regs[rs1]); break;
+                case 0x1: snprintf(disasm, 64, "sh    %s, %d(%s)", regs[rs2], imm_s, regs[rs1]); break;
+                case 0x2: snprintf(disasm, 64, "sw    %s, %d(%s)", regs[rs2], imm_s, regs[rs1]); break;
+                default: snprintf(disasm, 64, "unknown");
+            }
+            break;
+        case 0x63: // B-type
+            switch (funct3) {
+                case 0x0: snprintf(disasm, 64, "beq   %s, %s, %d", regs[rs1], regs[rs2], imm_b); break;
+                case 0x1: snprintf(disasm, 64, "bne   %s, %s, %d", regs[rs1], regs[rs2], imm_b); break;
+                case 0x4: snprintf(disasm, 64, "blt   %s, %s, %d", regs[rs1], regs[rs2], imm_b); break;
+                case 0x5: snprintf(disasm, 64, "bge   %s, %s, %d", regs[rs1], regs[rs2], imm_b); break;
+                case 0x6: snprintf(disasm, 64, "bltu  %s, %s, %d", regs[rs1], regs[rs2], imm_b); break;
+                case 0x7: snprintf(disasm, 64, "bgeu  %s, %s, %d", regs[rs1], regs[rs2], imm_b); break;
+                default: snprintf(disasm, 64, "unknown");
+            }
+            break;
+        case 0x37: // U-type (lui)
+            snprintf(disasm, 64, "lui   %s, 0x%x", regs[rd], imm_u >> 12); break;
+        case 0x17: // U-type (auipc)
+            snprintf(disasm, 64, "auipc %s, 0x%x", regs[rd], imm_u >> 12); break;
+        case 0x6F: // J-type (jal)
+            snprintf(disasm, 64, "jal   %s, %d", regs[rd], imm_j); break;
+        case 0x67: // I-type (jalr)
+            if (funct3 == 0x0) {
+                if (inst == 0x00008067) snprintf(disasm, 64, "ret");
+                else snprintf(disasm, 64, "jalr  %s, %s, %d", regs[rd], regs[rs1], imm_i);
+            } else {
+                snprintf(disasm, 64, "unknown");
+            }
+            break;
+        case 0x73: // 系统指令
+            if (inst == 0x00000073) snprintf(disasm, 64, "ecall");
+            else if (inst == 0x00100073) snprintf(disasm, 64, "ebreak");
+            else snprintf(disasm, 64, "unknown");
+            break;
+        default:
+            snprintf(disasm, 64, "unknown");
+    }
+    return disasm;
+}
+
+void print_iringbuf() {
+    printf("\033[1;34m====== Instruction Ring Buffer ======\033[0m\n");
+    if (iringbuf_count == 0) {
+        printf("No instructions in ring buffer.\n");
+        return;
+    }
+    int start = (iringbuf_count < IRINGBUF_SIZE) ? 0 : iringbuf_idx;
+    for (int i = 0; i < iringbuf_count; i++) {
+        int idx = (start + i) % IRINGBUF_SIZE;
+        bool is_last = (i == iringbuf_count - 1 && (npc_state.state == NPC_END || npc_state.state == NPC_ABORT));
+        printf("%s0x%08x: %-20s  0x%08x\n",
+               is_last ? "--> " : "    ",
+               iringbuf[idx].pc,
+               iringbuf[idx].disasm,
+               iringbuf[idx].inst);
+    }
+    printf("\033[1;34m====================================\033[0m\n");
 }
 
 bool load_rom_bin(const char* filename) {
@@ -225,15 +378,14 @@ static char* rl_gets() {
     return line_read;
 }
 
-void welcome();
-
 static int cmd_help(char *args);
 static int cmd_q(char *args);
 static int cmd_c(char *args);
 static int cmd_si(char *args);
 static int cmd_info(char *args);
 static int cmd_x(char *args);
-//void trace_inst(uint32_t pc, uint32_t instr);
+static int cmd_itrace(char *args);
+static int cmd_mtrace(char *args);
 
 static struct {
     const char *name;
@@ -244,8 +396,10 @@ static struct {
     { "c", "Continue the execution of the program", cmd_c },
     { "q", "Exit NPC", cmd_q },
     { "si", "Execute the program one or more steps", cmd_si },
-    { "info","Printf the reg and pc",cmd_info},
-    { "x","scan the pmem",cmd_x}
+    { "info", "Printf the reg and pc", cmd_info },
+    { "x", "scan the pmem", cmd_x },
+    { "itrace", "Print the instruction ring buffer", cmd_itrace },
+    { "mtrace", "Print the memory trace", cmd_mtrace}
 };
 
 #define ARRLEN(arr) (int)(sizeof(arr) / sizeof(arr[0]))
@@ -271,9 +425,7 @@ static int cmd_help(char *args) {
 }
 
 static int cmd_q(char *args) {
-    printf("Exiting...\n");
     npc_state.state = NPC_QUIT;
-    printf("状态设为 %d (NPC_QUIT)\n", npc_state.state);
     return -1;
 }
 
@@ -294,12 +446,10 @@ void cpu_exec(uint64_t n) {
     g_print_step = (n < MAX_INST_TO_PRINT);
 
     uint64_t steps = 0;
-    //uint32_t last_pc = top->io_pc; // 假设 Vtop 模块有 io_pc 输出
     int cycles = 0;
     while (steps < n && !ctx->gotFinish() && npc_state.state != NPC_END) {
         top->reset = is_reset && (cycles < 1);
         top->clk = 0;
-        //trace_inst(pc, instr);
         ctx->timeInc(1);
         top->eval();
         top->clk = 1;
@@ -309,8 +459,23 @@ void cpu_exec(uint64_t n) {
         steps++;
         update_virtual_time();
         update_rtc();
-        if(n <= 10) printf("\033[1;33mPC: 0x%x\033[0m    \033[1;34minstr:  0x%x\033[0m\n", pc, instr);
-        
+
+        if (g_print_step) {
+            const char* disasm = disassemble(instr);
+            printf("\033[1;33mPC: 0x%x\033[0m    \033[1;34minstr:  0x%x  %s\033[0m\n", pc, instr, disasm);
+            free((void*)disasm);
+        }
+
+        const char* disasm_buf = disassemble(instr);
+        strncpy(iringbuf[iringbuf_idx].disasm, disasm_buf, 63);
+        iringbuf[iringbuf_idx].disasm[63] = '\0';
+        free((void*)disasm_buf);
+        iringbuf[iringbuf_idx].pc = pc;
+        iringbuf[iringbuf_idx].inst = instr;
+        iringbuf_idx = (iringbuf_idx + 1) % IRINGBUF_SIZE;
+        if (iringbuf_count < IRINGBUF_SIZE) {
+            iringbuf_count++;
+        }
     }
     is_reset = false;
     if (npc_state.state != NPC_END) {
@@ -319,7 +484,6 @@ void cpu_exec(uint64_t n) {
 }
 
 static int cmd_si(char *args) {
-
     int i;
     if (args == NULL) {
         cpu_exec(1);
@@ -334,56 +498,77 @@ static int cmd_si(char *args) {
     return 0;
 }
 
-static int cmd_info(char *args){
-	if(args == NULL){
-		printf("Please input info r\n");
-		return 0;
-	}
-	if(strcmp(args,"r")==0){
+static int cmd_info(char *args) {
+    if (args == NULL) {
+        printf("Please input 'info r'\n");
+        return 0;
+    }
+    if (strcmp(args, "r") == 0) {
         printf_ref();
     }
-	 
-	
-	return 0;
+    return 0;
 }
 
 static int cmd_x(char *args) {
-  char *arg1 = strtok(NULL, " ");
-  if (arg1 == NULL) {
-    printf("Usage: x N EXPR\n");
+    char *arg1 = strtok(NULL, " ");
+    if (arg1 == NULL) {
+        printf("Usage: x N EXPR\n");
+        return 0;
+    }
+    char *arg2 = strtok(NULL, " ");
+    if (arg2 == NULL) {
+        printf("Usage: x N EXPR\n");
+        return 0;
+    }
+    char *endptr1;
+    u_int32_t n = strtol(arg1, &endptr1, 0);
+    u_int32_t expr = strtol(arg2, NULL, 16);
+
+    if (*endptr1 != '\0') {
+        printf("\033[1;31m无效地址格式: %s（十六进制需以0x开头）\033[0m\n", arg1);
+        return 0;
+    }
+    if (n < 0x80000000 || n >= 0x90000000) {
+        printf("\033[1;31m地址 0x%08x 超出RAM范围(0x80000000 ~ 0x8FFFFFFF)!\033[0m\n", n);
+        return 0;
+    }
+
+    printf("\033[1;34m=======内存扫描=======\033[0m\n");
+    printf("----------------------\n");
+    printf("%-10s    %-10s\n", 
+           "地址", "数值");
+    printf("----------------------\n");
+
+    for (int i = 0; i < expr; i++) {
+        uint32_t address = n + i * 4 ;
+        uint32_t data = pmem_read(address-0x80000000, 0);
+        printf("0x%08x  0x%08x\n", address, data);
+    }
+
+    printf("----------------------\n");
     return 0;
-  }
-  char *arg2 = strtok(NULL, " ");
-  if (arg2 == NULL) {
-    printf("Usage: x N EXPR\n");
-    return 0;
-  }
-  int n = strtol(arg1, NULL, 10);
-  int expr = strtol(arg2, NULL, 16);
-
-  if(n < 80000000 || n >= 90000000){
-    printf("\033[1;31m地址 0x%08d 超出RAM范围(起始地址:0x80000000)!\033[0m\n",n);
-    return 0;
-  }
-
-  printf("\033[1;34m======内存扫描======\033[0m\n");
-  printf("--------------------\n");
-  printf("%-10s    %-10s\n", 
-         "地址", "数值");
-  printf("--------------------\n");
-
-
-  for(int i = 0; i < expr; i++){
-    int address = n + i - 80000000;
-    int data = pmem_read(address);
-    printf("0x%d  %x\n", address + 80000000, data);
-  }
-
-  printf("--------------------\n");
-  return 0;
 }
 
+static int cmd_itrace(char *args) {
+    print_iringbuf();
+    return 0;
+}
 
+static int cmd_mtrace(char *args){
+    if(args == NULL){
+        printf("Please input 'mtrace on/off' \n");
+        return 0;
+    }
+    if(strcmp(args, "on") == 0){
+        is_mtrace = true;
+        printf("Mtrace is successfully turned on\n");
+    }
+    else if(strcmp(args, "off") == 0){
+        is_mtrace = false;
+        printf("Mtrace is successfully turned off\n");
+    }
+    return 0;
+}
 
 void sdb_mainloop() {
     for (char *str; (str = rl_gets()) != NULL; ) {
@@ -409,7 +594,6 @@ void sdb_mainloop() {
             while (!ctx->gotFinish() && npc_state.state != NPC_END) {
                 top->reset = (cycles < 1);
                 top->clk = 0;
-                //trace_inst(pc, instr);
                 ctx->timeInc(1);
                 top->eval();
                 top->clk = 1;
@@ -428,11 +612,10 @@ void sdb_mainloop() {
         if (npc_state.state == NPC_QUIT) {
             break;
         }
-        //printf("当前状态: %d\n", npc_state.state);
     }
 }
 
-int main(int argc, char**argv) {
+int main(int argc, char** argv) {
     welcome();
 
     time(&rtc_timep);

@@ -27,10 +27,12 @@ image: image-dep
 	@$(OBJCOPY) -S --set-section-flags .bss=alloc,contents -O binary $(IMAGE).elf $(IMAGE).bin
 
 NPC_HOME ?= /home/ysyxbby/ysyx-workbench/npc
-run: insert-arg
+sim: insert-arg
 	@echo "Running $(NAME) on minirv-npc..."
 	@$(MAKE) -C $(NPC_HOME) clean
 	@mkdir -p $(NPC_HOME)/rom
 	@cp $(IMAGE).bin $(NPC_HOME)/rom/text.bin  # 此时的.bin已经被insert-arg替换过
 	@$(MAKE) -C $(NPC_HOME) LDFLAGS+=-lreadline CFLAGS+=-I$(AM_HOME)/include CFLAGS+=-I$(NEMU_HOME)/include
 	@$(NPC_HOME)/obj_dir/Vtop
+run: insert-arg
+	$(MAKE) -C $(NPC_HOME) ISA=$(ISA) sim ARGS="$(NPCFLAGS)" IMG=$(IMAGE).bin

@@ -80,6 +80,12 @@ typedef struct {
 
 extern NPCState npc_state;
 
+typedef struct {
+    uint32_t pc;
+    uint32_t inst;
+    char disasm[64];
+} InstTrace;
+
 void sdb_mainloop();
 void cpu_exec(uint64_t n);
 static void welcome() {
@@ -87,4 +93,5 @@ static void welcome() {
     printf("Welcome to \033[33;41mminirv\033[0m-NPC!\n");
     printf("For help, type \"help\"\n");
 }
+void print_iringbuf();
 #endif

@@ -1,4 +1,4 @@
-import "DPI-C" function void ebreak(input int a0_val);
+import "DPI-C" function void ebreak(input int a0_val, input int exit_pc);
 import "DPI-C" function int rom_read(input int addr);
 import "DPI-C" function void display(input int instr, input int pc);
 import "DPI-C" function void display_ref(input int rf[]);
@@ -103,13 +103,17 @@ module top(
                    (waddr[1:0] == 2'd2) ? 8'h04 :
                    (waddr[1:0] == 2'd3) ? 8'h08 : 8'h00;
 
-  import "DPI-C" function int pmem_read(input int raddr);
+  import "DPI-C" function int pmem_read(input int raddr, input int valid);
   import "DPI-C" function void pmem_write(
   input int waddr, input int wdata, input byte wmask, input int pc);
   always @(*) begin
     display(instr,pc);
+    rdata = 0;
+
     if (valid) begin // 有读写请求时
-      rdata = pmem_read(raddr-32'h80000000);
+      if((instr_type == 12'd2) || (instr_type == 12'd8))begin
+        rdata = pmem_read(raddr-32'h80000000, {32{valid}});
+      end
       if (wen_ram) begin // 有写请求时
         pmem_write(waddr-32'h80000000, wdata, wmask, pc);
       end
@@ -164,7 +168,8 @@ module top(
 
   always @(posedge clk) begin
       if(instr == 32'h00100073)begin
-        ebreak(a0_val);
+        ebreak(a0_val,pc);
+
       end
   end
 

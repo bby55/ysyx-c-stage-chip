@@ -21,9 +21,9 @@ extern "C" {
     // DPI import at vsrc/top.v:4:30
     extern void display_ref(const svOpenArrayHandle rf);
     // DPI import at vsrc/top.v:1:30
-    extern void ebreak(int a0_val);
+    extern void ebreak(int a0_val, int exit_pc);
     // DPI import at vsrc/top.v:106:31
-    extern int pmem_read(int raddr);
+    extern int pmem_read(int raddr, int valid);
     // DPI import at vsrc/top.v:107:32
     extern void pmem_write(int waddr, int wdata, char wmask, int pc);
     // DPI import at vsrc/top.v:2:29
