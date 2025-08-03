@@ -316,6 +316,11 @@ module RegisterFile #(ADDR_WIDTH = 1, DATA_WIDTH = 1) (
   output [DATA_WIDTH-1:0] a0_val
 );
   reg [DATA_WIDTH-1:0] rf [2**ADDR_WIDTH-1:0];
+  initial begin
+        for (integer i = 0; i < 32; i = i + 1) begin
+            rf[i] = 0; // 初始化为 0
+        end
+    end
   assign rdata1 = (raddr1 == 0)? 0 : rf[raddr1];
   assign rdata2 = (raddr2 == 0)? 0 : rf[raddr2];
   assign a0_val = rf[10];

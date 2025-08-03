@@ -15,29 +15,58 @@
 
 #include <isa.h>
 #include <memory/paddr.h>
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+#include <errno.h>
 
-// this is not consistent with uint8_t
-// but it is ok since we do not access the array directly
-static const uint32_t img [] = {
-  0x00000297,  // auipc t0,0
-  0x00028823,  // sb  zero,16(t0)
-  0x0102c503,  // lbu a0,16(t0)
-  0x00100073,  // ebreak (used as nemu_trap)
-  0xdeadbeef,  // some data
+#define ROM_SIZE 4194304  // 1MB, 匹配 NPC 的 ROM 大小
+
+extern uint8_t pmem[];  // 声明 pmem，定义在 paddr.c 中
+
+static uint32_t img[ROM_SIZE];
+static size_t img_size = 0;
+
+static const uint32_t default_img[] = {
+    0x00000297,  // auipc t0,0
+    0x00028823,  // sb zero,16(t0)
+    0x0102c503,  // lbu a0,16(t0)
+    0x00100073,  // ebreak
+    0xdeadbeef   // some data
 };
 
-static void restart() {
-  /* Set the initial program counter. */
-  cpu.pc = RESET_VECTOR;
+void load_img() {
+    FILE* fp = fopen("/home/ysyxbby/ysyx-workbench/npc/rom/text.bin", "rb");
+    if (fp) {
+        printf("Loading NPC ROM: /home/ysyxbby/ysyx-workbench/npc/rom/text.bin\n");
+        size_t count = 0;
+        uint32_t word;
+        while (count < ROM_SIZE && fread(&word, 4, 1, fp) == 1) {
+            img[count++] = word;
+        }
+        img_size = count;
+        fclose(fp);
+        printf("Loaded %zu instructions from NPC ROM\n", count);
+    } else {
+        printf("No NPC ROM found at /home/ysyxbby/ysyx-workbench/npc/rom/text.bin: %s\n", strerror(errno));
+        memcpy(img, default_img, sizeof(default_img));
+        img_size = sizeof(default_img) / sizeof(default_img[0]);
+    }
 
-  /* The zero register is always 0. */
-  cpu.gpr[0] = 0;
+    if (img_size * 4 > CONFIG_MSIZE) {
+        printf("Error: Image size (%zu bytes) exceeds memory size (%u bytes)\n", 
+               img_size * 4, CONFIG_MSIZE);
+        exit(1);
+    }
+
+    memcpy(pmem + (RESET_VECTOR - CONFIG_MBASE), img, img_size * 4);
+    Log("Loaded image with %zu instructions to " FMT_PADDR, img_size, RESET_VECTOR);
 }
 
 void init_isa() {
-  /* Load built-in image. */
-  memcpy(guest_to_host(RESET_VECTOR), img, sizeof(img));
-
-  /* Initialize this virtual computer system. */
-  restart();
+    cpu.pc = RESET_VECTOR;
+    cpu.gpr[0] = 0;
+    for (int i = 1; i < 32; i++) {
+        cpu.gpr[i] = 0;
+    }
 }
