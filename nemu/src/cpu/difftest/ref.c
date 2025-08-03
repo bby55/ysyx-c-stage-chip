@@ -62,7 +62,9 @@ __EXPORT void difftest_raise_intr(word_t NO) {
 }
   void init_mem();
 __EXPORT void difftest_init(int port) {
-  // 初始化 NEMU 的内存和 ISA
-  init_mem();
-  init_isa();
+    printf("difftest_init: port=%d\n", port);
+    init_mem();
+    printf("init_mem completed\n");
+    init_isa();
+    printf("init_isa completed\n");
 }
