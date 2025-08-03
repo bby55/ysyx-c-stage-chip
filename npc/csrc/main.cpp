@@ -11,6 +11,17 @@
 #include <iostream>
 #include <time.h>
 #include "sdb.h"
+#include <dlfcn.h>
+void *ref_handle = dlopen("nemu/build/riscv32-nemu-interpreter-so", RTLD_LAZY);
+
+void (*ref_difftest_init)(int) = dlsym(ref_handle, "difftest_init");
+void (*ref_difftest_regcpy)(void*, bool) = dlsym(ref_handle, "difftest_regcpy");
+void (*ref_difftest_memcpy)(paddr_t, void*, size_t, bool) = dlsym(ref_handle, "difftest_memcpy");
+void (*ref_difftest_exec)(uint64_t) = dlsym(ref_handle, "difftest_exec");
+// 初始化REF，同步程序镜像和初始寄存器
+ref_difftest_init(0);
+ref_difftest_memcpy(RESET_VECTOR, guest_memory, img_size, DIFFTEST_TO_REF);  // 同步内存
+ref_difftest_regcpy(&npc_regs, DIFFTEST_TO_REF);  // 同步初始寄存器
 
 #define DEVICE_BASE 0x20000000
 #define SERIAL_PORT (DEVICE_BASE + 0x00003f8)
