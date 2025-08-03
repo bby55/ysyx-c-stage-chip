@@ -12,6 +12,7 @@
 #include <time.h>
 #include "sdb.h"
 #include <dlfcn.h>
+#include "../obj_dir/Vtop__Syms.h"
 // DiffTest API 函数指针
 typedef void (*difftest_memcpy_t)(uint32_t addr, void *buf, size_t n, bool direction);
 typedef void (*difftest_regcpy_t)(void *dut, bool direction);
@@ -63,6 +64,7 @@ typedef struct {
 // DiffTest 常量
 #define DIFFTEST_TO_DUT 0
 #define DIFFTEST_TO_REF 1
+#define RESET_VECTOR 0x80000000
 
 static uint32_t ref[32];
 static uint32_t pc;
@@ -72,9 +74,9 @@ static uint32_t instr;
 CPU_state get_npc_regs() {
     CPU_state cpu;
     for (int i = 0; i < 32; i++) {
-        cpu.gpr[i] = top->rootp->top__DOT__exec_unit__DOT__RegFile__DOT__rf[i];
+        cpu.gpr[i] = top->rootp->top__DOT__u_regfile__DOT__rf[i]; // 修正为正确的寄存器文件路径
     }
-    cpu.pc = top->rootp->top__DOT__pc;
+    cpu.pc = top->rootp->top__DOT__pc; // PC 路径正确
     return cpu;
 }
 
