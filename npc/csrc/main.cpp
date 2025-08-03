@@ -11,6 +11,19 @@
 #include <iostream>
 #include <time.h>
 #include "sdb.h"
+#include <dlfcn.h>
+// DiffTest API 函数指针
+typedef void (*difftest_memcpy_t)(uint32_t addr, void *buf, size_t n, bool direction);
+typedef void (*difftest_regcpy_t)(void *dut, bool direction);
+typedef void (*difftest_exec_t)(uint64_t n);
+typedef void (*difftest_init_t)(int);
+
+static void* nemu_so = NULL;
+static difftest_memcpy_t ref_difftest_memcpy = NULL;
+static difftest_regcpy_t ref_difftest_regcpy = NULL;
+static difftest_exec_t ref_difftest_exec = NULL;
+static difftest_init_t ref_difftest_init = NULL;
+
 
 #define DEVICE_BASE 0x20000000
 #define SERIAL_PORT (DEVICE_BASE + 0x00003f8)
@@ -40,9 +53,71 @@ const char *regs[] = {
     "a6", "a7", "s2", "s3", "s4", "s5", "s6", "s7",
     "s8", "s9", "s10", "s11", "t3", "t4", "t5", "t6"
 };
+
+// 与 NEMU 的 CPU_state 兼容的结构体
+typedef struct {
+    uint32_t gpr[32];
+    uint32_t pc;
+} CPU_state;
+
+// DiffTest 常量
+#define DIFFTEST_TO_DUT 0
+#define DIFFTEST_TO_REF 1
+
 static uint32_t ref[32];
 static uint32_t pc;
 static uint32_t instr;
+
+// DiffTest 辅助函数
+CPU_state get_npc_regs() {
+    CPU_state cpu;
+    for (int i = 0; i < 32; i++) {
+        cpu.gpr[i] = top->rootp->top__DOT__exec_unit__DOT__RegFile__DOT__rf[i];
+    }
+    cpu.pc = top->rootp->top__DOT__pc;
+    return cpu;
+}
+
+bool check_regs(const CPU_state* npc, const CPU_state* ref) {
+    if (npc->pc != ref->pc) {
+        printf("PC 不匹配: NPC=0x%x, REF=0x%x\n", npc->pc, ref->pc);
+        return false;
+    }
+    for (int i = 0; i < 32; i++) {
+        if (npc->gpr[i] != ref->gpr[i]) {
+            printf("寄存器 %s 不匹配: NPC=0x%x, REF=0x%x\n", regs[i], npc->gpr[i], ref->gpr[i]);
+            return false;
+        }
+    }
+    return true;
+}
+
+void init_difftest(const char* ref_so_file) {
+    nemu_so = dlopen(ref_so_file, RTLD_LAZY);
+    if (!nemu_so) {
+        printf("无法加载 NEMU 共享库: %s\n", dlerror());
+        exit(1);
+    }
+
+    ref_difftest_memcpy = (difftest_memcpy_t)dlsym(nemu_so, "difftest_memcpy");
+    ref_difftest_regcpy = (difftest_regcpy_t)dlsym(nemu_so, "difftest_regcpy");
+    ref_difftest_exec = (difftest_exec_t)dlsym(nemu_so, "difftest_exec");
+    ref_difftest_init = (difftest_init_t)dlsym(nemu_so, "difftest_init");
+
+    if (!ref_difftest_memcpy || !ref_difftest_regcpy || !ref_difftest_exec || !ref_difftest_init) {
+        printf("无法找到 NEMU 共享库中的 DiffTest 函数\n");
+        dlclose(nemu_so);
+        exit(1);
+    }
+
+    ref_difftest_init(0); // 初始化 NEMU
+    ref_difftest_memcpy(RESET_VECTOR, rom, ROM_SIZE * 4, DIFFTEST_TO_REF); // 拷贝 ROM 到 NEMU
+
+    CPU_state npc_cpu = get_npc_regs();
+    ref_difftest_regcpy(&npc_cpu, DIFFTEST_TO_REF); // 拷贝初始寄存器状态
+}
+
+//NPCState npc_state = { .state = NPC_STOP };
 
 void update_rtc() {
     static uint64_t last_sec = 0;
@@ -438,7 +513,7 @@ static int cmd_c(char *args) {
 static bool g_print_step = false;
 #define MAX_INST_TO_PRINT 10
 
-void cpu_exec(uint64_t n) {
+/*void cpu_exec(uint64_t n) {
     if (npc_state.state == NPC_END || npc_state.state == NPC_ABORT || npc_state.state == NPC_QUIT) {
         printf("程序执行已结束。请退出 NEMU 并重新运行。\n");
         return;
@@ -476,6 +551,64 @@ void cpu_exec(uint64_t n) {
         iringbuf_idx = (iringbuf_idx + 1) % IRINGBUF_SIZE;
         if (iringbuf_count < IRINGBUF_SIZE) {
             iringbuf_count++;
+        }
+    }
+    is_reset = false;
+    if (npc_state.state != NPC_END) {
+        npc_state.state = NPC_STOP;
+    }
+}*/
+
+void cpu_exec(uint64_t n) {
+    if (npc_state.state == NPC_END || npc_state.state == NPC_ABORT || npc_state.state == NPC_QUIT) {
+        printf("程序执行已结束。请退出 NPC 并重新运行。\n");
+        return;
+    }
+    npc_state.state = NPC_RUNNING;
+    g_print_step = (n < MAX_INST_TO_PRINT);
+
+    uint64_t steps = 0;
+    int cycles = 0;
+    while (steps < n && !ctx->gotFinish() && npc_state.state != NPC_END) {
+        top->reset = is_reset && (cycles < 1);
+        top->clk = 0;
+        ctx->timeInc(1);
+        top->eval();
+        top->clk = 1;
+        ctx->timeInc(1);
+        top->eval();
+        cycles++;
+        steps++;
+        update_virtual_time();
+        update_rtc();
+
+        if (g_print_step) {
+            const char* disasm = disassemble(instr);
+            printf("\033[1;33mPC: 0x%x\033[0m    \033[1;34minstr:  0x%x  %s\033[0m\n", pc, instr, disasm);
+            free((void*)disasm);
+        }
+
+        const char* disasm_buf = disassemble(instr);
+        strncpy(iringbuf[iringbuf_idx].disasm, disasm_buf, 63);
+        iringbuf[iringbuf_idx].disasm[63] = '\0';
+        free((void*)disasm_buf);
+        iringbuf[iringbuf_idx].pc = pc;
+        iringbuf[iringbuf_idx].inst = instr;
+        iringbuf_idx = (iringbuf_idx + 1) % IRINGBUF_SIZE;
+        if (iringbuf_count < IRINGBUF_SIZE) {
+            iringbuf_count++;
+        }
+
+        // DiffTest: 执行 REF 并比较状态
+        ref_difftest_exec(1);
+        CPU_state npc_cpu = get_npc_regs();
+        CPU_state ref_cpu;
+        ref_difftest_regcpy(&ref_cpu, DIFFTEST_TO_DUT);
+        if (!check_regs(&npc_cpu, &ref_cpu)) {
+            printf("DiffTest 失败，PC: 0x%x\n", pc);
+            npc_state.state = NPC_ABORT;
+            print_iringbuf();
+            break;
         }
     }
     is_reset = false;
@@ -624,6 +757,10 @@ int main(int argc, char** argv) {
     const char* rom_base = "/home/ysyxbby/ysyx-workbench/npc/rom/text";
     if (!init_rom(rom_base)) return 1;
     if (!init_ram(rom_base)) return 1;
+
+    const char* ref_so_file = "/home/ysyxbby/ysyx-workbench/nemu/build/riscv32-nemu-interpreter-so";
+    init_difftest(ref_so_file);
+
     ctx = new VerilatedContext;
     ctx->commandArgs(argc, argv);
     top = new Vtop(ctx);
