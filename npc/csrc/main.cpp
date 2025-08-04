@@ -536,7 +536,9 @@ void cpu_exec(uint64_t n) {
         }
         npc.pc = pc;
         difftest_regcpy(&npc, true);
-        //if(is_nemu >= 1){
+
+        //if(is_nemu >= 2){
+
             difftest_exec(1);
             
         //}
