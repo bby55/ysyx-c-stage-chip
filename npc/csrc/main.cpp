@@ -504,6 +504,65 @@ static int cmd_c(char *args) {
 static bool g_print_step = false;
 #define MAX_INST_TO_PRINT 10
 
+
+void prepare_npc_before_state(CPUState &npc_before, int is_nemu, uint32_t n_pc, uint32_t pc, const uint32_t *ref) {
+    if (is_nemu <= 1) { // 复位状态
+        for (int i = 0; i < 32; i++) {
+            npc_before.gpr[i] = 0x0;
+        }
+        npc_before.pc = 0x80000000;
+    } else if (n_pc - pc != 4) { // 跳转情况
+        for (int i = 0; i < 32; i++) {
+            npc_before.gpr[i] = ref[i];
+        }
+        npc_before.pc = n_pc;
+    } else { // 正常执行
+        for (int i = 0; i < 32; i++) {
+            npc_before.gpr[i] = ref[i];
+        }
+        npc_before.pc = pc + 4;
+    }
+}
+
+void sync_npc_to_nemu(CPUState &npc_before) {
+    difftest_regcpy(&npc_before, true);
+}
+
+void execute_nemu_step() {
+    difftest_exec(1);
+}
+
+void get_nemu_result(CPUState &ref_nemu) {
+    difftest_regcpy(&ref_nemu, false); // REF → NPC
+}
+
+bool check_diff_result(const CPUState &npc, const CPUState &ref_nemu, int is_nemu, uint32_t pc) {
+    if (memcmp(&npc, &ref_nemu, sizeof(npc)) != 0 && is_nemu != 1) {
+        printf("\n❌ DiffTest FAILED at PC = 0x%08x\n", pc);
+        for (int i = 0; i < 32; ++i) {
+            if (npc.gpr[i] != ref_nemu.gpr[i]) {
+                printf("x%-2d: NPC = 0x%08x, NEMU = 0x%08x\n", i, npc.gpr[i], ref_nemu.gpr[i]);
+            }
+        }
+        printf("PC : NPC->dnpc = 0x%08x, NEMU->dnpc = 0x%08x\n", npc.pc, ref_nemu.pc);
+        return true; // 有差异
+    }
+    return false; // 无差异
+}
+
+void update_instruction_trace(uint32_t pc, uint32_t instr, InstTrace *iringbuf, int &iringbuf_idx, int &iringbuf_count) {
+    const char* disasm_buf = disassemble(instr);
+    strncpy(iringbuf[iringbuf_idx].disasm, disasm_buf, 63);
+    iringbuf[iringbuf_idx].disasm[63] = '\0';
+    free((void*)disasm_buf);
+    iringbuf[iringbuf_idx].pc = pc;
+    iringbuf[iringbuf_idx].inst = instr;
+    iringbuf_idx = (iringbuf_idx + 1) % IRINGBUF_SIZE;
+    if (iringbuf_count < IRINGBUF_SIZE) {
+        iringbuf_count++;
+    }
+}
+
 void cpu_exec(uint64_t n) {
     if (npc_state.state == NPC_END || npc_state.state == NPC_ABORT || npc_state.state == NPC_QUIT) {
         printf("程序执行已结束。请退出 NEMU 并重新运行。\n");
@@ -516,18 +575,10 @@ void cpu_exec(uint64_t n) {
     int cycles = 0;
     CPUState npc_before;
     while (steps < n && !ctx->gotFinish() && npc_state.state != NPC_END) {
-        if(is_nemu <= 1){
-            for (int i = 0; i < 32; i++) {
-                npc_before.gpr[i] = 0x0;
-                }
-            npc_before.pc = 0x80000000;
-        }else{
-            for (int i = 0; i < 32; i++) {
-                npc_before.gpr[i] = ref[i];
-                }
-            npc_before.pc = pc;
-         }
-        printf("PC_BEFOR:0x%x\n",npc_before.pc);
+        // 准备NPC执行前状态
+        prepare_npc_before_state(npc_before, ::is_nemu, n_pc, pc, ref);
+
+        // 驱动时钟
         top->reset = is_reset && (cycles < 1);
         top->clk = 0;
         ctx->timeInc(1);
@@ -541,57 +592,47 @@ void cpu_exec(uint64_t n) {
         steps++;
         update_virtual_time();
         update_rtc();
-        ::is_nemu = is_nemu + 1;
-        printf("NEMU:%d\n",is_nemu);
+        ::is_nemu = ::is_nemu + 1;
         
+        // 准备NPC执行后状态
         CPUState npc;
         for (int i = 0; i < 32; i++) {
             npc.gpr[i] = ref[i];
         }
         npc.pc = n_pc;
-        printf("npc.pc:0x%x\n",npc.pc);
-        difftest_regcpy(&npc_before, true);
 
-        difftest_exec(1);
+        // 同步到NEMU
+        sync_npc_to_nemu(npc_before);
 
+        // 执行NEMU步骤
+        execute_nemu_step();
+
+        // 获取NEMU结果
         CPUState ref_nemu;
-        difftest_regcpy(&ref_nemu, false); // REF → NPC
+        get_nemu_result(ref_nemu);
         
+        // 打印指令信息
         if (g_print_step) {
             const char* disasm = disassemble(instr);
             printf("\033[1;33mPC: 0x%x\033[0m    \033[1;34minstr:  0x%x  %s\033[0m\n", pc, instr, disasm);
             free((void*)disasm);
         }
-        //ref_nemu.pc = ref_nemu.pc + 0x4;
-        if (memcmp(&npc, &ref_nemu, sizeof(npc)) != 0 && is_nemu != 1) {
-            printf("\n❌ DiffTest FAILED at PC = 0x%08x\n", npc.pc);
-            for (int i = 0; i < 32; ++i) {
-                if (npc.gpr[i] != ref_nemu.gpr[i]) {
-                    printf("x%-2d: NPC = 0x%08x, NEMU = 0x%08x\n", i, npc.gpr[i], ref_nemu.gpr[i]);
-            }
-            }
-            printf("PC : NPC = 0x%08x, NEMU = 0x%08x\n", npc.pc, ref_nemu.pc);
+
+        // 检查差异
+        if (check_diff_result(npc, ref_nemu, ::is_nemu, pc)) {
             npc_state.state = NPC_ABORT;
             return;
         }
-        
 
-        const char* disasm_buf = disassemble(instr);
-        strncpy(iringbuf[iringbuf_idx].disasm, disasm_buf, 63);
-        iringbuf[iringbuf_idx].disasm[63] = '\0';
-        free((void*)disasm_buf);
-        iringbuf[iringbuf_idx].pc = pc;
-        iringbuf[iringbuf_idx].inst = instr;
-        iringbuf_idx = (iringbuf_idx + 1) % IRINGBUF_SIZE;
-        if (iringbuf_count < IRINGBUF_SIZE) {
-            iringbuf_count++;
-        }
+        // 更新指令跟踪
+        update_instruction_trace(pc, instr, iringbuf, iringbuf_idx, iringbuf_count);
     }
     is_reset = false;
     if (npc_state.state != NPC_END) {
         npc_state.state = NPC_STOP;
     }
 }
+
 
 static int cmd_si(char *args) {
     int i;
