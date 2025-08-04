@@ -514,7 +514,20 @@ void cpu_exec(uint64_t n) {
 
     uint64_t steps = 0;
     int cycles = 0;
+    CPUState npc_before;
     while (steps < n && !ctx->gotFinish() && npc_state.state != NPC_END) {
+        if(is_nemu <= 1){
+            for (int i = 0; i < 32; i++) {
+                npc_before.gpr[i] = 0x0;
+                }
+            npc_before.pc = 0x80000000;
+        }else{
+            for (int i = 0; i < 32; i++) {
+                npc_before.gpr[i] = ref[i];
+                }
+            npc_before.pc = pc;
+         }
+        printf("PC_BEFOR:0x%x\n",npc_before.pc);
         top->reset = is_reset && (cycles < 1);
         top->clk = 0;
         ctx->timeInc(1);
@@ -530,18 +543,17 @@ void cpu_exec(uint64_t n) {
         update_rtc();
         ::is_nemu = is_nemu + 1;
         printf("NEMU:%d\n",is_nemu);
+        
         CPUState npc;
         for (int i = 0; i < 32; i++) {
             npc.gpr[i] = ref[i];
         }
         npc.pc = pc;
-        difftest_regcpy(&npc, true);
+        printf("npc.pc:0x%x\n",npc.pc);
+        difftest_regcpy(&npc_before, true);
 
-        //if(is_nemu >= 2){
+        difftest_exec(1);
 
-            difftest_exec(1);
-            
-        //}
         CPUState ref_nemu;
         difftest_regcpy(&ref_nemu, false); // REF → NPC
         
@@ -550,8 +562,8 @@ void cpu_exec(uint64_t n) {
             printf("\033[1;33mPC: 0x%x\033[0m    \033[1;34minstr:  0x%x  %s\033[0m\n", pc, instr, disasm);
             free((void*)disasm);
         }
-
-        if (memcmp(&npc, &ref_nemu, sizeof(npc)) != 0) {
+        
+        if (memcmp(&npc, &ref_nemu, sizeof(npc)) != 0 && is_nemu != 1) {
             printf("\n❌ DiffTest FAILED at PC = 0x%08x\n", npc.pc);
             for (int i = 0; i < 32; ++i) {
                 if (npc.gpr[i] != ref_nemu.gpr[i]) {
