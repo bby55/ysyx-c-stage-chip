@@ -31,22 +31,16 @@ __EXPORT void difftest_regcpy(void *dut, bool direction) {
 }
 
 __EXPORT void difftest_exec(uint64_t n) {
-    static int skip_count = 1; // 延缓两个周期
+    /* 删除 skip_count 相关代码 */
     Decode s;
-    if (skip_count > 0) {
-        Log("difftest_exec: skipping cycle %d, cpu.pc = " FMT_WORD, skip_count, cpu.pc);
-        skip_count--;
-        return;
-    }
     for (uint64_t i = 0; i < n; i++) {
         s.pc = cpu.pc;
         s.snpc = s.pc + 4;
-        Log("difftest_exec: cpu.pc = " FMT_WORD ", inst = 0x%x", cpu.pc, paddr_read(cpu.pc, 4));
-        printf("difftest_exec: cpu.pc = " FMT_WORD ", inst = 0x%x\n", cpu.pc, paddr_read(cpu.pc, 4));
-        isa_exec_once(&s); // 使用 exec_once
+        isa_exec_once(&s);
         cpu.pc = s.dnpc;
     }
 }
+
 
 __EXPORT void difftest_raise_intr(word_t NO) {
   assert(0);
