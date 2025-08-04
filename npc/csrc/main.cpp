@@ -520,7 +520,7 @@ void cpu_exec(uint64_t n) {
             for (int i = 0; i < 32; i++) {
                 npc_before.gpr[i] = 0x0;
                 }
-            npc_before.pc = 0x80000000 - 4;
+            npc_before.pc = 0x80000000;
         }else{
             for (int i = 0; i < 32; i++) {
                 npc_before.gpr[i] = ref[i];
@@ -562,7 +562,7 @@ void cpu_exec(uint64_t n) {
             printf("\033[1;33mPC: 0x%x\033[0m    \033[1;34minstr:  0x%x  %s\033[0m\n", pc, instr, disasm);
             free((void*)disasm);
         }
-        ref_nemu.pc = ref_nemu.pc + 0x4;
+        //ref_nemu.pc = ref_nemu.pc + 0x4;
         if (memcmp(&npc, &ref_nemu, sizeof(npc)) != 0 && is_nemu != 1) {
             printf("\n❌ DiffTest FAILED at PC = 0x%08x\n", npc.pc);
             for (int i = 0; i < 32; ++i) {
