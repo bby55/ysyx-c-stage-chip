@@ -41,6 +41,7 @@ __EXPORT void difftest_exec(uint64_t n) {
         s.pc = cpu.pc;
         s.snpc = s.pc + 4;
         Log("difftest_exec: cpu.pc = " FMT_WORD ", inst = 0x%x", cpu.pc, paddr_read(cpu.pc, 4));
+        printf("difftest_exec: cpu.pc = " FMT_WORD ", inst = 0x%x\n", cpu.pc, paddr_read(cpu.pc, 4));
         isa_exec_once(&s); // 使用 exec_once
         cpu.pc = s.dnpc;
     }
