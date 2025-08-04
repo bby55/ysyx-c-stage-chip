@@ -520,7 +520,7 @@ void cpu_exec(uint64_t n) {
             for (int i = 0; i < 32; i++) {
                 npc_before.gpr[i] = 0x0;
                 }
-            npc_before.pc = 0x80000000;
+            npc_before.pc = 0x80000000 - 4;
         }else{
             for (int i = 0; i < 32; i++) {
                 npc_before.gpr[i] = ref[i];
