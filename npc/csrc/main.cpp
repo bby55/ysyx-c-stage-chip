@@ -536,7 +536,7 @@ void cpu_exec(uint64_t n) {
         npc.pc = pc;
         printf("[DEBUG] npc addr = %p, size = %zu\n", &npc, sizeof(npc));
         printf("sizeof(CPUState) = %zu\n", sizeof(CPUState));
-        //difftest_regcpy(&npc, true);
+        difftest_regcpy(&npc, true);
 
         if (g_print_step) {
             const char* disasm = disassemble(instr);

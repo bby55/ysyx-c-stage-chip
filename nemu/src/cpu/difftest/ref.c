@@ -19,6 +19,7 @@ __EXPORT void difftest_memcpy(paddr_t addr, void *buf, size_t n, bool direction)
 
 __EXPORT void difftest_regcpy(void *dut, bool direction) {
   printf("[NEMU] difftest_regcpy: cpu = %p, dut = %p\n", (void *)&cpu, dut);
+  fflush(stdout);
   CPU_state *npc_cpu = (CPU_state *)dut;
   if (direction == DIFFTEST_TO_REF) {
     memcpy(&cpu.gpr, &npc_cpu->gpr, sizeof(cpu.gpr));
