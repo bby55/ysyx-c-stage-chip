@@ -48,7 +48,7 @@ static VerilatedContext* ctx = NULL;
 static Vtop* top = NULL;
 static bool is_reset = true;
 static bool is_mtrace = false; // 默认关闭mtrace
-
+static int is_nemu = 0;
 #define ROM_SIZE 4194304
 #define RAM_SIZE 4194304
 static uint32_t rom[ROM_SIZE];
@@ -528,16 +528,18 @@ void cpu_exec(uint64_t n) {
         steps++;
         update_virtual_time();
         update_rtc();
-
+        ::is_nemu = is_nemu + 1;
+        printf("NEMU:%d\n",is_nemu);
         CPUState npc;
         for (int i = 0; i < 32; i++) {
             npc.gpr[i] = ref[i];
         }
         npc.pc = pc;
         difftest_regcpy(&npc, true);
-        
-        difftest_exec(1);
-
+        //if(is_nemu >= 1){
+            difftest_exec(1);
+            
+        //}
         CPUState ref_nemu;
         difftest_regcpy(&ref_nemu, false); // REF → NPC
 
