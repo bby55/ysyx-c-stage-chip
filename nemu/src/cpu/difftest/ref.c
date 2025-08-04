@@ -18,8 +18,7 @@ __EXPORT void difftest_memcpy(paddr_t addr, void *buf, size_t n, bool direction)
 }
 
 __EXPORT void difftest_regcpy(void *dut, bool direction) {
-  printf("[NEMU] difftest_regcpy: cpu = %p, dut = %p\n", (void *)&cpu, dut);
-  fflush(stdout);
+
   CPU_state *npc_cpu = (CPU_state *)dut;
   if (direction == DIFFTEST_TO_REF) {
     memcpy(&cpu.gpr, &npc_cpu->gpr, sizeof(cpu.gpr));
@@ -31,13 +30,7 @@ __EXPORT void difftest_regcpy(void *dut, bool direction) {
 }
 
 __EXPORT void difftest_exec(uint64_t n) {
-    static int skip_count = 2; // 延缓两个周期
     Decode s;
-    if (skip_count > 0) {
-        Log("difftest_exec: skipping cycle %d, cpu.pc = " FMT_WORD, skip_count, cpu.pc);
-        skip_count--;
-        return;
-    }
     for (uint64_t i = 0; i < n; i++) {
         s.pc = cpu.pc;
         s.snpc = s.pc + 4;

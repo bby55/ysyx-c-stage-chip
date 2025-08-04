@@ -534,9 +534,12 @@ void cpu_exec(uint64_t n) {
             npc.gpr[i] = ref[i];
         }
         npc.pc = pc;
-        printf("[DEBUG] npc addr = %p, size = %zu\n", &npc, sizeof(npc));
-        printf("sizeof(CPUState) = %zu\n", sizeof(CPUState));
         difftest_regcpy(&npc, true);
+        
+        difftest_exec(1);
+
+        //CPUState ref_nemu;
+        //difftest_regcpy(&ref_nemu, false); // REF → NPC
 
         if (g_print_step) {
             const char* disasm = disassemble(instr);
@@ -708,12 +711,14 @@ void sdb_mainloop() {
 int main(int argc, char** argv) {
     welcome();
 
-    void* handle = dlopen("/home/ysyxbby/ysyx-workbench/nemu/build/riscv32-nemu-interpreter-so", RTLD_LAZY);
+    void* handle = dlopen("/home/ysyxbby/ysyx-workbench/nemu/build/riscv32-nemu-interpreter-so",
+                      RTLD_LAZY);
     if (!handle) { printf("dlopen failed\n"); return 1; }
-    difftest_init_t  difftest_init  = (difftest_init_t)dlsym(handle, "difftest_init");
-    difftest_memcpy_t difftest_memcpy = (difftest_memcpy_t)dlsym(handle, "difftest_memcpy");
-    difftest_regcpy_t difftest_regcpy = (difftest_regcpy_t)dlsym(handle, "difftest_regcpy");
-    difftest_exec_t  difftest_exec  = (difftest_exec_t)dlsym(handle, "difftest_exec");
+    difftest_init  = (difftest_init_t)dlsym(handle, "difftest_init");
+    difftest_memcpy = (difftest_memcpy_t)dlsym(handle, "difftest_memcpy");
+    difftest_regcpy = (difftest_regcpy_t)dlsym(handle, "difftest_regcpy");
+    difftest_exec  = (difftest_exec_t)dlsym(handle, "difftest_exec");
+
     difftest_init(0);  // 初始化 NEMU
     CPUState ref;
     difftest_regcpy(&ref, false);  // 把 NEMU 的寄存器拷到 ref
