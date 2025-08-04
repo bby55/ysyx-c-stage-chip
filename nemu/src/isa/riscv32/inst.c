@@ -55,6 +55,7 @@ static void decode_operand(Decode *s, int *rd, word_t *src1, word_t *src2, word_
 
 static int decode_exec(Decode *s) {
   s->dnpc = s->snpc;
+  printf("111111\n");
 
 #define INSTPAT_INST(s) ((s)->isa.inst)
 #define INSTPAT_MATCH(s, name, type, ... /* execute body */ ) { \
@@ -126,7 +127,7 @@ static int decode_exec(Decode *s) {
 }
 void trace_inst(word_t pc, uint32_t inst);
 int isa_exec_once(Decode *s) {
-  printf("111111\n");
+  
   s->isa.inst = inst_fetch(&s->snpc, 4);
   IFDEF(CONFIG_ITRACE, trace_inst(s->pc, s->isa.inst));
   return decode_exec(s);
