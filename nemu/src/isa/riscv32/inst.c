@@ -126,9 +126,7 @@ static int decode_exec(Decode *s) {
 }
 void trace_inst(word_t pc, uint32_t inst);
 int isa_exec_once(Decode *s) {
-  printf("pc:%ls\n",&s->snpc);
   s->isa.inst = inst_fetch(&s->snpc, 4);
-  printf("inst:%x\n",s->isa.inst);
   IFDEF(CONFIG_ITRACE, trace_inst(s->pc, s->isa.inst));
   return decode_exec(s);
 }
