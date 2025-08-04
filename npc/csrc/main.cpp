@@ -538,9 +538,20 @@ void cpu_exec(uint64_t n) {
         
         difftest_exec(1);
 
-        //CPUState ref_nemu;
-        //difftest_regcpy(&ref_nemu, false); // REF → NPC
+        CPUState ref_nemu;
+        difftest_regcpy(&ref_nemu, false); // REF → NPC
 
+        if (memcmp(&npc, &ref_nemu, sizeof(npc)) != 0) {
+            printf("\n❌ DiffTest FAILED at PC = 0x%08x\n", npc.pc);
+            for (int i = 0; i < 32; ++i) {
+                if (npc.gpr[i] != ref_nemu.gpr[i]) {
+                    printf("x%-2d: NPC = 0x%08x, NEMU = 0x%08x\n", i, npc.gpr[i], ref_nemu.gpr[i]);
+            }
+            }
+            printf("PC : NPC = 0x%08x, NEMU = 0x%08x\n", npc.pc, ref_nemu.pc);
+            npc_state.state = NPC_ABORT;
+            return;
+        }
         if (g_print_step) {
             const char* disasm = disassemble(instr);
             printf("\033[1;33mPC: 0x%x\033[0m    \033[1;34minstr:  0x%x  %s\033[0m\n", pc, instr, disasm);
@@ -722,19 +733,18 @@ int main(int argc, char** argv) {
     difftest_init(0);  // 初始化 NEMU
     CPUState ref;
     difftest_regcpy(&ref, false);  // 把 NEMU 的寄存器拷到 ref
-    static bool first = true;
-    if (first) {
-    // 第一次：把整个内存同步给 NEMU
-    printf("0x%x\n",rom[0]);
-    difftest_memcpy(0x80000000, rom, sizeof(rom), true);  // true = NPC -> REF
-    first = false;
-    }
-
+    
     time(&rtc_timep);
     rtc_tm = gmtime(&rtc_timep);
     const char* rom_base = "/home/ysyxbby/ysyx-workbench/npc/rom/text";
     if (!init_rom(rom_base)) return 1;
     if (!init_ram(rom_base)) return 1;
+    static bool first = true;
+    if (first) {
+    // 第一次：把整个内存同步给 NEMU
+    difftest_memcpy(0x80000000, rom, sizeof(rom), true);  // true = NPC -> REF
+    first = false;
+    }
     ctx = new VerilatedContext;
     ctx->commandArgs(argc, argv);
     tfp = new VerilatedVcdC;
