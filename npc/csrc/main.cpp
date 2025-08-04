@@ -61,7 +61,7 @@ const char *regs[] = {
 };
 static uint32_t ref[32];
 static uint32_t pc;
-static uint32_t npc;
+static uint32_t n_pc;
 static uint32_t instr;
 static int is_print = 0;
 
@@ -162,7 +162,7 @@ extern "C" void pmem_write(int waddr, int wdata, char wmask, int pc) {
 extern "C" void display(int instr, int pc, int npc) {
     ::instr = instr;
     ::pc = pc;
-    ::npc = npc;
+    ::n_pc = npc;
 }
 
 extern "C" void display_ref(
@@ -230,7 +230,7 @@ void printf_ref() {
         printf("\n");
     }
     printf("---------------------------------------------------------------------------------------------\n");
-    printf("\033[1;33mPC:       0x%-10.8x\033[0m\n", npc);
+    printf("\033[1;33mPC:       0x%-10.8x\033[0m\n", n_pc);
 }
 
 // 反汇编函数
@@ -525,7 +525,7 @@ void cpu_exec(uint64_t n) {
             for (int i = 0; i < 32; i++) {
                 npc_before.gpr[i] = ref[i];
                 }
-
+            npc_before.pc = pc;
          }
         printf("PC_BEFOR:0x%x\n",npc_before.pc);
         top->reset = is_reset && (cycles < 1);
@@ -548,8 +548,7 @@ void cpu_exec(uint64_t n) {
         for (int i = 0; i < 32; i++) {
             npc.gpr[i] = ref[i];
         }
-        npc.pc = pc;
-        npc_before.pc = pc;
+        npc.pc = n_pc;
         printf("npc.pc:0x%x\n",npc.pc);
         difftest_regcpy(&npc_before, true);
 

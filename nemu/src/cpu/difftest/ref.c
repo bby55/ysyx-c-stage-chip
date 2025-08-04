@@ -41,7 +41,7 @@ __EXPORT void difftest_exec(uint64_t n) {
     for (uint64_t i = 0; i < n; i++) {
         s.pc = cpu.pc;
         printf("s%x\n",s.pc);
-        s.snpc = s.pc;
+        s.snpc = s.pc + 4;
         isa_exec_once(&s);
         cpu.pc = s.dnpc;
         //printf("cpu%x\n",cpu.pc);
