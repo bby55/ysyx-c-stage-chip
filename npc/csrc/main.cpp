@@ -725,6 +725,7 @@ int main(int argc, char** argv) {
     static bool first = true;
     if (first) {
     // 第一次：把整个内存同步给 NEMU
+    printf("0x%x\n",rom[0]);
     difftest_memcpy(0x80000000, rom, sizeof(rom), true);  // true = NPC -> REF
     first = false;
     }
