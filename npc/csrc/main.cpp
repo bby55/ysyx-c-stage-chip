@@ -525,7 +525,7 @@ void cpu_exec(uint64_t n) {
             for (int i = 0; i < 32; i++) {
                 npc_before.gpr[i] = ref[i];
                 }
-            npc_before.pc = pc;
+
          }
         printf("PC_BEFOR:0x%x\n",npc_before.pc);
         top->reset = is_reset && (cycles < 1);
@@ -549,6 +549,7 @@ void cpu_exec(uint64_t n) {
             npc.gpr[i] = ref[i];
         }
         npc.pc = pc;
+        npc_before.pc = pc;
         printf("npc.pc:0x%x\n",npc.pc);
         difftest_regcpy(&npc_before, true);
 
