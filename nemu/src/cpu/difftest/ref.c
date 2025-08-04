@@ -30,7 +30,13 @@ __EXPORT void difftest_regcpy(void *dut, bool direction) {
 }
 
 __EXPORT void difftest_exec(uint64_t n) {
+    static int skip_count = 1; // 延缓两个周期
     Decode s;
+    if (skip_count > 0) {
+        Log("difftest_exec: skipping cycle %d, cpu.pc = " FMT_WORD, skip_count, cpu.pc);
+        skip_count--;
+        return;
+    }
     for (uint64_t i = 0; i < n; i++) {
         s.pc = cpu.pc;
         s.snpc = s.pc + 4;
