@@ -7,7 +7,144 @@
 
 #include "Vtop___024root.h"
 
-void Vtop___024root___act_sequent__TOP__0(Vtop___024root* vlSelf);
+void Vtop___024root____Vdpiimwrap_top__DOT__pmem_read_TOP(IData/*31:0*/ raddr, IData/*31:0*/ valid, IData/*31:0*/ &pmem_read__Vfuncrtn);
+void Vtop___024root____Vdpiimwrap_top__DOT__pmem_write_TOP(IData/*31:0*/ waddr, IData/*31:0*/ wdata, CData/*7:0*/ wmask, IData/*31:0*/ pc);
+
+VL_INLINE_OPT void Vtop___024root___act_sequent__TOP__0(Vtop___024root* vlSelf) {
+    if (false && vlSelf) {}  // Prevent unused
+    Vtop__Syms* const __restrict vlSymsp VL_ATTR_UNUSED = vlSelf->vlSymsp;
+    VL_DEBUG_IF(VL_DBG_MSGF("+    Vtop___024root___act_sequent__TOP__0\n"); );
+    // Body
+    vlSelf->top__DOT__rd_data = (((((((((0U == (IData)(vlSelf->top__DOT__instr_type)) 
+                                        | (1U == (IData)(vlSelf->top__DOT__instr_type))) 
+                                       | (2U == (IData)(vlSelf->top__DOT__instr_type))) 
+                                      | (3U == (IData)(vlSelf->top__DOT__instr_type))) 
+                                     | (7U == (IData)(vlSelf->top__DOT__instr_type))) 
+                                    | (5U == (IData)(vlSelf->top__DOT__instr_type))) 
+                                   | (6U == (IData)(vlSelf->top__DOT__instr_type))) 
+                                  | (8U == (IData)(vlSelf->top__DOT__instr_type)))
+                                  ? ((0U == (IData)(vlSelf->top__DOT__instr_type))
+                                      ? (vlSelf->top__DOT__rs1_data 
+                                         + vlSelf->top__DOT__imm)
+                                      : ((1U == (IData)(vlSelf->top__DOT__instr_type))
+                                          ? ((IData)(4U) 
+                                             + vlSelf->top__DOT__pc)
+                                          : ((2U == (IData)(vlSelf->top__DOT__instr_type))
+                                              ? vlSelf->top__DOT__rdata
+                                              : ((3U 
+                                                  == (IData)(vlSelf->top__DOT__instr_type))
+                                                  ? vlSelf->top__DOT__rs2_data
+                                                  : 
+                                                 ((7U 
+                                                   == (IData)(vlSelf->top__DOT__instr_type))
+                                                   ? vlSelf->top__DOT__rs2_data
+                                                   : 
+                                                  ((5U 
+                                                    == (IData)(vlSelf->top__DOT__instr_type))
+                                                    ? 
+                                                   (vlSelf->top__DOT__rs1_data 
+                                                    + vlSelf->top__DOT__rs2_data)
+                                                    : 
+                                                   ((6U 
+                                                     == (IData)(vlSelf->top__DOT__instr_type))
+                                                     ? vlSelf->top__DOT__imm
+                                                     : 
+                                                    ((2U 
+                                                      & (IData)(vlSelf->top__DOT__u_alu__DOT__byte_idx))
+                                                      ? 
+                                                     ((1U 
+                                                       & (IData)(vlSelf->top__DOT__u_alu__DOT__byte_idx))
+                                                       ? 
+                                                      (vlSelf->top__DOT__rdata 
+                                                       >> 0x18U)
+                                                       : 
+                                                      (0xffU 
+                                                       & (vlSelf->top__DOT__rdata 
+                                                          >> 0x10U)))
+                                                      : 
+                                                     ((1U 
+                                                       & (IData)(vlSelf->top__DOT__u_alu__DOT__byte_idx))
+                                                       ? 
+                                                      (0xffU 
+                                                       & (vlSelf->top__DOT__rdata 
+                                                          >> 8U))
+                                                       : 
+                                                      (0xffU 
+                                                       & vlSelf->top__DOT__rdata))))))))))
+                                  : 0U);
+    vlSelf->top__DOT__rdata = 0U;
+    if (vlSelf->top__DOT__valid) {
+        if (((2U == (IData)(vlSelf->top__DOT__instr_type)) 
+             | (8U == (IData)(vlSelf->top__DOT__instr_type)))) {
+            Vtop___024root____Vdpiimwrap_top__DOT__pmem_read_TOP(
+                                                                 (((IData)(vlSelf->top__DOT__valid)
+                                                                    ? vlSelf->top__DOT____VdfgTmp_h2f2dbb37__0
+                                                                    : 0x80000000U) 
+                                                                  - (IData)(0x80000000U)), 
+                                                                 (- (IData)((IData)(vlSelf->top__DOT__valid))), vlSelf->__Vfunc_top__DOT__pmem_read__2__Vfuncout);
+            vlSelf->top__DOT__rdata = vlSelf->__Vfunc_top__DOT__pmem_read__2__Vfuncout;
+        }
+        if (vlSelf->top__DOT__wen_ram) {
+            Vtop___024root____Vdpiimwrap_top__DOT__pmem_write_TOP(
+                                                                  (((IData)(vlSelf->top__DOT__wen_ram)
+                                                                     ? vlSelf->top__DOT____VdfgTmp_h2f2dbb37__0
+                                                                     : 0x80000000U) 
+                                                                   - (IData)(0x80000000U)), 
+                                                                  ((3U 
+                                                                    == (IData)(vlSelf->top__DOT__instr_type))
+                                                                    ? vlSelf->top__DOT__rd_data
+                                                                    : 
+                                                                   ((7U 
+                                                                     == (IData)(vlSelf->top__DOT__instr_type))
+                                                                     ? 
+                                                                    ((0U 
+                                                                      == (IData)(vlSelf->top__DOT____VdfgTmp_ha2850746__0))
+                                                                      ? 
+                                                                     (0xffU 
+                                                                      & vlSelf->top__DOT__rd_data)
+                                                                      : 
+                                                                     ((1U 
+                                                                       == (IData)(vlSelf->top__DOT____VdfgTmp_ha2850746__0))
+                                                                       ? 
+                                                                      (0xff00U 
+                                                                       & (vlSelf->top__DOT__rd_data 
+                                                                          << 8U))
+                                                                       : 
+                                                                      ((2U 
+                                                                        == (IData)(vlSelf->top__DOT____VdfgTmp_ha2850746__0))
+                                                                        ? 
+                                                                       (0xff0000U 
+                                                                        & (vlSelf->top__DOT__rd_data 
+                                                                           << 0x10U))
+                                                                        : 
+                                                                       (vlSelf->top__DOT__rd_data 
+                                                                        << 0x18U))))
+                                                                     : 0U)), 
+                                                                  ((3U 
+                                                                    == (IData)(vlSelf->top__DOT__instr_type))
+                                                                    ? 0xfU
+                                                                    : 
+                                                                   ((0U 
+                                                                     == (IData)(vlSelf->top__DOT____VdfgTmp_ha2850746__0))
+                                                                     ? 1U
+                                                                     : 
+                                                                    ((1U 
+                                                                      == (IData)(vlSelf->top__DOT____VdfgTmp_ha2850746__0))
+                                                                      ? 2U
+                                                                      : 
+                                                                     ((2U 
+                                                                       == (IData)(vlSelf->top__DOT____VdfgTmp_ha2850746__0))
+                                                                       ? 4U
+                                                                       : 
+                                                                      ((3U 
+                                                                        == (IData)(vlSelf->top__DOT____VdfgTmp_ha2850746__0))
+                                                                        ? 8U
+                                                                        : 0U))))), vlSelf->top__DOT__pc);
+        }
+    } else {
+        vlSelf->top__DOT__rdata = 0U;
+    }
+}
 
 void Vtop___024root___eval_act(Vtop___024root* vlSelf) {
     if (false && vlSelf) {}  // Prevent unused

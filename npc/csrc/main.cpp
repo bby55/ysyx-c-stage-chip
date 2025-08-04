@@ -23,6 +23,7 @@ static time_t rtc_timep;
 static uint64_t virtual_us = 0;
 static uint32_t cycle_counter = 0;
 static const uint32_t CYCLES_PER_US = 13;
+static VerilatedVcdC* tfp = NULL;
 
 // Verilator 上下文和模块全局化
 static VerilatedContext* ctx = NULL;
@@ -43,6 +44,7 @@ const char *regs[] = {
 static uint32_t ref[32];
 static uint32_t pc;
 static uint32_t instr;
+static int is_print = 0;
 
 void update_rtc() {
     static uint64_t last_sec = 0;
@@ -67,6 +69,10 @@ void putch(int c) {
 
 
 extern "C" void ebreak(int exit_code, int exit_pc) {
+    if (tfp != NULL) {
+        tfp->close();
+        delete tfp;
+    }
     if (exit_code == 0) {
         printf("Exit PC: %x\n", exit_pc);
         printf("[DPI] ebreak: \033[1;32m HIT GOOD TRAP \033[0m\n");        
@@ -484,7 +490,7 @@ void cpu_exec(uint64_t n) {
         return;
     }
     npc_state.state = NPC_RUNNING;
-    g_print_step = (n <= MAX_INST_TO_PRINT);
+    g_print_step = (n <= MAX_INST_TO_PRINT && is_print);
 
     uint64_t steps = 0;
     int cycles = 0;
@@ -493,9 +499,11 @@ void cpu_exec(uint64_t n) {
         top->clk = 0;
         ctx->timeInc(1);
         top->eval();
+        if (tfp != NULL) tfp->dump(ctx->time());
         top->clk = 1;
         ctx->timeInc(1);
         top->eval();
+        if (tfp != NULL) tfp->dump(ctx->time());
         cycles++;
         steps++;
         update_virtual_time();
@@ -526,17 +534,27 @@ void cpu_exec(uint64_t n) {
 
 static int cmd_si(char *args) {
     int i;
-    if (args == NULL) {
-        cpu_exec(1);
-    } else {
-        i = atoi(args);
-        if (i <= 0) {
-            printf("无效步数: %s，请提供正整数。\n", args);
-            return 0;
+    if(is_print != 0){
+        if (args == NULL) {
+            cpu_exec(1);
+            is_print = 1;
+        } else {
+            i = atoi(args);
+            if (i <= 0) {
+                printf("无效步数: %s，请提供正整数。\n", args);
+                return 0;
+            }
+            cpu_exec(i);
+            is_print = 1;
         }
-        cpu_exec(i);
-    }
     return 0;
+    }
+    else{
+        cpu_exec(1);
+        is_print = 1;
+        cpu_exec(1);
+        return 0;
+    }
 }
 
 static int cmd_info(char *args) {
@@ -637,9 +655,11 @@ void sdb_mainloop() {
                 top->clk = 0;
                 ctx->timeInc(1);
                 top->eval();
+                if (tfp != NULL) tfp->dump(ctx->time());
                 top->clk = 1;
                 ctx->timeInc(1);
                 top->eval();
+                if (tfp != NULL) tfp->dump(ctx->time());
                 cycles++;
                 update_virtual_time();
                 update_rtc();
@@ -666,9 +686,18 @@ int main(int argc, char** argv) {
     if (!init_ram(rom_base)) return 1;
     ctx = new VerilatedContext;
     ctx->commandArgs(argc, argv);
-    top = new Vtop(ctx);
+    tfp = new VerilatedVcdC;
+    ctx->traceEverOn(true);  // 启用波形跟踪
+    top = new Vtop(ctx);     // 只创建一次Vtop实例
+    top->trace(tfp, 99);     // 关联波形跟踪到该实例
+    tfp->open("waveform.vcd");  // 打开波形文件
     npc_state.state = NPC_STOP;
     sdb_mainloop();
+
+    if (tfp != NULL) {
+        tfp->close();
+        delete tfp;
+    }
 
     if (npc_state.state == NPC_QUIT) {
         printf("程序已退出。\n");

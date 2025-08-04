@@ -59,7 +59,7 @@ class Vtop___024root final : public VerilatedModule {
         IData/*31:0*/ top__DOT__i1__DOT__i0__DOT__lut_out;
         IData/*31:0*/ top__DOT__i3__DOT__i0__DOT__lut_out;
         IData/*31:0*/ top__DOT__u_regfile__DOT__unnamedblk1__DOT__i;
-        IData/*31:0*/ __Vfunc_rom_read__0__Vfuncout;
+        IData/*31:0*/ __Vfunc_rom_read__1__Vfuncout;
         IData/*31:0*/ __Vfunc_top__DOT__pmem_read__2__Vfuncout;
         IData/*31:0*/ __Vtrigrprev__TOP__top__DOT__rdata;
         IData/*31:0*/ __VstlIterCount;

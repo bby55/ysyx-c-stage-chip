@@ -59,7 +59,9 @@ module top(
   );
 
   
-  
+  always @(posedge clk)begin
+    display(instr,pc);
+  end
   
   assign rom_index = (pc < 32'h80000000)? (pc >> 2) : (pc - 32'h80000000) >> 2;
   /*Rom #(
@@ -117,7 +119,7 @@ module top(
   import "DPI-C" function void pmem_write(
   input int waddr, input int wdata, input byte wmask, input int pc);
   always @(*) begin
-    display(instr,pc);
+    
     rdata = 0;
 
     if (valid) begin // 有读写请求时
@@ -339,7 +341,7 @@ module RegisterFile #(ADDR_WIDTH = 1, DATA_WIDTH = 1) (
   end
 
   
-  always @(posedge clk) begin
+  always @(*) begin
     $display(rf[2]);
     display_ref(
         rf[0], rf[1], rf[2], rf[3],
