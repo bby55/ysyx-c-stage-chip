@@ -12,9 +12,6 @@ class Vtop__Syms;
 class Vtop___024unit final : public VerilatedModule {
   public:
 
-    // DESIGN SPECIFIC STATE
-    CData/*0:0*/ __VmonitorOff;
-
     // INTERNAL VARIABLES
     Vtop__Syms* const vlSymsp;
 

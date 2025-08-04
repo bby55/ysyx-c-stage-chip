@@ -47,9 +47,9 @@ module top(
   wire wen;
   wire [9:0] opcode_funct3;
   wire [31:0] a0_val; 
-  initial begin
+  /*initial begin
     $monitor("PC=%h instr=%h raddr=%h", pc,instr,raddr);
-  end
+  end*/
   PC #(.PC_START(32'h80000000)
   )u_pc (
     .clk(clk),
@@ -342,7 +342,6 @@ module RegisterFile #(ADDR_WIDTH = 1, DATA_WIDTH = 1) (
 
   
   always @(*) begin
-    $display(rf[2]);
     display_ref(
         rf[0], rf[1], rf[2], rf[3],
         rf[4], rf[5], rf[6], rf[7],

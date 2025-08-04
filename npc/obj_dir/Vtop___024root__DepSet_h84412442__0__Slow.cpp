@@ -40,8 +40,6 @@ VL_ATTR_COLD void Vtop___024root___stl_sequent__TOP__0(Vtop___024root* vlSelf) {
     Vtop__Syms* const __restrict vlSymsp VL_ATTR_UNUSED = vlSelf->vlSymsp;
     VL_DEBUG_IF(VL_DBG_MSGF("+    Vtop___024root___stl_sequent__TOP__0\n"); );
     // Body
-    VL_WRITEF("%10#\n",32,vlSelf->top__DOT__u_regfile__DOT__rf
-              [2U]);
     Vtop___024unit____Vdpiimwrap_display_ref_TOP____024unit(
                                                             vlSelf->top__DOT__u_regfile__DOT__rf
                                                             [0U], 
@@ -527,12 +525,6 @@ VL_ATTR_COLD void Vtop___024root___stl_sequent__TOP__0(Vtop___024root* vlSelf) {
                                               ? ((IData)(0x80000000U) 
                                                  + vlSelf->top__DOT____VdfgTmp_h2f2dbb37__0)
                                               : vlSelf->top__DOT____VdfgTmp_h2f2dbb37__0))));
-    if (VL_UNLIKELY((1U & (~ (IData)(vlSymsp->TOP____024unit.__VmonitorOff))))) {
-        VL_WRITEF("PC=%x instr=%x raddr=%x\n",32,vlSelf->top__DOT__pc,
-                  32,vlSelf->top__DOT__instr,32,((IData)(vlSelf->top__DOT__valid)
-                                                  ? vlSelf->top__DOT____VdfgTmp_h2f2dbb37__0
-                                                  : 0x80000000U));
-    }
     vlSelf->top__DOT__i3__DOT__i0__DOT__data_list[0U] 
         = ((0x80000000U > vlSelf->top__DOT__rs1_data)
             ? ((IData)(0x80000000U) + vlSelf->top__DOT____VdfgTmp_h2f2dbb37__0)

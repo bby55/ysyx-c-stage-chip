@@ -3,8 +3,8 @@ VERILATOR = verilator
 TOP_MODULE = top
 SIM_EXE = obj_dir/V$(TOP_MODULE)
 
-NEMU_LIB_PATH = /home/ysyxbby/ysyx-workbench/nemu
-NEMU_LIB_NAME = riscv32-nemu-interpreter
+NEMU_LIB_PATH = /home/ysyxbby/ysyx-workbench/nemu/build
+NEMU_LIB_NAME = :riscv32-nemu-interpreter-so
 
 # 源文件
 VERILOG_SRC = vsrc/top.v

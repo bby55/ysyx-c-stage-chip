@@ -11,7 +11,24 @@
 #include <iostream>
 #include <time.h>
 #include "sdb.h"
+#include <dlfcn.h>
 
+// 定义函数指针类型
+typedef void (*difftest_init_t)(int);
+typedef void (*difftest_memcpy_t)(uint64_t, void*, size_t, bool);
+typedef void (*difftest_regcpy_t)(void*, bool);
+typedef void (*difftest_exec_t)(uint64_t);
+
+// 定义全局函数指针
+difftest_init_t difftest_init;
+difftest_memcpy_t difftest_memcpy;
+difftest_regcpy_t difftest_regcpy;
+difftest_exec_t difftest_exec;
+
+struct CPUState {
+    uint32_t gpr[32];
+    uint32_t pc;
+} __attribute__((packed));
 
 #define DEVICE_BASE 0x20000000
 #define SERIAL_PORT (DEVICE_BASE + 0x00003f8)
@@ -512,6 +529,15 @@ void cpu_exec(uint64_t n) {
         update_virtual_time();
         update_rtc();
 
+        CPUState npc;
+        for (int i = 0; i < 32; i++) {
+            npc.gpr[i] = ref[i];
+        }
+        npc.pc = pc;
+        printf("[DEBUG] npc addr = %p, size = %zu\n", &npc, sizeof(npc));
+        printf("sizeof(CPUState) = %zu\n", sizeof(CPUState));
+        //difftest_regcpy(&npc, true);
+
         if (g_print_step) {
             const char* disasm = disassemble(instr);
             printf("\033[1;33mPC: 0x%x\033[0m    \033[1;34minstr:  0x%x  %s\033[0m\n", pc, instr, disasm);
@@ -681,6 +707,22 @@ void sdb_mainloop() {
 
 int main(int argc, char** argv) {
     welcome();
+
+    void* handle = dlopen("/home/ysyxbby/ysyx-workbench/nemu/build/riscv32-nemu-interpreter-so", RTLD_LAZY);
+    if (!handle) { printf("dlopen failed\n"); return 1; }
+    difftest_init_t  difftest_init  = (difftest_init_t)dlsym(handle, "difftest_init");
+    difftest_memcpy_t difftest_memcpy = (difftest_memcpy_t)dlsym(handle, "difftest_memcpy");
+    difftest_regcpy_t difftest_regcpy = (difftest_regcpy_t)dlsym(handle, "difftest_regcpy");
+    difftest_exec_t  difftest_exec  = (difftest_exec_t)dlsym(handle, "difftest_exec");
+    difftest_init(0);  // 初始化 NEMU
+    CPUState ref;
+    difftest_regcpy(&ref, false);  // 把 NEMU 的寄存器拷到 ref
+    static bool first = true;
+    if (first) {
+    // 第一次：把整个内存同步给 NEMU
+    difftest_memcpy(0x80000000, ram, sizeof(ram), true);  // true = NPC -> REF
+    first = false;
+    }
 
     time(&rtc_timep);
     rtc_tm = gmtime(&rtc_timep);
