@@ -64,7 +64,7 @@ void Vtop___024root___eval_triggers__act(Vtop___024root* vlSelf) {
 #endif
 }
 
-void Vtop___024unit____Vdpiimwrap_display_TOP____024unit(IData/*31:0*/ instr, IData/*31:0*/ pc);
+void Vtop___024unit____Vdpiimwrap_display_TOP____024unit(IData/*31:0*/ instr, IData/*31:0*/ pc, IData/*31:0*/ npc);
 void Vtop___024unit____Vdpiimwrap_ebreak_TOP____024unit(IData/*31:0*/ a0_val, IData/*31:0*/ exit_pc);
 void Vtop___024unit____Vdpiimwrap_display_ref_TOP____024unit(IData/*31:0*/ rf0, IData/*31:0*/ rf1, IData/*31:0*/ rf2, IData/*31:0*/ rf3, IData/*31:0*/ rf4, IData/*31:0*/ rf5, IData/*31:0*/ rf6, IData/*31:0*/ rf7, IData/*31:0*/ rf8, IData/*31:0*/ rf9, IData/*31:0*/ rf10, IData/*31:0*/ rf11, IData/*31:0*/ rf12, IData/*31:0*/ rf13, IData/*31:0*/ rf14, IData/*31:0*/ rf15, IData/*31:0*/ rf16, IData/*31:0*/ rf17, IData/*31:0*/ rf18, IData/*31:0*/ rf19, IData/*31:0*/ rf20, IData/*31:0*/ rf21, IData/*31:0*/ rf22, IData/*31:0*/ rf23, IData/*31:0*/ rf24, IData/*31:0*/ rf25, IData/*31:0*/ rf26, IData/*31:0*/ rf27, IData/*31:0*/ rf28, IData/*31:0*/ rf29, IData/*31:0*/ rf30, IData/*31:0*/ rf31);
 void Vtop___024unit____Vdpiimwrap_rom_read_TOP____024unit(IData/*31:0*/ addr, IData/*31:0*/ &rom_read__Vfuncrtn);
@@ -82,7 +82,7 @@ VL_INLINE_OPT void Vtop___024root___nba_sequent__TOP__0(Vtop___024root* vlSelf) 
     __Vdlyvset__top__DOT__u_regfile__DOT__rf__v0 = 0;
     // Body
     __Vdlyvset__top__DOT__u_regfile__DOT__rf__v0 = 0U;
-    Vtop___024unit____Vdpiimwrap_display_TOP____024unit(vlSelf->top__DOT__instr, vlSelf->top__DOT__pc);
+    Vtop___024unit____Vdpiimwrap_display_TOP____024unit(vlSelf->top__DOT__instr, vlSelf->top__DOT__pc, vlSelf->top__DOT__pc_next);
     if ((0x100073U == vlSelf->top__DOT__instr)) {
         Vtop___024unit____Vdpiimwrap_ebreak_TOP____024unit(
                                                            vlSelf->top__DOT__u_regfile__DOT__rf

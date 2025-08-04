@@ -12,6 +12,7 @@
 #include <time.h>
 #include "sdb.h"
 
+
 #define DEVICE_BASE 0x20000000
 #define SERIAL_PORT (DEVICE_BASE + 0x00003f8)
 #define TIMER_LO    (DEVICE_BASE + 0x0000048)
@@ -43,6 +44,7 @@ const char *regs[] = {
 };
 static uint32_t ref[32];
 static uint32_t pc;
+static uint32_t npc;
 static uint32_t instr;
 static int is_print = 0;
 
@@ -140,9 +142,10 @@ extern "C" void pmem_write(int waddr, int wdata, char wmask, int pc) {
     ram[addr] = new_val;
 }
 
-extern "C" void display(int instr, int pc) {
+extern "C" void display(int instr, int pc, int npc) {
     ::instr = instr;
     ::pc = pc;
+    ::npc = npc;
 }
 
 extern "C" void display_ref(
@@ -210,7 +213,7 @@ void printf_ref() {
         printf("\n");
     }
     printf("---------------------------------------------------------------------------------------------\n");
-    printf("\033[1;33mPC:       0x%-10.8x\033[0m\n", pc);
+    printf("\033[1;33mPC:       0x%-10.8x\033[0m\n", npc);
 }
 
 // 反汇编函数

@@ -1,6 +1,6 @@
 import "DPI-C" function void ebreak(input int a0_val, input int exit_pc);
 import "DPI-C" function int rom_read(input int addr);
-import "DPI-C" function void display(input int instr, input int pc);
+import "DPI-C" function void display(input int instr, input int pc, input int npc);
 import "DPI-C" function void display_ref(
     input int rf0, input int rf1, input int rf2, input int rf3,
     input int rf4, input int rf5, input int rf6, input int rf7,
@@ -60,7 +60,7 @@ module top(
 
   
   always @(posedge clk)begin
-    display(instr,pc);
+    display(instr,pc,pc_next);
   end
   
   assign rom_index = (pc < 32'h80000000)? (pc >> 2) : (pc - 32'h80000000) >> 2;

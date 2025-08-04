@@ -32,16 +32,18 @@ VL_INLINE_OPT void Vtop___024unit____Vdpiimwrap_rom_read_TOP____024unit(IData/*3
     rom_read__Vfuncrtn = rom_read__Vfuncrtn__Vcvt;
 }
 
-extern "C" void display(int instr, int pc);
+extern "C" void display(int instr, int pc, int npc);
 
-VL_INLINE_OPT void Vtop___024unit____Vdpiimwrap_display_TOP____024unit(IData/*31:0*/ instr, IData/*31:0*/ pc) {
+VL_INLINE_OPT void Vtop___024unit____Vdpiimwrap_display_TOP____024unit(IData/*31:0*/ instr, IData/*31:0*/ pc, IData/*31:0*/ npc) {
     VL_DEBUG_IF(VL_DBG_MSGF("+        Vtop___024unit____Vdpiimwrap_display_TOP____024unit\n"); );
     // Body
     int instr__Vcvt;
     for (size_t instr__Vidx = 0; instr__Vidx < 1; ++instr__Vidx) instr__Vcvt = instr;
     int pc__Vcvt;
     for (size_t pc__Vidx = 0; pc__Vidx < 1; ++pc__Vidx) pc__Vcvt = pc;
-    display(instr__Vcvt, pc__Vcvt);
+    int npc__Vcvt;
+    for (size_t npc__Vidx = 0; npc__Vidx < 1; ++npc__Vidx) npc__Vcvt = npc;
+    display(instr__Vcvt, pc__Vcvt, npc__Vcvt);
 }
 
 extern "C" void display_ref(int rf0, int rf1, int rf2, int rf3, int rf4, int rf5, int rf6, int rf7, int rf8, int rf9, int rf10, int rf11, int rf12, int rf13, int rf14, int rf15, int rf16, int rf17, int rf18, int rf19, int rf20, int rf21, int rf22, int rf23, int rf24, int rf25, int rf26, int rf27, int rf28, int rf29, int rf30, int rf31);

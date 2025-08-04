@@ -35,10 +35,11 @@ VM_PREFIX = Vtop
 VM_MODPREFIX = Vtop
 # User CFLAGS (from -CFLAGS on Verilator command line)
 VM_USER_CFLAGS = \
+	-I/home/ysyxbby/ysyx-workbench/nemu/include \
 
 # User LDLIBS (from -LDFLAGS on Verilator command line)
 VM_USER_LDLIBS = \
-	-lreadline \
+	-lreadline -L/home/ysyxbby/ysyx-workbench/nemu -lriscv32-nemu-interpreter -Wl,-rpath=/home/ysyxbby/ysyx-workbench/nemu \
 
 # User .cpp files (from .cpp's on Verilator command line)
 VM_USER_CLASSES = \

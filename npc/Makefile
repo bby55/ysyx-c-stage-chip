@@ -3,21 +3,27 @@ VERILATOR = verilator
 TOP_MODULE = top
 SIM_EXE = obj_dir/V$(TOP_MODULE)
 
+NEMU_LIB_PATH = /home/ysyxbby/ysyx-workbench/nemu
+NEMU_LIB_NAME = riscv32-nemu-interpreter
+
 # 源文件
 VERILOG_SRC = vsrc/top.v
 CPP_SRC = csrc/main.cpp
 
 # Verilator编译选项
 VERILATOR_FLAGS = \
-	--top-module $(TOP_MODULE) \
-	-cc -trace \
-	-build -exe $(CPP_SRC) \
-	-Wno-EOFNEWLINE \
-	-Wno-DECLFILENAME \
-	-Wno-MULTITOP \
-	-Wno-UNUSEDSIGNAL \
-	-Wno-UNUSEDPARAM \
-	--LDFLAGS "-lreadline"
+    --top-module $(TOP_MODULE) \
+    -cc -trace \
+    -build -exe $(CPP_SRC) \
+    -Wno-EOFNEWLINE \
+    -Wno-DECLFILENAME \
+    -Wno-MULTITOP \
+    -Wno-UNUSEDSIGNAL \
+    -Wno-UNUSEDPARAM \
+    -CFLAGS "-I$(NEMU_LIB_PATH)/include" \
+    --LDFLAGS "-lreadline -L$(NEMU_LIB_PATH) -l$(NEMU_LIB_NAME) -Wl,-rpath=$(NEMU_LIB_PATH)"
+
+
 
 # 默认目标
 .PHONY: all sim clean

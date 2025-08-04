@@ -17,7 +17,7 @@ extern "C" {
 
     // DPI IMPORTS
     // DPI import at vsrc/top.v:3:30
-    extern void display(int instr, int pc);
+    extern void display(int instr, int pc, int npc);
     // DPI import at vsrc/top.v:4:30
     extern void display_ref(int rf0, int rf1, int rf2, int rf3, int rf4, int rf5, int rf6, int rf7, int rf8, int rf9, int rf10, int rf11, int rf12, int rf13, int rf14, int rf15, int rf16, int rf17, int rf18, int rf19, int rf20, int rf21, int rf22, int rf23, int rf24, int rf25, int rf26, int rf27, int rf28, int rf29, int rf30, int rf31);
     // DPI import at vsrc/top.v:1:30
