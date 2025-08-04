@@ -11,27 +11,6 @@
 #include <iostream>
 #include <time.h>
 #include "sdb.h"
-#include <dlfcn.h>
-#include "../obj_dir/Vtop___024root.h"
-// DiffTest API 函数指针
-typedef void (*difftest_memcpy_t)(uint32_t addr, void *buf, size_t n, bool direction);
-typedef void (*difftest_regcpy_t)(void *dut, bool direction);
-typedef void (*difftest_exec_t)(uint64_t n);
-typedef void (*difftest_init_t)(int);
-
-static void* nemu_so = NULL;
-static difftest_memcpy_t ref_difftest_memcpy = NULL;
-static difftest_regcpy_t ref_difftest_regcpy = NULL;
-static difftest_exec_t ref_difftest_exec = NULL;
-static difftest_init_t ref_difftest_init = NULL;
-#define DIFFTEST_TO_DUT 0
-#define DIFFTEST_TO_REF 1
-#define RESET_VECTOR 0x80000000
-
-typedef struct {
-    uint32_t gpr[32];
-    uint32_t pc;
-} CPU_state;
 
 #define DEVICE_BASE 0x20000000
 #define SERIAL_PORT (DEVICE_BASE + 0x00003f8)
@@ -86,68 +65,6 @@ void putch(int c) {
     *(volatile uint8_t *)SERIAL_PORT = c & 0xff;
 }
 
-CPU_state get_npc_regs() {
-    printf("get_npc_regs called\n");
-    CPU_state cpu;
-    for (int i = 0; i < 32; i++) {
-        cpu.gpr[i] = ref[i];
-
-        printf("cpu.gpr = %x ref = %x\n",cpu.gpr[i],ref[i]);
-    }
-    if(pc == 0){
-        cpu.pc = 0x80000000;
-    }else{
-        cpu.pc = pc;
-    }
-    
-    printf("PC = 0x%x\n", cpu.pc);
-    return cpu;
-}
-
-bool check_regs(const CPU_state* npc, const CPU_state* ref) {
-    printf("check_regs called\n");
-   // if (pc != ref->pc) {
-        //printf("PC 不匹配: NPC=0x%x, REF=0x%x\n", pc, ref->pc);
-        //return false;
-    //}
-    for (int i = 0; i < 32; i++) {
-        
-        if (npc->gpr[i] != ref->gpr[i]) {
-            printf("寄存器 %s 不匹配: NPC=0x%x, REF=0x%x\n", regs[i], npc->gpr[i], ref->gpr[i]);
-            return false;
-        }
-    }
-    return true;
-}
-
-void init_difftest(const char* ref_so_file) {
-    printf("init_difftest: loading %s\n", ref_so_file);
-    nemu_so = dlopen(ref_so_file, RTLD_LAZY);
-    if (!nemu_so) {
-        printf("无法加载 NEMU 共享库: %s\n", dlerror());
-        exit(1);
-    }
-
-    ref_difftest_memcpy = (difftest_memcpy_t)dlsym(nemu_so, "difftest_memcpy");
-    ref_difftest_regcpy = (difftest_regcpy_t)dlsym(nemu_so, "difftest_regcpy");
-    ref_difftest_exec = (difftest_exec_t)dlsym(nemu_so, "difftest_exec");
-    ref_difftest_init = (difftest_init_t)dlsym(nemu_so, "difftest_init");
-
-    if (!ref_difftest_memcpy || !ref_difftest_regcpy || !ref_difftest_exec || !ref_difftest_init) {
-        printf("无法找到 NEMU 共享库中的 DiffTest 函数\n");
-        dlclose(nemu_so);
-        exit(1);
-    }
-
-    printf("Calling ref_difftest_init\n");
-    ref_difftest_init(0); // 初始化 NEMU
-    printf("Calling ref_difftest_memcpy\n");
-    ref_difftest_memcpy(RESET_VECTOR, rom, ROM_SIZE * 4, DIFFTEST_TO_REF); // 拷贝 ROM 到 NEMU
-    printf("Calling get_npc_regs\n");
-    CPU_state npc_cpu = get_npc_regs();
-    printf("Calling ref_difftest_regcpy\n");
-    ref_difftest_regcpy(&npc_cpu, DIFFTEST_TO_REF); // 拷贝初始寄存器状态
-}
 
 extern "C" void ebreak(int exit_code, int exit_pc) {
     if (exit_code == 0) {
@@ -222,12 +139,50 @@ extern "C" void display(int instr, int pc) {
     ::pc = pc;
 }
 
-extern "C" void display_ref(int rf[]) {
-    ::ref[0] = 0;
-    for(int i = 1; i < 32; i++) {
-        ::ref[i] = rf[i];
-    }
+extern "C" void display_ref(
+    int rf0, int rf1, int rf2, int rf3,
+    int rf4, int rf5, int rf6, int rf7,
+    int rf8, int rf9, int rf10, int rf11,
+    int rf12, int rf13, int rf14, int rf15,
+    int rf16, int rf17, int rf18, int rf19,
+    int rf20, int rf21, int rf22, int rf23,
+    int rf24, int rf25, int rf26, int rf27,
+    int rf28, int rf29, int rf30, int rf31
+) {
+    ::ref[0] = rf0;
+    ::ref[1] = rf1;
+    ::ref[2] = rf2;
+    ::ref[3] = rf3;
+    ::ref[4] = rf4;
+    ::ref[5] = rf5;
+    ::ref[6] = rf6;
+    ::ref[7] = rf7;
+    ::ref[8] = rf8;
+    ::ref[9] = rf9;
+    ::ref[10] = rf10;
+    ::ref[11] = rf11;
+    ::ref[12] = rf12;
+    ::ref[13] = rf13;
+    ::ref[14] = rf14;
+    ::ref[15] = rf15;
+    ::ref[16] = rf16;
+    ::ref[17] = rf17;
+    ::ref[18] = rf18;
+    ::ref[19] = rf19;
+    ::ref[20] = rf20;
+    ::ref[21] = rf21;
+    ::ref[22] = rf22;
+    ::ref[23] = rf23;
+    ::ref[24] = rf24;
+    ::ref[25] = rf25;
+    ::ref[26] = rf26;
+    ::ref[27] = rf27;
+    ::ref[28] = rf28;
+    ::ref[29] = rf29;
+    ::ref[30] = rf30;
+    ::ref[31] = rf31;
 }
+
 
 void printf_ref() {
     printf("\033[1;34m======================================== 寄存器状态 ========================================\033[0m\n");
@@ -524,18 +479,16 @@ static bool g_print_step = false;
 #define MAX_INST_TO_PRINT 10
 
 void cpu_exec(uint64_t n) {
-    printf("cpu_exec: n=%lu\n", n);
     if (npc_state.state == NPC_END || npc_state.state == NPC_ABORT || npc_state.state == NPC_QUIT) {
-        printf("程序执行已结束。请退出 NPC 并重新运行。\n");
+        printf("程序执行已结束。请退出 NEMU 并重新运行。\n");
         return;
     }
     npc_state.state = NPC_RUNNING;
-    g_print_step = (n < MAX_INST_TO_PRINT);
+    g_print_step = (n <= MAX_INST_TO_PRINT);
 
     uint64_t steps = 0;
     int cycles = 0;
     while (steps < n && !ctx->gotFinish() && npc_state.state != NPC_END) {
-        printf("Cycle %d: reset=%d\n", cycles, top->reset);
         top->reset = is_reset && (cycles < 1);
         top->clk = 0;
         ctx->timeInc(1);
@@ -563,22 +516,6 @@ void cpu_exec(uint64_t n) {
         iringbuf_idx = (iringbuf_idx + 1) % IRINGBUF_SIZE;
         if (iringbuf_count < IRINGBUF_SIZE) {
             iringbuf_count++;
-        }
-
-        // DiffTest: 执行 REF 并比较状态
-        printf("Calling ref_difftest_exec\n");
-        ref_difftest_exec(1);
-        printf("Calling get_npc_regs\n");
-        CPU_state npc_cpu = get_npc_regs();
-        printf("Calling ref_difftest_regcpy\n");
-        CPU_state ref_cpu;
-        ref_difftest_regcpy(&ref_cpu, DIFFTEST_TO_DUT);
-        printf("Calling check_regs\n");
-        if (!check_regs(&npc_cpu, &ref_cpu)) {
-            printf("DiffTest 失败，PC: 0x%x\n", pc);
-            npc_state.state = NPC_ABORT;
-            print_iringbuf();
-            break;
         }
     }
     is_reset = false;
@@ -727,13 +664,9 @@ int main(int argc, char** argv) {
     const char* rom_base = "/home/ysyxbby/ysyx-workbench/npc/rom/text";
     if (!init_rom(rom_base)) return 1;
     if (!init_ram(rom_base)) return 1;
-
-    const char* ref_so_file = "/home/ysyxbby/ysyx-workbench/nemu/build/riscv32-nemu-interpreter-so";
-    init_difftest(ref_so_file);
     ctx = new VerilatedContext;
     ctx->commandArgs(argc, argv);
     top = new Vtop(ctx);
-
     npc_state.state = NPC_STOP;
     sdb_mainloop();
 

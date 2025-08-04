@@ -33,6 +33,9 @@ class Vtop__Syms final : public VerilatedSyms {
     Vtop___024root                 TOP;
     Vtop___024unit                 TOP____024unit;
 
+    // SCOPE NAMES
+    VerilatedScope __Vscope_top;
+
     // CONSTRUCTORS
     Vtop__Syms(VerilatedContext* contextp, const char* namep, Vtop* modelp);
     ~Vtop__Syms();

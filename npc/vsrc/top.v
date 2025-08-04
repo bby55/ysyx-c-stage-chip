@@ -1,7 +1,17 @@
 import "DPI-C" function void ebreak(input int a0_val, input int exit_pc);
 import "DPI-C" function int rom_read(input int addr);
 import "DPI-C" function void display(input int instr, input int pc);
-import "DPI-C" function void display_ref(input int rf[]);
+import "DPI-C" function void display_ref(
+    input int rf0, input int rf1, input int rf2, input int rf3,
+    input int rf4, input int rf5, input int rf6, input int rf7,
+    input int rf8, input int rf9, input int rf10, input int rf11,
+    input int rf12, input int rf13, input int rf14, input int rf15,
+    input int rf16, input int rf17, input int rf18, input int rf19,
+    input int rf20, input int rf21, input int rf22, input int rf23,
+    input int rf24, input int rf25, input int rf26, input int rf27,
+    input int rf28, input int rf29, input int rf30, input int rf31
+);
+
 
 module top(
     input clk,
@@ -37,9 +47,9 @@ module top(
   wire wen;
   wire [9:0] opcode_funct3;
   wire [31:0] a0_val; 
-  /*initial begin
+  initial begin
     $monitor("PC=%h instr=%h raddr=%h", pc,instr,raddr);
-  end*/
+  end
   PC #(.PC_START(32'h80000000)
   )u_pc (
     .clk(clk),
@@ -326,8 +336,23 @@ module RegisterFile #(ADDR_WIDTH = 1, DATA_WIDTH = 1) (
   assign a0_val = rf[10];
   always @(posedge clk) begin
     if (wen & (waddr != 0)) rf[waddr] <= wdata;
-    display_ref(rf);
   end
+
+  
+  always @(posedge clk) begin
+    $display(rf[2]);
+    display_ref(
+        rf[0], rf[1], rf[2], rf[3],
+        rf[4], rf[5], rf[6], rf[7],
+        rf[8], rf[9], rf[10], rf[11],
+        rf[12], rf[13], rf[14], rf[15],
+        rf[16], rf[17], rf[18], rf[19],
+        rf[20], rf[21], rf[22], rf[23],
+        rf[24], rf[25], rf[26], rf[27],
+        rf[28], rf[29], rf[30], rf[31]
+    );
+end
+
   
 endmodule
 
