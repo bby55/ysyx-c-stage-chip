@@ -544,6 +544,12 @@ void cpu_exec(uint64_t n) {
         //}
         CPUState ref_nemu;
         difftest_regcpy(&ref_nemu, false); // REF → NPC
+        
+        if (g_print_step) {
+            const char* disasm = disassemble(instr);
+            printf("\033[1;33mPC: 0x%x\033[0m    \033[1;34minstr:  0x%x  %s\033[0m\n", pc, instr, disasm);
+            free((void*)disasm);
+        }
 
         if (memcmp(&npc, &ref_nemu, sizeof(npc)) != 0) {
             printf("\n❌ DiffTest FAILED at PC = 0x%08x\n", npc.pc);
@@ -556,11 +562,7 @@ void cpu_exec(uint64_t n) {
             npc_state.state = NPC_ABORT;
             return;
         }
-        if (g_print_step) {
-            const char* disasm = disassemble(instr);
-            printf("\033[1;33mPC: 0x%x\033[0m    \033[1;34minstr:  0x%x  %s\033[0m\n", pc, instr, disasm);
-            free((void*)disasm);
-        }
+        
 
         const char* disasm_buf = disassemble(instr);
         strncpy(iringbuf[iringbuf_idx].disasm, disasm_buf, 63);
