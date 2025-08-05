@@ -6,24 +6,24 @@
 #if !defined(__ISA_NATIVE__) || defined(__NATIVE_USE_KLIB__)
 
 #define PRINTF_BUF_SIZE 1024  // 临时缓冲区大小（根据需求调整）
-char buf[1024];
-void putch(char ch);
 
 int printf(const char *fmt, ...) {
+    char buf[PRINTF_BUF_SIZE];  // 临时缓冲区
     va_list ap;
+
     va_start(ap, fmt);
-    
-    int val = vsnprintf(buf, 1024, fmt, ap);
-    char *tmp = buf;
-    while (*tmp != 0) {
-        putch(*tmp);
-        tmp++;
+    // 先通过vsprintf将格式化结果写入buf
+    int len = vsprintf(buf, fmt, ap);
+    va_end(ap);
+
+    // 遍历buf，用putch逐个输出字符（直到终止符'\0'）
+    for (int i = 0; i < len; i++) {
+        putch(buf[i]);  // 调用底层字符输出函数
     }
 
-    va_end(ap);
-    return val;
+    return len;  // 返回输出的字符数
 }
-/*
+
 // 辅助函数：将整数转换为字符串（以10进制为例）
 static int itoa(int num, char *buf) {
     char *start = buf;
@@ -54,69 +54,56 @@ static int itoa(int num, char *buf) {
     }
     return buf - start;  // 返回写入的字符数
 }
-*/
-int sprintf(char *out, const char *fmt, ...) {
-  va_list ap;
-  va_start(ap, fmt);
-  
-  int val = vsnprintf(out, 1024, fmt, ap);
-  va_end(ap);
 
-  return val;
-}
+// 核心：格式化字符串，支持 %d、%s、%%
+int vsprintf(char *out, const char *fmt, va_list ap) {
+    char *start = out;  // 记录缓冲区起始位置（用于计算长度）
 
-int vsnprintf(char *out, size_t n, const char *fmt, va_list ap) {
-    char *start = out;
-    while (n-- && *fmt != '\0') {
-        if (*fmt == '%') {
-            fmt++;
-            if (*fmt == 's') {
-                char *tmp_s = va_arg(ap, char*);
-                while (*tmp_s != '\0') {
-                    *out++ = *tmp_s++;
-                }
-            }
-            else if (*fmt == 'd') {
-                int tmp_int = va_arg(ap, int);
-                if (tmp_int < 0) {
-                    *out++ = '-';
-                    tmp_int = -1 * tmp_int;
-                }
-                int number = tmp_int;
-                int len  = 0;
-                do {
-                    number /= 10;
-                    len++;
-                } while (number);
-                out = out + len - 1;
-                int tmp_len = len;
-                while (tmp_len--) {
-                    int tmp = tmp_int % 10;
-                    *out-- = tmp + 48;
-                    tmp_int /= 10;
-                }
-                out += (len+1);
-            }
-            else if (*fmt == '%') {
-                *out++ = '%';
-            }
-            else if (*fmt == 'c') {
-                char tmp_char = va_arg(ap, int);
-                *out++ = tmp_char;
-            }
-            else {
-                return -1;
-            }
-        }
-        else {
+    for (; *fmt != '\0'; fmt++) {
+        if (*fmt != '%') {
+            // 普通字符直接写入缓冲区
             *out++ = *fmt;
+            continue;
         }
-        fmt++;
+        // 处理格式化占位符
+        switch (*(++fmt)) {
+            case '%':  // 输出 '%' 本身
+                *out++ = '%';
+                break;
+            case 'd':  // 处理整数
+                out += itoa(va_arg(ap, int), out);  // 调用itoa转换
+                break;
+            case 's': {
+    char *s = va_arg(ap, char*);
+    // 临时检查：若指针指向低地址（可能无效），输出标记并退出
+        if ((uintptr_t)s < 0x80000000) {  // 假设有效地址从0x80000000开始
+            break;
+        }
+    // 正常处理（同时添加NULL检查）
+        if (s == NULL) {
+            const char *null_str = "(null)";
+            while (*null_str) *out++ = *null_str++;
+        } else {
+            while (*s) *out++ = *s++;
+        }
+        break;
+        }
+            // 可扩展其他格式符（如%x、%c等）
+            default:
+                *out++ = *fmt;  // 未知格式符直接输出
+                break;
+        }
     }
-    *out = '\0';
-    return out - start;
+    *out = '\0';  // 结尾添加字符串终止符
+    return out - start;  // 返回格式化后的字符数（不含终止符）
 }
-
+int sprintf(char *out, const char *fmt, ...) {
+    va_list ap;
+    va_start(ap, fmt);  // 初始化可变参数列表
+    int len = vsprintf(out, fmt, ap);  // 复用vsprintf的格式化逻辑
+    va_end(ap);  // 清理可变参数
+    return len;  // 返回格式化后的长度
+}
 /*
 static int int_to_str(int num, char *buf) {
     int len = 0;
@@ -197,14 +184,14 @@ int sprintf(char *out, const char *fmt, ...) {
     out[j] = '\0';
     va_end(args);
     return j;
-}
-*/
+}*/
+
 int snprintf(char *out, size_t n, const char *fmt, ...) {
   panic("Not implemented");
 }
-/*
+
 int vsnprintf(char *out, size_t n, const char *fmt, va_list ap) {
   panic("Not implemented");
 }
-*/
+
 #endif
