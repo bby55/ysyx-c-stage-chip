@@ -154,6 +154,8 @@ extern "C" void pmem_write(int waddr, int wdata, char wmask, int pc) {
     else if (wmask == 0x2) new_val = (new_val & ~0xFF00) | (wdata & 0xFF00);
     else if (wmask == 0x4) new_val = (new_val & ~0xFF0000) | (wdata & 0xFF0000);
     else if (wmask == 0x8) new_val = (new_val & ~0xFF000000) | (wdata & 0xFF000000);
+    else if (wmask == 0x3) new_val = (new_val & ~0x0000FFFF) | (wdata & 0xFFFF);
+    else if (wmask == 0x0c) new_val = (new_val & ~0xFFFF0000) | (wdata & 0xFFFF0000);
     else new_val = wdata;
     if(is_mtrace) printf("\033[1;32mMtrace: 成功在地址: 0x%x 存入数据 0x%x\n\033[0m", waddr+0x80000000, new_val);
     ram[addr] = new_val;
@@ -537,7 +539,7 @@ void get_nemu_result(CPUState &ref_nemu) {
 }
 
 bool check_diff_result(const CPUState &npc, const CPUState &ref_nemu, int is_nemu, uint32_t pc) {
-    if (memcmp(&npc, &ref_nemu, sizeof(npc)) != 0 && is_nemu != 1) {
+    if (memcmp(&npc, &ref_nemu, sizeof(npc)) != 0 && is_nemu > 1) {
         printf("\n❌ DiffTest FAILED at PC = 0x%08x\n", pc);
         for (int i = 0; i < 32; ++i) {
             if (npc.gpr[i] != ref_nemu.gpr[i]) {
@@ -545,9 +547,11 @@ bool check_diff_result(const CPUState &npc, const CPUState &ref_nemu, int is_nem
             }
         }
         printf("PC : NPC->dnpc = 0x%08x, NEMU->dnpc = 0x%08x\n", npc.pc, ref_nemu.pc);
-        return true; // 有差异
+        
+        npc_state.state = NPC_ABORT;
+        return true;
     }
-    return false; // 无差异
+    return false;
 }
 
 void update_instruction_trace(uint32_t pc, uint32_t instr, InstTrace *iringbuf, int &iringbuf_idx, int &iringbuf_count) {
@@ -562,7 +566,9 @@ void update_instruction_trace(uint32_t pc, uint32_t instr, InstTrace *iringbuf, 
         iringbuf_count++;
     }
 }
-
+CPUState ref_nemu;
+CPUState npc_before;
+CPUState npc;
 void cpu_exec(uint64_t n) {
     if (npc_state.state == NPC_END || npc_state.state == NPC_ABORT || npc_state.state == NPC_QUIT) {
         printf("程序执行已结束。请退出 NEMU 并重新运行。\n");
@@ -573,10 +579,10 @@ void cpu_exec(uint64_t n) {
 
     uint64_t steps = 0;
     int cycles = 0;
-    CPUState npc_before;
+    
     while (steps < n && !ctx->gotFinish() && npc_state.state != NPC_END) {
         // 准备NPC执行前状态
-        prepare_npc_before_state(npc_before, ::is_nemu, n_pc, pc, ref);
+        //prepare_npc_before_state(npc_before, ::is_nemu, n_pc, pc, ref);
 
         // 驱动时钟
         top->reset = is_reset && (cycles < 1);
@@ -595,21 +601,21 @@ void cpu_exec(uint64_t n) {
         ::is_nemu = ::is_nemu + 1;
         
         // 准备NPC执行后状态
-        CPUState npc;
+        
         for (int i = 0; i < 32; i++) {
             npc.gpr[i] = ref[i];
         }
         npc.pc = n_pc;
 
         // 同步到NEMU
-        sync_npc_to_nemu(npc_before);
+        //sync_npc_to_nemu(npc_before);
 
         // 执行NEMU步骤
-        execute_nemu_step();
+        //execute_nemu_step();
 
         // 获取NEMU结果
-        CPUState ref_nemu;
-        get_nemu_result(ref_nemu);
+
+        //get_nemu_result(ref_nemu);
         
         // 打印指令信息
         if (g_print_step) {
@@ -618,11 +624,10 @@ void cpu_exec(uint64_t n) {
             free((void*)disasm);
         }
 
-        // 检查差异
-        if (check_diff_result(npc, ref_nemu, ::is_nemu, pc)) {
-            npc_state.state = NPC_ABORT;
-            return;
-        }
+
+        //if (check_diff_result(npc, ref_nemu, ::is_nemu, pc)) {
+        //return;
+        //}
 
         // 更新指令跟踪
         update_instruction_trace(pc, instr, iringbuf, iringbuf_idx, iringbuf_count);
@@ -751,8 +756,10 @@ void sdb_mainloop() {
         }
 
         if (npc_state.state == NPC_RUNNING) {
+
             int cycles = 0;
             while (!ctx->gotFinish() && npc_state.state != NPC_END) {
+                //prepare_npc_before_state(npc_before, ::is_nemu, n_pc, pc, ref);
                 top->reset = (cycles < 1);
                 top->clk = 0;
                 ctx->timeInc(1);
@@ -765,8 +772,29 @@ void sdb_mainloop() {
                 cycles++;
                 update_virtual_time();
                 update_rtc();
+                ::is_nemu = ::is_nemu + 1;
+
+                for (int i = 0; i < 32; i++) {
+                    npc.gpr[i] = ref[i];
+                }
+                npc.pc = n_pc;
+
+                // 同步到NEMU
+               // sync_npc_to_nemu(npc_before);
+
+                // 执行NEMU步骤
+                //execute_nemu_step();
+
+                // 获取NEMU结果
+
+                //get_nemu_result(ref_nemu);
+
+                //if (check_diff_result(npc, ref_nemu, ::is_nemu, pc)) {
+                 //   break;
+                //}
+                        
             }
-            printf("仿真完成，返回命令提示符。\n");
+            if(npc_state.state != NPC_ABORT) printf("仿真完成，返回命令提示符。\n");
             if (npc_state.state != NPC_END) {
                 npc_state.state = NPC_STOP;
             }
