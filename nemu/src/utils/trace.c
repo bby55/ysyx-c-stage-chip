@@ -1,4 +1,4 @@
-#include "../../include/common.h"
+/*#include "../../include/common.h"
 
 #define MAX_IRINGBUF 16
 
@@ -48,3 +48,4 @@ void memory_write_dis(paddr_t addr, int len, word_t data)
 {
     printf(ANSI_FMT("Write in memory: ", ANSI_FG_YELLOW) FMT_PADDR "  Length: %d   Write Data: " FMT_WORD "\n", addr, len, data);
 }
+*/
