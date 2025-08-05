@@ -187,7 +187,11 @@ int sprintf(char *out, const char *fmt, ...) {
 }*/
 
 int snprintf(char *out, size_t n, const char *fmt, ...) {
-  panic("Not implemented");
+    va_list ap;
+    va_start(ap, fmt);       // 初始化可变参数列表
+    int len = vsnprintf(out, n, fmt, ap);  // 调用 vsnprintf 处理格式化
+    va_end(ap);
+    return len;
 }
 
 int vsnprintf(char *out, size_t n, const char *fmt, va_list ap) {
@@ -214,13 +218,7 @@ int vsnprintf(char *out, size_t n, const char *fmt, va_list ap) {
                     len++;
                 } while (number);
                 out = out + len - 1;
-                int tmp_len = len;int snprintf(char *out, size_t n, const char *fmt, ...) {
-    va_list ap;
-    va_start(ap, fmt);       // 初始化可变参数列表
-    int len = vsnprintf(out, n, fmt, ap);  // 调用 vsnprintf 处理格式化
-    va_end(ap);
-    return len;
-}
+                int tmp_len = len;
                 while (tmp_len--) {
                     int tmp = tmp_int % 10;
                     *out-- = tmp + 48;
