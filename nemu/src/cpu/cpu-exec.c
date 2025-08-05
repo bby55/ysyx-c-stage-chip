@@ -102,7 +102,7 @@ static void statistic() {
 }
 void display_inst();
 void assert_fail_msg() {
-  display_inst();
+  //display_inst();
   isa_reg_display();
   statistic();
 }
