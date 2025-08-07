@@ -17,6 +17,11 @@
 
 word_t isa_raise_intr(word_t NO, vaddr_t epc) {
 
+  cpu.csr.mstatus &= ~(1<<7);
+  cpu.csr.mstatus |= ((cpu.csr.mstatus&(1<<3))<<4);
+  cpu.csr.mstatus &= ~(1<<3);
+  cpu.csr.mstatus |= ((1<<11)+(1<<12));
+
   if(NO==0){
     epc+=4;
   }
