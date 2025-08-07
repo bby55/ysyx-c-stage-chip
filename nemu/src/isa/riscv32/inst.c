@@ -23,13 +23,13 @@
 #define Mw vaddr_write
 
 static vaddr_t *csr_register(word_t imm) {
+    printf("%x\n",cpu.csr.mcause);
   switch (imm)
   {
   case 0x341: return &(cpu.csr.mepc);
   case 0x342: return &(cpu.csr.mcause);
   case 0x300: return &(cpu.csr.mstatus);
   case 0x305: return &(cpu.csr.mtvec);
-  printf("%x\n",cpu.csr.mcause);
   default: panic("Unknown csr");
   }
 }
