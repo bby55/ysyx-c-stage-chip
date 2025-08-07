@@ -47,15 +47,15 @@ bool isa_difftest_checkregs(CPU_state *ref_r, vaddr_t pc) {
         printf("mstatus is different! ref: 0x%08x, current: 0x%08x\n", ref_r->csr.mstatus, cpu.csr.mstatus);
         return false;
     }
-    if (ref_r->csr.mcause != cpu.csr.mcause) {
+    if (ref_r->csr.mtvec != cpu.csr.mcause) {
         printf("mcause is different! ref: 0x%08x, current: 0x%08x\n", ref_r->csr.mcause, cpu.csr.mcause);
-        //return false;
+        return false;
     }
     if (ref_r->csr.mepc != cpu.csr.mepc) {
         printf("mepc is different! ref: 0x%08x, current: 0x%08x\n", ref_r->csr.mepc, cpu.csr.mepc);
         return false;
     }
-    if (ref_r->csr.mtvec != cpu.csr.mtvec) {
+    if (ref_r->csr.mcause != cpu.csr.mtvec) {
         printf("mtvec is different! ref: 0x%08x, current: 0x%08x\n", ref_r->csr.mtvec, cpu.csr.mtvec);
         return false;
     }
