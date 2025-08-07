@@ -23,7 +23,6 @@
 #define Mw vaddr_write
 
 static vaddr_t *csr_register(word_t imm) {
-    printf("%x\n",cpu.csr.mcause);
   switch (imm)
   {
   case 0x341: return &(cpu.csr.mepc);
