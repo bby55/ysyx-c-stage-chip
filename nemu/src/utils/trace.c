@@ -48,4 +48,15 @@ void memory_write_dis(paddr_t addr, int len, word_t data)
 {
     printf(ANSI_FMT("Write in memory: ", ANSI_FG_YELLOW) FMT_PADDR "  Length: %d   Write Data: " FMT_WORD "\n", addr, len, data);
 }
+
+
+static void etrace() {
+  IFDEF(CONFIG_ETRACE, {
+    printf("\n" 
+      ANSI_FMT("[ETRACE]", ANSI_FG_YELLOW) 
+      "ecall in mepc = " FMT_WORD ", mcause = " FMT_WORD "\n",
+      cpu.csrs.mepc, cpu.csrs.mcause);
+  });
+}
+
 */
