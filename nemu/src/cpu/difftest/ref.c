@@ -6,6 +6,9 @@
 #include <difftest-def.h>
 
 __EXPORT void difftest_memcpy(paddr_t addr, void *buf, size_t n, bool direction) {
+  if(addr == 0xa0000048 || addr == 0xa000004c){
+    return;
+  }
   if (direction == DIFFTEST_TO_REF) {
     for (size_t i = 0; i < n; i++) {
       //printf("0x%x\n",((uint32_t *)buf)[i]);

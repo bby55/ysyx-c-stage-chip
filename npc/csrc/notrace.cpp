@@ -13,17 +13,17 @@
 #include "sdb.h"
 #include <dlfcn.h>
 
-// 定义函数指针类型
-typedef void (*difftest_init_t)(int);
-typedef void (*difftest_memcpy_t)(uint64_t, void*, size_t, bool);
-typedef void (*difftest_regcpy_t)(void*, bool);
-typedef void (*difftest_exec_t)(uint64_t);
+// // 定义函数指针类型
+// typedef void (*difftest_init_t)(int);
+// typedef void (*difftest_memcpy_t)(uint64_t, void*, size_t, bool);
+// typedef void (*difftest_regcpy_t)(void*, bool);
+// typedef void (*difftest_exec_t)(uint64_t);
 
-// 定义全局函数指针
-difftest_init_t difftest_init;
-difftest_memcpy_t difftest_memcpy;
-difftest_regcpy_t difftest_regcpy;
-difftest_exec_t difftest_exec;
+// // 定义全局函数指针
+// difftest_init_t difftest_init;
+// difftest_memcpy_t difftest_memcpy;
+// difftest_regcpy_t difftest_regcpy;
+// difftest_exec_t difftest_exec;
 
 struct CPUState {
     uint32_t gpr[32];
@@ -41,7 +41,7 @@ static time_t rtc_timep;
 static uint64_t virtual_us = 0;
 static uint32_t cycle_counter = 0;
 static const uint32_t CYCLES_PER_US = 13;
-static VerilatedVcdC* tfp = NULL;
+//static VerilatedVcdC* tfp = NULL;
 
 // Verilator 上下文和模块全局化
 static VerilatedContext* ctx = NULL;
@@ -88,10 +88,10 @@ void putch(int c) {
 
 
 extern "C" void ebreak(int exit_code, int exit_pc) {
-    if (tfp != NULL) {
-        tfp->close();
-        delete tfp;
-    }
+    // if (tfp != NULL) {
+    //     tfp->close();
+    //     delete tfp;
+    // }
     if (exit_code == 0) {
         printf("Exit PC: %x\n", exit_pc);
         printf("[DPI] ebreak: \033[1;32m HIT GOOD TRAP \033[0m\n");        
@@ -123,7 +123,6 @@ extern "C" int rom_read(int raddr) {
 }
 
 extern "C" int pmem_read(int raddr, int valid) {
-
     uint32_t data = 0;
     if (raddr == SERIAL_PORT) data = 0;
     else if (raddr == TIMER_LO) data = (uint32_t)(virtual_us & 0xFFFFFFFF);
@@ -140,6 +139,7 @@ extern "C" int pmem_read(int raddr, int valid) {
 }
 
 extern "C" void pmem_write(int waddr, int wdata, char wmask, int pc) {
+
     if (waddr == SERIAL_PORT) {
         if (wmask & 0x1) {
             putchar(wdata & 0xff);
@@ -147,7 +147,12 @@ extern "C" void pmem_write(int waddr, int wdata, char wmask, int pc) {
         }
         return;
     }
-    if (waddr == TIMER_LO || waddr == TIMER_HI) return;
+    
+    if (waddr == TIMER_LO || waddr == TIMER_HI) {
+            printf("0x%x\n",waddr);
+            return;
+    }
+
     int addr = (waddr & ~0x3u) >> 2;
     uint32_t new_val = ram[addr];
     if (wmask == 0x1) new_val = (new_val & ~0xFF) | (wdata & 0xFF);
@@ -526,46 +531,46 @@ void prepare_npc_before_state(CPUState &npc_before, int is_nemu, uint32_t n_pc, 
     }
 }
 
-void sync_npc_to_nemu(CPUState &npc_before) {
-    difftest_regcpy(&npc_before, true);
-}
+// void sync_npc_to_nemu(CPUState &npc_before) {
+//     difftest_regcpy(&npc_before, true);
+// }
 
-void execute_nemu_step() {
-    difftest_exec(1);
-}
+// void execute_nemu_step() {
+//     difftest_exec(1);
+// }
 
-void get_nemu_result(CPUState &ref_nemu) {
-    difftest_regcpy(&ref_nemu, false); // REF → NPC
-}
+// void get_nemu_result(CPUState &ref_nemu) {
+//     difftest_regcpy(&ref_nemu, false); // REF → NPC
+// }
 
-bool check_diff_result(const CPUState &npc, const CPUState &ref_nemu, int is_nemu, uint32_t pc) {
-    if (memcmp(&npc, &ref_nemu, sizeof(npc)) != 0 && is_nemu > 1) {
-        printf("\n❌ DiffTest FAILED at PC = 0x%08x\n", pc);
-        for (int i = 0; i < 32; ++i) {
-            if (npc.gpr[i] != ref_nemu.gpr[i]) {
-                printf("x%-2d: NPC = 0x%08x, NEMU = 0x%08x\n", i, npc.gpr[i], ref_nemu.gpr[i]);
-            }
-        }
-        printf("PC : NPC->dnpc = 0x%08x, NEMU->dnpc = 0x%08x\n", npc.pc, ref_nemu.pc);
+// bool check_diff_result(const CPUState &npc, const CPUState &ref_nemu, int is_nemu, uint32_t pc) {
+//     if (memcmp(&npc, &ref_nemu, sizeof(npc)) != 0 && is_nemu > 1) {
+//         printf("\n❌ DiffTest FAILED at PC = 0x%08x\n", pc);
+//         for (int i = 0; i < 32; ++i) {
+//             if (npc.gpr[i] != ref_nemu.gpr[i]) {
+//                 printf("x%-2d: NPC = 0x%08x, NEMU = 0x%08x\n", i, npc.gpr[i], ref_nemu.gpr[i]);
+//             }
+//         }
+//         printf("PC : NPC->dnpc = 0x%08x, NEMU->dnpc = 0x%08x\n", npc.pc, ref_nemu.pc);
         
-        npc_state.state = NPC_ABORT;
-        return true;
-    }
-    return false;
-}
+//         npc_state.state = NPC_ABORT;
+//         return true;
+//     }
+//     return false;
+// }
 
-void update_instruction_trace(uint32_t pc, uint32_t instr, InstTrace *iringbuf, int &iringbuf_idx, int &iringbuf_count) {
-    const char* disasm_buf = disassemble(instr);
-    strncpy(iringbuf[iringbuf_idx].disasm, disasm_buf, 63);
-    iringbuf[iringbuf_idx].disasm[63] = '\0';
-    free((void*)disasm_buf);
-    iringbuf[iringbuf_idx].pc = pc;
-    iringbuf[iringbuf_idx].inst = instr;
-    iringbuf_idx = (iringbuf_idx + 1) % IRINGBUF_SIZE;
-    if (iringbuf_count < IRINGBUF_SIZE) {
-        iringbuf_count++;
-    }
-}
+// void update_instruction_trace(uint32_t pc, uint32_t instr, InstTrace *iringbuf, int &iringbuf_idx, int &iringbuf_count) {
+//     const char* disasm_buf = disassemble(instr);
+//     strncpy(iringbuf[iringbuf_idx].disasm, disasm_buf, 63);
+//     iringbuf[iringbuf_idx].disasm[63] = '\0';
+//     free((void*)disasm_buf);
+//     iringbuf[iringbuf_idx].pc = pc;
+//     iringbuf[iringbuf_idx].inst = instr;
+//     iringbuf_idx = (iringbuf_idx + 1) % IRINGBUF_SIZE;
+//     if (iringbuf_count < IRINGBUF_SIZE) {
+//         iringbuf_count++;
+//     }
+// }
 CPUState ref_nemu;
 CPUState npc_before;
 CPUState npc;
@@ -582,18 +587,18 @@ void cpu_exec(uint64_t n) {
     
     while (steps < n && !ctx->gotFinish() && npc_state.state != NPC_END) {
         // 准备NPC执行前状态
-        prepare_npc_before_state(npc_before, ::is_nemu, n_pc, pc, ref);
+        //prepare_npc_before_state(npc_before, ::is_nemu, n_pc, pc, ref);
 
         // 驱动时钟
         top->reset = is_reset && (cycles < 1);
         top->clk = 0;
         ctx->timeInc(1);
-        top->eval();
-        if (tfp != NULL) tfp->dump(ctx->time());
+         top->eval();
+        // if (tfp != NULL) tfp->dump(ctx->time());
         top->clk = 1;
         ctx->timeInc(1);
-        top->eval();
-        if (tfp != NULL) tfp->dump(ctx->time());
+         top->eval();
+        // if (tfp != NULL) tfp->dump(ctx->time());
         cycles++;
         steps++;
         update_virtual_time();
@@ -607,15 +612,15 @@ void cpu_exec(uint64_t n) {
         }
         npc.pc = n_pc;
 
-        //同步到NEMU
-        sync_npc_to_nemu(npc_before);
+        // 同步到NEMU
+        //sync_npc_to_nemu(npc_before);
 
-        //执行NEMU步骤
-        execute_nemu_step();
+        // 执行NEMU步骤
+        //execute_nemu_step();
 
-        //获取NEMU结果
+        // 获取NEMU结果
 
-        get_nemu_result(ref_nemu);
+        //get_nemu_result(ref_nemu);
         
         // 打印指令信息
         if (g_print_step) {
@@ -625,12 +630,12 @@ void cpu_exec(uint64_t n) {
         }
 
 
-        if (check_diff_result(npc, ref_nemu, ::is_nemu, pc)) {
-        return;
-        }
+        //if (check_diff_result(npc, ref_nemu, ::is_nemu, pc)) {
+        //return;
+        //}
 
         // 更新指令跟踪
-        update_instruction_trace(pc, instr, iringbuf, iringbuf_idx, iringbuf_count);
+        //update_instruction_trace(pc, instr, iringbuf, iringbuf_idx, iringbuf_count);
     }
     is_reset = false;
     if (npc_state.state != NPC_END) {
@@ -759,16 +764,16 @@ void sdb_mainloop() {
 
             int cycles = 0;
             while (!ctx->gotFinish() && npc_state.state != NPC_END) {
-                prepare_npc_before_state(npc_before, ::is_nemu, n_pc, pc, ref);
+                //prepare_npc_before_state(npc_before, ::is_nemu, n_pc, pc, ref);
                 top->reset = (cycles < 1);
                 top->clk = 0;
                 ctx->timeInc(1);
                 top->eval();
-                if (tfp != NULL) tfp->dump(ctx->time());
+                // if (tfp != NULL) tfp->dump(ctx->time());
                 top->clk = 1;
                 ctx->timeInc(1);
                 top->eval();
-                if (tfp != NULL) tfp->dump(ctx->time());
+                // if (tfp != NULL) tfp->dump(ctx->time());
                 cycles++;
                 update_virtual_time();
                 update_rtc();
@@ -779,19 +784,19 @@ void sdb_mainloop() {
                 }
                 npc.pc = n_pc;
 
-                //同步到NEMU
-               sync_npc_to_nemu(npc_before);
+                // 同步到NEMU
+               // sync_npc_to_nemu(npc_before);
 
-                //执行NEMU步骤
-                execute_nemu_step();
+                // 执行NEMU步骤
+                //execute_nemu_step();
 
-                //获取NEMU结果
+                // 获取NEMU结果
 
-                get_nemu_result(ref_nemu);
+                //get_nemu_result(ref_nemu);
 
-                if (check_diff_result(npc, ref_nemu, ::is_nemu, pc)) {
-                   break;
-                }
+                //if (check_diff_result(npc, ref_nemu, ::is_nemu, pc)) {
+                 //   break;
+                //}
                         
             }
             if(npc_state.state != NPC_ABORT) printf("仿真完成，返回命令提示符。\n");
@@ -809,43 +814,43 @@ void sdb_mainloop() {
 int main(int argc, char** argv) {
     welcome();
 
-    void* handle = dlopen("/home/ysyxbby/ysyx-workbench/nemu/build/riscv32-nemu-interpreter-so",
-                      RTLD_LAZY);
-    if (!handle) { printf("dlopen failed\n"); return 1; }
-    difftest_init  = (difftest_init_t)dlsym(handle, "difftest_init");
-    difftest_memcpy = (difftest_memcpy_t)dlsym(handle, "difftest_memcpy");
-    difftest_regcpy = (difftest_regcpy_t)dlsym(handle, "difftest_regcpy");
-    difftest_exec  = (difftest_exec_t)dlsym(handle, "difftest_exec");
+    // void* handle = dlopen("/home/ysyxbby/ysyx-workbench/nemu/build/riscv32-nemu-interpreter-so",
+    //                   RTLD_LAZY);
+    // if (!handle) { printf("dlopen failed\n"); return 1; }
+    // difftest_init  = (difftest_init_t)dlsym(handle, "difftest_init");
+    // difftest_memcpy = (difftest_memcpy_t)dlsym(handle, "difftest_memcpy");
+    // difftest_regcpy = (difftest_regcpy_t)dlsym(handle, "difftest_regcpy");
+    // difftest_exec  = (difftest_exec_t)dlsym(handle, "difftest_exec");
 
-    difftest_init(0);  // 初始化 NEMU
-    CPUState ref;
-    difftest_regcpy(&ref, false);  // 把 NEMU 的寄存器拷到 ref
+    // difftest_init(0);  // 初始化 NEMU
+    // CPUState ref;
+    // difftest_regcpy(&ref, false);  // 把 NEMU 的寄存器拷到 ref
     
     time(&rtc_timep);
     rtc_tm = gmtime(&rtc_timep);
     const char* rom_base = "/home/ysyxbby/ysyx-workbench/npc/rom/text";
     if (!init_rom(rom_base)) return 1;
     if (!init_ram(rom_base)) return 1;
-    static bool first = true;
-    if (first) {
-    // 第一次：把整个内存同步给 NEMU
-    difftest_memcpy(0x80000000, rom, sizeof(rom), true);  // true = NPC -> REF
-    first = false;
-    }
+    // static bool first = true;
+    // if (first) {
+    // // 第一次：把整个内存同步给 NEMU
+    // difftest_memcpy(0x80000000, rom, sizeof(rom), true);  // true = NPC -> REF
+    // first = false;
+    // }
     ctx = new VerilatedContext;
     ctx->commandArgs(argc, argv);
-    tfp = new VerilatedVcdC;
-    ctx->traceEverOn(true);  // 启用波形跟踪
-    top = new Vtop(ctx);     // 只创建一次Vtop实例
-    top->trace(tfp, 99);     // 关联波形跟踪到该实例
-    tfp->open("waveform.vcd");  // 打开波形文件
+    //tfp = new VerilatedVcdC;
+    // ctx->traceEverOn(true);  // 启用波形跟踪
+     top = new Vtop(ctx);     // 只创建一次Vtop实例
+    // top->trace(tfp, 99);     // 关联波形跟踪到该实例
+    // tfp->open("waveform.vcd");  // 打开波形文件
     npc_state.state = NPC_STOP;
     sdb_mainloop();
 
-    if (tfp != NULL) {
-        tfp->close();
-        delete tfp;
-    }
+    // if (tfp != NULL) {
+    //     tfp->close();
+    //     delete tfp;
+    // }
 
     if (npc_state.state == NPC_QUIT) {
         printf("程序已退出。\n");
