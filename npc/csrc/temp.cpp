@@ -13,17 +13,17 @@
 #include "sdb.h"
 #include <dlfcn.h>
 
-// 定义函数指针类型
-typedef void (*difftest_init_t)(int);
-typedef void (*difftest_memcpy_t)(uint64_t, void*, size_t, bool);
-typedef void (*difftest_regcpy_t)(void*, bool);
-typedef void (*difftest_exec_t)(uint64_t);
+// // 定义函数指针类型
+// typedef void (*difftest_init_t)(int);
+// typedef void (*difftest_memcpy_t)(uint64_t, void*, size_t, bool);
+// typedef void (*difftest_regcpy_t)(void*, bool);
+// typedef void (*difftest_exec_t)(uint64_t);
 
-// 定义全局函数指针
-difftest_init_t difftest_init;
-difftest_memcpy_t difftest_memcpy;
-difftest_regcpy_t difftest_regcpy;
-difftest_exec_t difftest_exec;
+// // 定义全局函数指针
+// difftest_init_t difftest_init;
+// difftest_memcpy_t difftest_memcpy;
+// difftest_regcpy_t difftest_regcpy;
+// difftest_exec_t difftest_exec;
 
 struct CPUState {
     uint32_t gpr[32];
@@ -526,46 +526,46 @@ void prepare_npc_before_state(CPUState &npc_before, int is_nemu, uint32_t n_pc, 
     }
 }
 
-void sync_npc_to_nemu(CPUState &npc_before) {
-    difftest_regcpy(&npc_before, true);
-}
+// void sync_npc_to_nemu(CPUState &npc_before) {
+//     difftest_regcpy(&npc_before, true);
+// }
 
-void execute_nemu_step() {
-    difftest_exec(1);
-}
+// void execute_nemu_step() {
+//     difftest_exec(1);
+// }
 
-void get_nemu_result(CPUState &ref_nemu) {
-    difftest_regcpy(&ref_nemu, false); // REF → NPC
-}
+// void get_nemu_result(CPUState &ref_nemu) {
+//     difftest_regcpy(&ref_nemu, false); // REF → NPC
+// }
 
-bool check_diff_result(const CPUState &npc, const CPUState &ref_nemu, int is_nemu, uint32_t pc) {
-    if (memcmp(&npc, &ref_nemu, sizeof(npc)) != 0 && is_nemu > 1) {
-        printf("\n❌ DiffTest FAILED at PC = 0x%08x\n", pc);
-        for (int i = 0; i < 32; ++i) {
-            if (npc.gpr[i] != ref_nemu.gpr[i]) {
-                printf("x%-2d: NPC = 0x%08x, NEMU = 0x%08x\n", i, npc.gpr[i], ref_nemu.gpr[i]);
-            }
-        }
-        printf("PC : NPC->dnpc = 0x%08x, NEMU->dnpc = 0x%08x\n", npc.pc, ref_nemu.pc);
+// bool check_diff_result(const CPUState &npc, const CPUState &ref_nemu, int is_nemu, uint32_t pc) {
+//     if (memcmp(&npc, &ref_nemu, sizeof(npc)) != 0 && is_nemu > 1) {
+//         printf("\n❌ DiffTest FAILED at PC = 0x%08x\n", pc);
+//         for (int i = 0; i < 32; ++i) {
+//             if (npc.gpr[i] != ref_nemu.gpr[i]) {
+//                 printf("x%-2d: NPC = 0x%08x, NEMU = 0x%08x\n", i, npc.gpr[i], ref_nemu.gpr[i]);
+//             }
+//         }
+//         printf("PC : NPC->dnpc = 0x%08x, NEMU->dnpc = 0x%08x\n", npc.pc, ref_nemu.pc);
         
-        npc_state.state = NPC_ABORT;
-        return true;
-    }
-    return false;
-}
+//         npc_state.state = NPC_ABORT;
+//         return true;
+//     }
+//     return false;
+// }
 
-void update_instruction_trace(uint32_t pc, uint32_t instr, InstTrace *iringbuf, int &iringbuf_idx, int &iringbuf_count) {
-    const char* disasm_buf = disassemble(instr);
-    strncpy(iringbuf[iringbuf_idx].disasm, disasm_buf, 63);
-    iringbuf[iringbuf_idx].disasm[63] = '\0';
-    free((void*)disasm_buf);
-    iringbuf[iringbuf_idx].pc = pc;
-    iringbuf[iringbuf_idx].inst = instr;
-    iringbuf_idx = (iringbuf_idx + 1) % IRINGBUF_SIZE;
-    if (iringbuf_count < IRINGBUF_SIZE) {
-        iringbuf_count++;
-    }
-}
+// void update_instruction_trace(uint32_t pc, uint32_t instr, InstTrace *iringbuf, int &iringbuf_idx, int &iringbuf_count) {
+//     const char* disasm_buf = disassemble(instr);
+//     strncpy(iringbuf[iringbuf_idx].disasm, disasm_buf, 63);
+//     iringbuf[iringbuf_idx].disasm[63] = '\0';
+//     free((void*)disasm_buf);
+//     iringbuf[iringbuf_idx].pc = pc;
+//     iringbuf[iringbuf_idx].inst = instr;
+//     iringbuf_idx = (iringbuf_idx + 1) % IRINGBUF_SIZE;
+//     if (iringbuf_count < IRINGBUF_SIZE) {
+//         iringbuf_count++;
+//     }
+// }
 CPUState ref_nemu;
 CPUState npc_before;
 CPUState npc;
@@ -582,7 +582,7 @@ void cpu_exec(uint64_t n) {
     
     while (steps < n && !ctx->gotFinish() && npc_state.state != NPC_END) {
         // 准备NPC执行前状态
-        prepare_npc_before_state(npc_before, ::is_nemu, n_pc, pc, ref);
+        //prepare_npc_before_state(npc_before, ::is_nemu, n_pc, pc, ref);
 
         // 驱动时钟
         top->reset = is_reset && (cycles < 1);
@@ -607,15 +607,15 @@ void cpu_exec(uint64_t n) {
         }
         npc.pc = n_pc;
 
-        //同步到NEMU
-        sync_npc_to_nemu(npc_before);
+        // 同步到NEMU
+        //sync_npc_to_nemu(npc_before);
 
-        //执行NEMU步骤
-        execute_nemu_step();
+        // 执行NEMU步骤
+        //execute_nemu_step();
 
-        //获取NEMU结果
+        // 获取NEMU结果
 
-        get_nemu_result(ref_nemu);
+        //get_nemu_result(ref_nemu);
         
         // 打印指令信息
         if (g_print_step) {
@@ -625,12 +625,12 @@ void cpu_exec(uint64_t n) {
         }
 
 
-        if (check_diff_result(npc, ref_nemu, ::is_nemu, pc)) {
-        return;
-        }
+        //if (check_diff_result(npc, ref_nemu, ::is_nemu, pc)) {
+        //return;
+        //}
 
         // 更新指令跟踪
-        update_instruction_trace(pc, instr, iringbuf, iringbuf_idx, iringbuf_count);
+        //update_instruction_trace(pc, instr, iringbuf, iringbuf_idx, iringbuf_count);
     }
     is_reset = false;
     if (npc_state.state != NPC_END) {
@@ -759,7 +759,7 @@ void sdb_mainloop() {
 
             int cycles = 0;
             while (!ctx->gotFinish() && npc_state.state != NPC_END) {
-                prepare_npc_before_state(npc_before, ::is_nemu, n_pc, pc, ref);
+                //prepare_npc_before_state(npc_before, ::is_nemu, n_pc, pc, ref);
                 top->reset = (cycles < 1);
                 top->clk = 0;
                 ctx->timeInc(1);
@@ -779,19 +779,19 @@ void sdb_mainloop() {
                 }
                 npc.pc = n_pc;
 
-                //同步到NEMU
-               sync_npc_to_nemu(npc_before);
+                // 同步到NEMU
+               // sync_npc_to_nemu(npc_before);
 
-                //执行NEMU步骤
-                execute_nemu_step();
+                // 执行NEMU步骤
+                //execute_nemu_step();
 
-                //获取NEMU结果
+                // 获取NEMU结果
 
-                get_nemu_result(ref_nemu);
+                //get_nemu_result(ref_nemu);
 
-                if (check_diff_result(npc, ref_nemu, ::is_nemu, pc)) {
-                   break;
-                }
+                //if (check_diff_result(npc, ref_nemu, ::is_nemu, pc)) {
+                 //   break;
+                //}
                         
             }
             if(npc_state.state != NPC_ABORT) printf("仿真完成，返回命令提示符。\n");
@@ -809,29 +809,29 @@ void sdb_mainloop() {
 int main(int argc, char** argv) {
     welcome();
 
-    void* handle = dlopen("/home/ysyxbby/ysyx-workbench/nemu/build/riscv32-nemu-interpreter-so",
-                      RTLD_LAZY);
-    if (!handle) { printf("dlopen failed\n"); return 1; }
-    difftest_init  = (difftest_init_t)dlsym(handle, "difftest_init");
-    difftest_memcpy = (difftest_memcpy_t)dlsym(handle, "difftest_memcpy");
-    difftest_regcpy = (difftest_regcpy_t)dlsym(handle, "difftest_regcpy");
-    difftest_exec  = (difftest_exec_t)dlsym(handle, "difftest_exec");
+    // void* handle = dlopen("/home/ysyxbby/ysyx-workbench/nemu/build/riscv32-nemu-interpreter-so",
+    //                   RTLD_LAZY);
+    // if (!handle) { printf("dlopen failed\n"); return 1; }
+    // difftest_init  = (difftest_init_t)dlsym(handle, "difftest_init");
+    // difftest_memcpy = (difftest_memcpy_t)dlsym(handle, "difftest_memcpy");
+    // difftest_regcpy = (difftest_regcpy_t)dlsym(handle, "difftest_regcpy");
+    // difftest_exec  = (difftest_exec_t)dlsym(handle, "difftest_exec");
 
-    difftest_init(0);  // 初始化 NEMU
-    CPUState ref;
-    difftest_regcpy(&ref, false);  // 把 NEMU 的寄存器拷到 ref
+    // difftest_init(0);  // 初始化 NEMU
+    // CPUState ref;
+    // difftest_regcpy(&ref, false);  // 把 NEMU 的寄存器拷到 ref
     
     time(&rtc_timep);
     rtc_tm = gmtime(&rtc_timep);
     const char* rom_base = "/home/ysyxbby/ysyx-workbench/npc/rom/text";
     if (!init_rom(rom_base)) return 1;
     if (!init_ram(rom_base)) return 1;
-    static bool first = true;
-    if (first) {
-    // 第一次：把整个内存同步给 NEMU
-    difftest_memcpy(0x80000000, rom, sizeof(rom), true);  // true = NPC -> REF
-    first = false;
-    }
+    // static bool first = true;
+    // if (first) {
+    // // 第一次：把整个内存同步给 NEMU
+    // difftest_memcpy(0x80000000, rom, sizeof(rom), true);  // true = NPC -> REF
+    // first = false;
+    // }
     ctx = new VerilatedContext;
     ctx->commandArgs(argc, argv);
     tfp = new VerilatedVcdC;

@@ -49,9 +49,9 @@ module top(
   wire [9:0] opcode_funct3;
   wire [16:0] opcode_funct3_funct7;
   wire [31:0] a0_val; 
-  /*initial begin
+  initial begin
     $monitor("PC=%h instr=%h raddr=%h", pc,instr,raddr);
-  end*/
+  end
   PC #(.PC_START(32'h80000000)
   )u_pc (
     .clk(clk),
@@ -73,7 +73,7 @@ module top(
     .addr(rom_index[2:0]),       // 地址接当前PC值
     .dout(instr)        // 输出接指令寄存器instr
   );*/
-
+  
   assign instr = rom_read(rom_index*4);
 
 /* verilator lint_off UNOPTFLAT */

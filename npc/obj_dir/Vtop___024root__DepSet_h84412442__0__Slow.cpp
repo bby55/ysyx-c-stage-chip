@@ -1524,6 +1524,12 @@ VL_ATTR_COLD void Vtop___024root___stl_sequent__TOP__0(Vtop___024root* vlSelf) {
                                                 + vlSelf->top__DOT__rs1_data);
     vlSelf->top__DOT____VdfgTmp_h8a6dd3c2__0 = (vlSelf->top__DOT__imm 
                                                 + vlSelf->top__DOT__pc);
+    if (VL_UNLIKELY((1U & (~ (IData)(vlSymsp->TOP____024unit.__VmonitorOff))))) {
+        VL_WRITEF("PC=%x instr=%x raddr=%x\n",32,vlSelf->top__DOT__pc,
+                  32,vlSelf->top__DOT__instr,32,((IData)(vlSelf->top__DOT__valid)
+                                                  ? vlSelf->top__DOT____VdfgTmp_h2f2dbb37__0
+                                                  : 0x80000000U));
+    }
     vlSelf->top__DOT__i3__DOT__i0__DOT__pair_list[7U] 
         = (0x100000000ULL | (QData)((IData)(((0x80000000U 
                                               > vlSelf->top__DOT__rs1_data)
