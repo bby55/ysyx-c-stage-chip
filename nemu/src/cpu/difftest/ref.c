@@ -6,7 +6,6 @@
 #include <difftest-def.h>
 
 __EXPORT void difftest_memcpy(paddr_t addr, void *buf, size_t n, bool direction) {
-  printf("NEMU::0x%x\n",addr);
   if(addr == 0xa0000048 || addr == 0xa000004c){
     return;
   }
