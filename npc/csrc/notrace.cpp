@@ -139,7 +139,7 @@ extern "C" int pmem_read(int raddr, int valid) {
 }
 
 extern "C" void pmem_write(int waddr, int wdata, char wmask, int pc) {
-
+    printf("wdata:0x%x  wmask:0x%x\n",wdata,wmask);
     if (waddr == SERIAL_PORT) {
         if (wmask & 0x1) {
             putchar(wdata & 0xff);
@@ -147,12 +147,7 @@ extern "C" void pmem_write(int waddr, int wdata, char wmask, int pc) {
         }
         return;
     }
-    
-    if (waddr == TIMER_LO || waddr == TIMER_HI) {
-            printf("0x%x\n",waddr);
-            return;
-    }
-
+    if (waddr == TIMER_LO || waddr == TIMER_HI) return;
     int addr = (waddr & ~0x3u) >> 2;
     uint32_t new_val = ram[addr];
     if (wmask == 0x1) new_val = (new_val & ~0xFF) | (wdata & 0xFF);

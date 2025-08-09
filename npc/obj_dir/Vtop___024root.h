@@ -25,6 +25,7 @@ class Vtop___024root final : public VerilatedModule {
         CData/*0:0*/ top__DOT__valid;
         CData/*0:0*/ top__DOT__wen_ram;
         CData/*0:0*/ top__DOT__is_lui;
+        CData/*0:0*/ top__DOT____VdfgTmp_hb37fddff__0;
         CData/*1:0*/ top__DOT____VdfgTmp_ha2850746__0;
         CData/*0:0*/ top__DOT____VdfgTmp_h42b8e437__0;
         CData/*0:0*/ top__DOT__i4__DOT__i0__DOT__lut_out;
@@ -82,9 +83,9 @@ class Vtop___024root final : public VerilatedModule {
         VlUnpacked<SData/*12:0*/, 8> top__DOT__i4__DOT__i0__DOT__pair_list;
         VlUnpacked<SData/*11:0*/, 8> top__DOT__i4__DOT__i0__DOT__key_list;
         VlUnpacked<CData/*0:0*/, 8> top__DOT__i4__DOT__i0__DOT__data_list;
-        VlUnpacked<SData/*12:0*/, 3> top__DOT__i5__DOT__i0__DOT__pair_list;
     };
     struct {
+        VlUnpacked<SData/*12:0*/, 3> top__DOT__i5__DOT__i0__DOT__pair_list;
         VlUnpacked<SData/*11:0*/, 3> top__DOT__i5__DOT__i0__DOT__key_list;
         VlUnpacked<CData/*0:0*/, 3> top__DOT__i5__DOT__i0__DOT__data_list;
         VlUnpacked<IData/*21:0*/, 22> top__DOT__i0__DOT__i0__DOT__pair_list;

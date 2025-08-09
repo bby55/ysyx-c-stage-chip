@@ -438,6 +438,7 @@ VL_ATTR_COLD void Vtop___024root___ctor_var_reset(Vtop___024root* vlSelf) {
     vlSelf->top__DOT__instr_type_funct7 = VL_RAND_RESET_I(12);
     VL_RAND_RESET_W(1584, vlSelf->top__DOT____Vcellinp__i1____pinNumber4);
     vlSelf->top__DOT____VdfgTmp_h2f2dbb37__0 = 0;
+    vlSelf->top__DOT____VdfgTmp_hb37fddff__0 = 0;
     vlSelf->top__DOT____VdfgTmp_ha2850746__0 = 0;
     vlSelf->top__DOT____VdfgTmp_h8a6dd3c2__0 = 0;
     vlSelf->top__DOT____VdfgTmp_h42b8e437__0 = 0;

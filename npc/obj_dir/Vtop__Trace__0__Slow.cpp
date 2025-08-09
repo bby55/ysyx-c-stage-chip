@@ -634,30 +634,20 @@ VL_ATTR_COLD void Vtop___024root__trace_full_sub_0(Vtop___024root* vlSelf, Veril
                                 ? vlSelf->top__DOT____VdfgTmp_h2f2dbb37__0
                                 : 0x80000000U)),32);
     bufp->fullCData(oldp+211,(((0x10U == (IData)(vlSelf->top__DOT__instr_type))
-                                ? (((IData)(vlSelf->top__DOT__wen_ram) 
-                                    & (vlSelf->top__DOT____VdfgTmp_h2f2dbb37__0 
-                                       >> 1U)) ? 0xcU
-                                    : 3U) : ((3U == (IData)(vlSelf->top__DOT__instr_type))
-                                              ? 0xfU
-                                              : ((0U 
-                                                  == (IData)(vlSelf->top__DOT____VdfgTmp_ha2850746__0))
-                                                  ? 1U
-                                                  : 
-                                                 ((1U 
-                                                   == (IData)(vlSelf->top__DOT____VdfgTmp_ha2850746__0))
-                                                   ? 2U
-                                                   : 
-                                                  ((2U 
-                                                    == (IData)(vlSelf->top__DOT____VdfgTmp_ha2850746__0))
-                                                    ? 4U
-                                                    : 
-                                                   ((3U 
-                                                     == (IData)(vlSelf->top__DOT____VdfgTmp_ha2850746__0))
-                                                     ? 8U
-                                                     : 0U))))))),8);
-    bufp->fullCData(oldp+212,((((IData)(vlSelf->top__DOT__wen_ram) 
-                                & (vlSelf->top__DOT____VdfgTmp_h2f2dbb37__0 
-                                   >> 1U)) ? 0xcU : 3U)),8);
+                                ? ((IData)(vlSelf->top__DOT____VdfgTmp_hb37fddff__0)
+                                    ? 0xcU : 3U) : 
+                               ((3U == (IData)(vlSelf->top__DOT__instr_type))
+                                 ? 0xfU : ((0U == (IData)(vlSelf->top__DOT____VdfgTmp_ha2850746__0))
+                                            ? 1U : 
+                                           ((1U == (IData)(vlSelf->top__DOT____VdfgTmp_ha2850746__0))
+                                             ? 2U : 
+                                            ((2U == (IData)(vlSelf->top__DOT____VdfgTmp_ha2850746__0))
+                                              ? 4U : 
+                                             ((3U == (IData)(vlSelf->top__DOT____VdfgTmp_ha2850746__0))
+                                               ? 8U
+                                               : 0U))))))),8);
+    bufp->fullCData(oldp+212,(((IData)(vlSelf->top__DOT____VdfgTmp_hb37fddff__0)
+                                ? 0xcU : 3U)),8);
     bufp->fullBit(oldp+213,(vlSelf->top__DOT__valid));
     bufp->fullBit(oldp+214,(vlSelf->top__DOT__wen_ram));
     bufp->fullSData(oldp+215,(vlSelf->top__DOT__instr_type_tmp),12);
@@ -830,24 +820,34 @@ VL_ATTR_COLD void Vtop___024root__trace_full_sub_0(Vtop___024root* vlSelf, Veril
     bufp->fullBit(oldp+354,(vlSelf->reset));
     bufp->fullIData(oldp+355,(vlSelf->top__DOT__rd_data),32);
     bufp->fullIData(oldp+356,(vlSelf->top__DOT__rdata),32);
-    bufp->fullIData(oldp+357,((((3U == (IData)(vlSelf->top__DOT__instr_type)) 
-                                | (0x10U == (IData)(vlSelf->top__DOT__instr_type)))
+    bufp->fullIData(oldp+357,(((3U == (IData)(vlSelf->top__DOT__instr_type))
                                 ? vlSelf->top__DOT__rd_data
-                                : ((7U == (IData)(vlSelf->top__DOT__instr_type))
-                                    ? ((0U == (IData)(vlSelf->top__DOT____VdfgTmp_ha2850746__0))
-                                        ? (0xffU & vlSelf->top__DOT__rd_data)
-                                        : ((1U == (IData)(vlSelf->top__DOT____VdfgTmp_ha2850746__0))
-                                            ? (0xff00U 
-                                               & (vlSelf->top__DOT__rd_data 
-                                                  << 8U))
-                                            : ((2U 
+                                : ((0x10U == (IData)(vlSelf->top__DOT__instr_type))
+                                    ? ((IData)(vlSelf->top__DOT____VdfgTmp_hb37fddff__0)
+                                        ? (vlSelf->top__DOT__rd_data 
+                                           << 0x10U)
+                                        : (0xffffU 
+                                           & vlSelf->top__DOT__rd_data))
+                                    : ((7U == (IData)(vlSelf->top__DOT__instr_type))
+                                        ? ((0U == (IData)(vlSelf->top__DOT____VdfgTmp_ha2850746__0))
+                                            ? (0xffU 
+                                               & vlSelf->top__DOT__rd_data)
+                                            : ((1U 
                                                 == (IData)(vlSelf->top__DOT____VdfgTmp_ha2850746__0))
-                                                ? (0xff0000U 
+                                                ? (0xff00U 
                                                    & (vlSelf->top__DOT__rd_data 
-                                                      << 0x10U))
-                                                : (vlSelf->top__DOT__rd_data 
-                                                   << 0x18U))))
-                                    : 0U))),32);
+                                                      << 8U))
+                                                : (
+                                                   (2U 
+                                                    == (IData)(vlSelf->top__DOT____VdfgTmp_ha2850746__0))
+                                                    ? 
+                                                   (0xff0000U 
+                                                    & (vlSelf->top__DOT__rd_data 
+                                                       << 0x10U))
+                                                    : 
+                                                   (vlSelf->top__DOT__rd_data 
+                                                    << 0x18U))))
+                                        : 0U)))),32);
     bufp->fullBit(oldp+358,(0U));
     bufp->fullIData(oldp+359,(0U),32);
     bufp->fullIData(oldp+360,(vlSelf->top__DOT__imm_ex),32);

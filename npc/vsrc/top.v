@@ -89,7 +89,10 @@ module top(
   assign raddr = (valid==1)?rs1_data+imm:32'h80000000;
   assign waddr = (wen_ram==1)?rs1_data+imm:32'h80000000;
 
-  assign wdata = (instr_type == 12'd3 || instr_type == 12'd16) ? rd_data :      // SW: 完整32位
+  assign wdata = (instr_type == 12'd3) ? rd_data :      // SW: 完整32位
+                 (instr_type == 12'd16) ?               //sh
+                 (waddr[1] == 1'd0) ? {16'd0, rd_data[15:0]} :
+                 {rd_data[15:0], 16'b0} :
                  (instr_type == 12'd7) ?                // SB: 字节存储
                  (waddr[1:0] == 2'd0) ? {24'd0, rd_data[7:0]} :
                  (waddr[1:0] == 2'd1) ? {16'd0, rd_data[7:0], 8'd0} :

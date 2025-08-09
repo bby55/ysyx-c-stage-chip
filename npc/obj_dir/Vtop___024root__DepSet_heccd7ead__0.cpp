@@ -284,44 +284,51 @@ VL_INLINE_OPT void Vtop___024root___act_sequent__TOP__0(Vtop___024root* vlSelf) 
                                                                      ? vlSelf->top__DOT____VdfgTmp_h2f2dbb37__0
                                                                      : 0x80000000U) 
                                                                    - (IData)(0x80000000U)), 
-                                                                  (((3U 
-                                                                     == (IData)(vlSelf->top__DOT__instr_type)) 
-                                                                    | (0x10U 
-                                                                       == (IData)(vlSelf->top__DOT__instr_type)))
+                                                                  ((3U 
+                                                                    == (IData)(vlSelf->top__DOT__instr_type))
                                                                     ? vlSelf->top__DOT__rd_data
                                                                     : 
-                                                                   ((7U 
+                                                                   ((0x10U 
                                                                      == (IData)(vlSelf->top__DOT__instr_type))
                                                                      ? 
-                                                                    ((0U 
-                                                                      == (IData)(vlSelf->top__DOT____VdfgTmp_ha2850746__0))
+                                                                    ((IData)(vlSelf->top__DOT____VdfgTmp_hb37fddff__0)
                                                                       ? 
-                                                                     (0xffU 
-                                                                      & vlSelf->top__DOT__rd_data)
+                                                                     (vlSelf->top__DOT__rd_data 
+                                                                      << 0x10U)
                                                                       : 
-                                                                     ((1U 
+                                                                     (0xffffU 
+                                                                      & vlSelf->top__DOT__rd_data))
+                                                                     : 
+                                                                    ((7U 
+                                                                      == (IData)(vlSelf->top__DOT__instr_type))
+                                                                      ? 
+                                                                     ((0U 
                                                                        == (IData)(vlSelf->top__DOT____VdfgTmp_ha2850746__0))
                                                                        ? 
-                                                                      (0xff00U 
-                                                                       & (vlSelf->top__DOT__rd_data 
-                                                                          << 8U))
+                                                                      (0xffU 
+                                                                       & vlSelf->top__DOT__rd_data)
                                                                        : 
-                                                                      ((2U 
+                                                                      ((1U 
                                                                         == (IData)(vlSelf->top__DOT____VdfgTmp_ha2850746__0))
                                                                         ? 
-                                                                       (0xff0000U 
+                                                                       (0xff00U 
                                                                         & (vlSelf->top__DOT__rd_data 
-                                                                           << 0x10U))
+                                                                           << 8U))
                                                                         : 
-                                                                       (vlSelf->top__DOT__rd_data 
-                                                                        << 0x18U))))
-                                                                     : 0U)), 
+                                                                       ((2U 
+                                                                         == (IData)(vlSelf->top__DOT____VdfgTmp_ha2850746__0))
+                                                                         ? 
+                                                                        (0xff0000U 
+                                                                         & (vlSelf->top__DOT__rd_data 
+                                                                            << 0x10U))
+                                                                         : 
+                                                                        (vlSelf->top__DOT__rd_data 
+                                                                         << 0x18U))))
+                                                                      : 0U))), 
                                                                   ((0x10U 
                                                                     == (IData)(vlSelf->top__DOT__instr_type))
                                                                     ? 
-                                                                   (((IData)(vlSelf->top__DOT__wen_ram) 
-                                                                     & (vlSelf->top__DOT____VdfgTmp_h2f2dbb37__0 
-                                                                        >> 1U))
+                                                                   ((IData)(vlSelf->top__DOT____VdfgTmp_hb37fddff__0)
                                                                      ? 0xcU
                                                                      : 3U)
                                                                     : 
