@@ -164,7 +164,7 @@ module top(
 
   assign I_ex = {{20{I_imm[11]}}, I_imm};
   assign S_ex = {{20{S_imm[11]}}, S_imm};
-  assign J_ex = {{11{J_imm[11]}}, J_imm, 1'b0};
+  assign J_ex = {{11{J_imm[19]}}, J_imm, 1'b0};
   assign U_ex = {U_imm, {12{1'b0}}};
   assign B_ex = {{19{B_imm[11]}}, B_imm, 1'b0};
   assign R_ex = {{32{R_imm}}};

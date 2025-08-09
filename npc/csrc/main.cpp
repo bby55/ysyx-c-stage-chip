@@ -123,7 +123,7 @@ extern "C" int rom_read(int raddr) {
 }
 
 extern "C" int pmem_read(int raddr, int valid) {
-
+    printf("0x%X\n",raddr);
     uint32_t data = 0;
     if (raddr == SERIAL_PORT) data = 0;
     if (raddr == TIMER_LO) data = (uint32_t)(virtual_us & 0xFFFFFFFF);
@@ -140,6 +140,7 @@ extern "C" int pmem_read(int raddr, int valid) {
 }
 
 extern "C" void pmem_write(int waddr, int wdata, char wmask, int pc) {
+    printf("0x%X\n",waddr);
     if (waddr == SERIAL_PORT) {
         if (wmask & 0x1) {
             putchar(wdata & 0xff);

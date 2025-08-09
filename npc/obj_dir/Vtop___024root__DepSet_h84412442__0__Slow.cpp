@@ -254,14 +254,13 @@ VL_ATTR_COLD void Vtop___024root___stl_sequent__TOP__0(Vtop___024root* vlSelf) {
                                                 >> 8U)))));
     vlSelf->top__DOT____VdfgTmp_h42b8e437__0 = (vlSelf->top__DOT__rs1_data 
                                                 == vlSelf->top__DOT__rs2_data);
-    vlSelf->top__DOT__J_ex = (((- (IData)((1U & (vlSelf->top__DOT__instr 
-                                                 >> 0xcU)))) 
+    vlSelf->top__DOT__J_ex = (((- (IData)((vlSelf->top__DOT__instr 
+                                           >> 0x1fU))) 
                                << 0x15U) | (vlSelf->top__DOT__J_imm 
                                             << 1U));
     vlSelf->top__DOT__i1__DOT__i0__DOT__data_list[0x18U] 
-        = (((- (IData)((1U & (vlSelf->top__DOT__instr 
-                              >> 0xcU)))) << 0x15U) 
-           | (vlSelf->top__DOT__J_imm << 1U));
+        = (((- (IData)((vlSelf->top__DOT__instr >> 0x1fU))) 
+            << 0x15U) | (vlSelf->top__DOT__J_imm << 1U));
     vlSelf->top__DOT__i0__DOT__i0__DOT__lut_out = (
                                                    (- (IData)(
                                                               ((IData)(vlSelf->top__DOT__opcode_funct3) 
