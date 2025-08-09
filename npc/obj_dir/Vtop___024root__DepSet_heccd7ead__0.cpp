@@ -36,10 +36,47 @@ VL_INLINE_OPT void Vtop___024root___act_sequent__TOP__0(Vtop___024root* vlSelf) 
             vlSelf->top__DOT__rd_data = 0U;
         } else if ((2U & (IData)(vlSelf->top__DOT__instr_type))) {
             vlSelf->top__DOT__rd_data = ((1U & (IData)(vlSelf->top__DOT__instr_type))
-                                          ? 0U : (vlSelf->top__DOT__rs1_data 
-                                                  >> 
-                                                  (0x1fU 
-                                                   & vlSelf->top__DOT__rs2_data)));
+                                          ? ((2U & (IData)(vlSelf->top__DOT__u_alu__DOT__byte_idx))
+                                              ? ((1U 
+                                                  & (IData)(vlSelf->top__DOT__u_alu__DOT__byte_idx))
+                                                  ? 
+                                                 (((- (IData)(
+                                                              (vlSelf->top__DOT__rdata 
+                                                               >> 0x1fU))) 
+                                                   << 8U) 
+                                                  | (vlSelf->top__DOT__rdata 
+                                                     >> 0x18U))
+                                                  : 
+                                                 (((- (IData)(
+                                                              (1U 
+                                                               & (vlSelf->top__DOT__rdata 
+                                                                  >> 0x17U)))) 
+                                                   << 8U) 
+                                                  | (0xffU 
+                                                     & (vlSelf->top__DOT__rdata 
+                                                        >> 0x10U))))
+                                              : ((1U 
+                                                  & (IData)(vlSelf->top__DOT__u_alu__DOT__byte_idx))
+                                                  ? 
+                                                 (((- (IData)(
+                                                              (1U 
+                                                               & (vlSelf->top__DOT__rdata 
+                                                                  >> 0xfU)))) 
+                                                   << 8U) 
+                                                  | (0xffU 
+                                                     & (vlSelf->top__DOT__rdata 
+                                                        >> 8U)))
+                                                  : 
+                                                 (((- (IData)(
+                                                              (1U 
+                                                               & (vlSelf->top__DOT__rdata 
+                                                                  >> 7U)))) 
+                                                   << 8U) 
+                                                  | (0xffU 
+                                                     & vlSelf->top__DOT__rdata))))
+                                          : (vlSelf->top__DOT__rs1_data 
+                                             >> (0x1fU 
+                                                 & vlSelf->top__DOT__rs2_data)));
         } else if ((1U & (IData)(vlSelf->top__DOT__instr_type))) {
             vlSelf->top__DOT__rd_data = VL_SHIFTRS_III(32,32,5, vlSelf->top__DOT__rs1_data, 
                                                        (0x1fU 
@@ -231,7 +268,8 @@ VL_INLINE_OPT void Vtop___024root___act_sequent__TOP__0(Vtop___024root* vlSelf) 
         if (((2U == (IData)(vlSelf->top__DOT__instr_type)) 
              | ((8U == (IData)(vlSelf->top__DOT__instr_type)) 
                 | ((0x1fU == (IData)(vlSelf->top__DOT__instr_type)) 
-                   | (0x20U == (IData)(vlSelf->top__DOT__instr_type)))))) {
+                   | ((0x20U == (IData)(vlSelf->top__DOT__instr_type)) 
+                      | (0x23U == (IData)(vlSelf->top__DOT__instr_type))))))) {
             Vtop___024root____Vdpiimwrap_top__DOT__pmem_read_TOP(
                                                                  (((IData)(vlSelf->top__DOT__valid)
                                                                     ? vlSelf->top__DOT____VdfgTmp_h2f2dbb37__0

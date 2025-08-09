@@ -49,8 +49,8 @@ static Vtop* top = NULL;
 static bool is_reset = true;
 static bool is_mtrace = false; // 默认关闭mtrace
 static int is_nemu = 0;
-#define ROM_SIZE 4194304
-#define RAM_SIZE 4194304
+#define ROM_SIZE 33554432
+#define RAM_SIZE 33554432
 static uint32_t rom[ROM_SIZE];
 static uint32_t ram[RAM_SIZE];
 const char *regs[] = {

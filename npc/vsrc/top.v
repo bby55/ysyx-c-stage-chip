@@ -97,14 +97,15 @@ module top(
                  {rd_data[7:0], 24'd0} :
                  32'd0;  
 
-    MuxKeyWithDefault #(7, 12, 1) i4 (valid, instr_type, 1'd0, {
+    MuxKeyWithDefault #(8, 12, 1) i4 (valid, instr_type, 1'd0, {
     12'd2, 1'b1, //lw
     12'd8, 1'b1,  //lbu
     12'd3, 1'b1, //SW
     12'd7, 1'b1, //sb
     12'd16,1'b1, //sh
     12'd31,1'b1,  //lh
-    12'd32,1'b1  //lhu
+    12'd32,1'b1,  //lhu
+    12'd35,1'b1
     //.....
   });
 
@@ -133,7 +134,7 @@ module top(
     rdata = 0;
 
     if (valid) begin // 有读写请求时
-      if((instr_type == 12'd2) || (instr_type == 12'd8) || (instr_type == 12'd31) || instr_type == 12'd32)begin
+      if((instr_type == 12'd2) || (instr_type == 12'd8) || (instr_type == 12'd31) || instr_type == 12'd32 ||(instr_type == 12'd35))begin
         rdata = pmem_read(raddr-32'h80000000, {32{valid}});
       end
       if (wen_ram) begin // 有写请求时
@@ -175,7 +176,7 @@ module top(
   wire [11:0]instr_type_tmp;
   wire [11:0]instr_type_nofunct;
   wire [11:0]instr_type_funct7;
-  MuxKeyWithDefault #(21, 10, 12) i0 (instr_type_tmp, opcode_funct3, 12'd0, {
+  MuxKeyWithDefault #(22, 10, 12) i0 (instr_type_tmp, opcode_funct3, 12'd0, {
     10'b0010011000, 12'd0, //ADDI
     10'b1100111000, 12'd1, //JALR
     10'b0000011010, 12'd2, //LW
@@ -207,8 +208,9 @@ module top(
     10'b1100011110, 12'd28,    //bltu
     10'b0010011011, 12'd30,    //sltiu
     10'b0000011001, 12'd31,    //lh
-    10'b0000011101, 12'd32     //lhu
+    10'b0000011101, 12'd32,     //lhu
     //12'd33 //sra
+    10'b0000011000, 12'd35      //lb
     //.....
   });
   
@@ -244,7 +246,7 @@ module top(
   end
 
 
-  MuxKeyWithDefault #(35, 12, 32) i1 (imm, instr_type, 32'd0, {
+  MuxKeyWithDefault #(36, 12, 32) i1 (imm, instr_type, 32'd0, {
     12'd0, I_ex, //
     12'd1, I_ex, //
     12'd2, I_ex, //
@@ -279,7 +281,8 @@ module top(
     12'd31,I_ex, //lh
     12'd32,I_ex, //lhu
     12'd33,R_ex, //sra
-    12'd34,R_ex  //srl
+    12'd34,R_ex,  //srl
+    12'd35,I_ex
     //.....
   });
 
@@ -572,6 +575,14 @@ always @(*) begin
         end
         12'd33: alu_out = $signed(rs1_data) >>> rs2_data[4:0];
         12'd34: alu_out = $unsigned(rs1_data) >> rs2_data[4:0];
+        12'd35: begin                                       // LB（加载符号字节）
+            case (byte_idx)
+                2'd0: alu_out = {{24{rdata[7]}}, rdata[7:0]};        // 第0字节
+                2'd1: alu_out = {{24{rdata[15]}}, rdata[15:8]};       // 第1字节
+                2'd2: alu_out = {{24{rdata[23]}}, rdata[23:16]};      // 第2字节
+                2'd3: alu_out = {{24{rdata[31]}}, rdata[31:24]};      // 第3字节（修复原25→24的笔误）
+            endcase
+        end 
         default: alu_out = {DATA_WIDTH{1'b0}};              // 默认输出0
     endcase
 end
