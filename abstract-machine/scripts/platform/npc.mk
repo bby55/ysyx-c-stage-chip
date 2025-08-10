@@ -36,3 +36,6 @@ sim: insert-arg
 	@$(NPC_HOME)/obj_dir/Vtop
 run: insert-arg
 	$(MAKE) -C $(NPC_HOME) ISA=$(ISA) sim ARGS="$(NPCFLAGS)" IMG=$(IMAGE).bin
+
+run-diff: insert-arg
+	$(MAKE) -C $(NPC_HOME) ISA=$(ISA) sim ARGS="$(NPCFLAGS)" IMG=$(IMAGE).bin DIFFTEST=1

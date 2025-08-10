@@ -33,7 +33,12 @@ VL_INLINE_OPT void Vtop___024root___act_sequent__TOP__0(Vtop___024root* vlSelf) 
         } else if ((8U & (IData)(vlSelf->top__DOT__instr_type))) {
             vlSelf->top__DOT__rd_data = 0U;
         } else if ((4U & (IData)(vlSelf->top__DOT__instr_type))) {
-            vlSelf->top__DOT__rd_data = 0U;
+            vlSelf->top__DOT__rd_data = ((2U & (IData)(vlSelf->top__DOT__instr_type))
+                                          ? ((1U & (IData)(vlSelf->top__DOT__instr_type))
+                                              ? 0U : vlSelf->top__DOT__t)
+                                          : ((1U & (IData)(vlSelf->top__DOT__instr_type))
+                                              ? vlSelf->top__DOT__t
+                                              : 0U));
         } else if ((2U & (IData)(vlSelf->top__DOT__instr_type))) {
             vlSelf->top__DOT__rd_data = ((1U & (IData)(vlSelf->top__DOT__instr_type))
                                           ? ((2U & (IData)(vlSelf->top__DOT__u_alu__DOT__byte_idx))

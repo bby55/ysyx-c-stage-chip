@@ -4,14 +4,14 @@ TOP_MODULE = top
 SIM_EXE = obj_dir/V$(TOP_MODULE)
 
 NEMU_LIB_PATH = /home/ysyxbby/ysyx-workbench/nemu/build
-NEMU_LIB_NAME = :riscv32-nemu-interpreter-so
+NEMU_LIB_NAME = riscv32-nemu-interpreter-so  # 修正原可能存在的多余冒号问题
 
 # 源文件
 VERILOG_SRC = vsrc/top.v
 CPP_SRC = csrc/main.cpp
 
-# Verilator编译选项
-VERILATOR_FLAGS = \
+# 基础编译选项
+BASE_VERILATOR_FLAGS = \
     --top-module $(TOP_MODULE) \
     -cc -trace \
     -build -exe $(CPP_SRC) \
@@ -20,13 +20,20 @@ VERILATOR_FLAGS = \
     -Wno-MULTITOP \
     -Wno-UNUSEDSIGNAL \
     -Wno-UNUSEDPARAM \
-    -CFLAGS "-I$(NEMU_LIB_PATH)/include" \
+    -CFLAGS "-I$(NEMU_LIB_PATH)/include"
+
+# 根据DIFFTEST开关决定是否添加difftest相关选项
+ifdef DIFFTEST
+VERILATOR_FLAGS = $(BASE_VERILATOR_FLAGS) \
+    -CFLAGS "-DENABLE_DIFFTEST" \
     --LDFLAGS "-lreadline -L$(NEMU_LIB_PATH) -l$(NEMU_LIB_NAME) -Wl,-rpath=$(NEMU_LIB_PATH)"
-
-
+else
+VERILATOR_FLAGS = $(BASE_VERILATOR_FLAGS) \
+    --LDFLAGS "-lreadline"
+endif
 
 # 默认目标
-.PHONY: all sim clean
+.PHONY: all sim clean run run-diff
 
 all: sim
 
@@ -39,6 +46,13 @@ ifdef IMG
 endif
 	@./$(SIM_EXE) $(ARGS)
 
+# 便捷目标：直接运行（默认不启用difftest）
+run: sim
+
+# 便捷目标：运行并启用difftest
+run-diff:
+	@$(MAKE) DIFFTEST=1 sim
+
 # 编译目标：使用Verilator生成可执行文件
 $(SIM_EXE): $(VERILOG_SRC) $(CPP_SRC)
 	@echo "Compiling with Verilator..."
@@ -49,3 +63,4 @@ clean:
 	@echo "Cleaning up..."
 	rm -rf obj_dir
 	rm -f *.vcd
+	rm -rf rom
