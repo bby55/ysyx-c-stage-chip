@@ -330,7 +330,7 @@ VL_ATTR_COLD void Vtop___024root___eval_initial__TOP(Vtop___024root* vlSelf) {
     vlSelf->top__DOT__u_regfile__DOT__unnamedblk1__DOT__i = 0x20U;
     vlSelf->top__DOT__u_regfile__DOT__mcause = 0U;
     vlSelf->top__DOT__u_regfile__DOT__mepc = 0U;
-    vlSelf->top__DOT__u_regfile__DOT__mstatus = 0U;
+    vlSelf->top__DOT__u_regfile__DOT__mstatus = 0x1800U;
     vlSelf->top__DOT__u_regfile__DOT__mtvec = 0U;
 }
 
@@ -364,7 +364,7 @@ VL_ATTR_COLD void Vtop___024root___eval_settle(Vtop___024root* vlSelf) {
 #ifdef VL_DEBUG
                 Vtop___024root___dump_triggers__stl(vlSelf);
 #endif
-                VL_FATAL_MT("vsrc/top.v", 16, "", "Settle region did not converge.");
+                VL_FATAL_MT("vsrc/top.v", 17, "", "Settle region did not converge.");
             }
             vlSelf->__VstlIterCount = ((IData)(1U) 
                                        + vlSelf->__VstlIterCount);

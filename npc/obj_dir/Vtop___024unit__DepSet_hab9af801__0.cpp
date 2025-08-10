@@ -46,6 +46,22 @@ VL_INLINE_OPT void Vtop___024unit____Vdpiimwrap_display_TOP____024unit(IData/*31
     display(instr__Vcvt, pc__Vcvt, npc__Vcvt);
 }
 
+extern "C" void set_csr_values(int mcause, int mepc, int mstatus, int mtvec);
+
+VL_INLINE_OPT void Vtop___024unit____Vdpiimwrap_set_csr_values_TOP____024unit(IData/*31:0*/ mcause, IData/*31:0*/ mepc, IData/*31:0*/ mstatus, IData/*31:0*/ mtvec) {
+    VL_DEBUG_IF(VL_DBG_MSGF("+        Vtop___024unit____Vdpiimwrap_set_csr_values_TOP____024unit\n"); );
+    // Body
+    int mcause__Vcvt;
+    for (size_t mcause__Vidx = 0; mcause__Vidx < 1; ++mcause__Vidx) mcause__Vcvt = mcause;
+    int mepc__Vcvt;
+    for (size_t mepc__Vidx = 0; mepc__Vidx < 1; ++mepc__Vidx) mepc__Vcvt = mepc;
+    int mstatus__Vcvt;
+    for (size_t mstatus__Vidx = 0; mstatus__Vidx < 1; ++mstatus__Vidx) mstatus__Vcvt = mstatus;
+    int mtvec__Vcvt;
+    for (size_t mtvec__Vidx = 0; mtvec__Vidx < 1; ++mtvec__Vidx) mtvec__Vcvt = mtvec;
+    set_csr_values(mcause__Vcvt, mepc__Vcvt, mstatus__Vcvt, mtvec__Vcvt);
+}
+
 extern "C" void display_ref(int rf0, int rf1, int rf2, int rf3, int rf4, int rf5, int rf6, int rf7, int rf8, int rf9, int rf10, int rf11, int rf12, int rf13, int rf14, int rf15, int rf16, int rf17, int rf18, int rf19, int rf20, int rf21, int rf22, int rf23, int rf24, int rf25, int rf26, int rf27, int rf28, int rf29, int rf30, int rf31);
 
 VL_INLINE_OPT void Vtop___024unit____Vdpiimwrap_display_ref_TOP____024unit(IData/*31:0*/ rf0, IData/*31:0*/ rf1, IData/*31:0*/ rf2, IData/*31:0*/ rf3, IData/*31:0*/ rf4, IData/*31:0*/ rf5, IData/*31:0*/ rf6, IData/*31:0*/ rf7, IData/*31:0*/ rf8, IData/*31:0*/ rf9, IData/*31:0*/ rf10, IData/*31:0*/ rf11, IData/*31:0*/ rf12, IData/*31:0*/ rf13, IData/*31:0*/ rf14, IData/*31:0*/ rf15, IData/*31:0*/ rf16, IData/*31:0*/ rf17, IData/*31:0*/ rf18, IData/*31:0*/ rf19, IData/*31:0*/ rf20, IData/*31:0*/ rf21, IData/*31:0*/ rf22, IData/*31:0*/ rf23, IData/*31:0*/ rf24, IData/*31:0*/ rf25, IData/*31:0*/ rf26, IData/*31:0*/ rf27, IData/*31:0*/ rf28, IData/*31:0*/ rf29, IData/*31:0*/ rf30, IData/*31:0*/ rf31) {

@@ -1,6 +1,7 @@
 import "DPI-C" function void ebreak(input int a0_val, input int exit_pc);
 import "DPI-C" function int rom_read(input int addr);
 import "DPI-C" function void display(input int instr, input int pc, input int npc);
+import "DPI-C" function void set_csr_values(input int mcause, input int mepc, input int mstatus, input int mtvec);
 import "DPI-C" function void display_ref(
     input int rf0, input int rf1, input int rf2, input int rf3,
     input int rf4, input int rf5, input int rf6, input int rf7,
@@ -503,7 +504,7 @@ module RegisterFile #(ADDR_WIDTH = 1, DATA_WIDTH = 1) (
         end
         mcause    = 0;
         mepc      = 0;
-        mstatus   = 0;
+        mstatus   = 32'h1800;
         mtvec     = 0;
     end
   assign rdata1 = (raddr1 == 0)? 0 : rf[raddr1];
@@ -533,6 +534,18 @@ module RegisterFile #(ADDR_WIDTH = 1, DATA_WIDTH = 1) (
       default: ;
       endcase
     end
+
+    if(instr_type == 12'd39)begin
+      // 1. 恢复MIE = MPIE（将MPIE位[7]的值赋给MIE位[3]）
+      mstatus[3] <= mstatus[7];
+      
+      // 2. 设置MPIE = 1（根据RISC-V规范，MRET后MPIE应置1）
+      mstatus[7] <= 1'b1;
+      
+      // 3. 清除MPP字段（位11-12），恢复为用户模式（00）
+      mstatus[12:11] <= 2'b00;
+    end
+    set_csr_values(mcause, mepc, mstatus, mtvec);
   end
 
   

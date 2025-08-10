@@ -30,6 +30,11 @@ __EXPORT void difftest_regcpy(void *dut, bool direction) {
   } else {
     memcpy(&npc_cpu->gpr, &cpu.gpr, sizeof(cpu.gpr));
     npc_cpu->pc = cpu.pc;
+
+    npc_cpu->csr.mcause = cpu.csr.mcause;   
+    npc_cpu->csr.mepc = cpu.csr.mepc;
+    npc_cpu->csr.mstatus = cpu.csr.mstatus;
+    npc_cpu->csr.mtvec = cpu.csr.mtvec;
   }
 }
 
@@ -64,4 +69,8 @@ __EXPORT void difftest_raise_intr(word_t NO) {
 __EXPORT void difftest_init(int port) {
   init_mem();
   init_isa();
+  cpu.csr.mstatus = 0x1800; // 对应NPC侧RegisterFile的初始值
+  cpu.csr.mcause = 0;
+  cpu.csr.mepc = 0;
+  cpu.csr.mtvec = 0;
 }

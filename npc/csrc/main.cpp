@@ -31,6 +31,11 @@ difftest_exec_t difftest_exec;
 struct CPUState {
     uint32_t gpr[32];
     uint32_t pc;
+    // 新增特殊寄存器字段
+    uint32_t mcause;
+    uint32_t mepc;
+    uint32_t mstatus;
+    uint32_t mtvec;
 } __attribute__((packed));
 
 #define DEVICE_BASE 0x20000000
@@ -83,6 +88,18 @@ void update_virtual_time() {
         virtual_us++;
         cycle_counter = 0;
     }
+}
+
+uint32_t csr_mcause = 0;
+uint32_t csr_mepc = 0;
+uint32_t csr_mstatus = 0;
+uint32_t csr_mtvec = 0;
+
+extern "C" void set_csr_values(int mcause, int mepc, int mstatus, int mtvec) {
+    csr_mcause = mcause;
+    csr_mepc = mepc;
+    csr_mstatus = mstatus;
+    csr_mtvec = mtvec;
 }
 
 void putch(int c) {
@@ -542,15 +559,54 @@ void get_nemu_result(CPUState &ref_nemu) {
 }
 
 bool check_diff_result(const CPUState &npc, const CPUState &ref_nemu, int is_nemu, uint32_t pc) {
-    if (memcmp(&npc, &ref_nemu, sizeof(npc)) != 0 && is_nemu > 1) {
-        printf("\n❌ DiffTest FAILED at PC = 0x%08x\n", pc);
-        for (int i = 0; i < 32; ++i) {
-            if (npc.gpr[i] != ref_nemu.gpr[i]) {
-                printf("x%-2d: NPC = 0x%08x, NEMU = 0x%08x\n", i, npc.gpr[i], ref_nemu.gpr[i]);
+    if (is_nemu <= 1) return false; // 跳过初始状态
+
+    bool has_error = false;
+    // 原有通用寄存器比对
+    for (int i = 0; i < 32; ++i) {
+        if (npc.gpr[i] != ref_nemu.gpr[i]) {
+            if (!has_error) {
+                printf("\n❌ DiffTest FAILED at PC = 0x%08x\n", pc);
+                has_error = true;
             }
+            printf("x%-2d: NPC = 0x%08x, NEMU = 0x%08x\n", i, npc.gpr[i], ref_nemu.gpr[i]);
         }
-        printf("PC : NPC->dnpc = 0x%08x, NEMU->dnpc = 0x%08x\n", npc.pc, ref_nemu.pc);
-        
+    }
+
+    // 原有PC比对
+    if (npc.pc != ref_nemu.pc) {
+        if (!has_error) {
+            printf("\n❌ DiffTest FAILED at PC = 0x%08x\n", pc);
+            has_error = true;
+        }
+        printf("PC : NPC = 0x%08x, NEMU = 0x%08x\n", npc.pc, ref_nemu.pc);
+    }
+
+    // 新增：特殊寄存器比对
+    if (npc.mcause != ref_nemu.mcause) {
+        if (!has_error) {
+            printf("\n❌ DiffTest FAILED at PC = 0x%08x\n", pc);
+            has_error = true;
+        }
+        printf("mcause: NPC = 0x%08x, NEMU = 0x%08x\n", npc.mcause, ref_nemu.mcause);
+    }
+
+    if (npc.mepc != ref_nemu.mepc) {
+        if (!has_error) has_error = true;
+        printf("mepc: NPC = 0x%08x, NEMU = 0x%08x\n", npc.mepc, ref_nemu.mepc);
+    }
+
+    if (npc.mstatus != ref_nemu.mstatus) {
+        if (!has_error) has_error = true;
+        printf("mstatus: NPC = 0x%08x, NEMU = 0x%08x\n", npc.mstatus, ref_nemu.mstatus);
+    }
+
+    if (npc.mtvec != ref_nemu.mtvec) {
+        if (!has_error) has_error = true;
+        printf("mtvec: NPC = 0x%08x, NEMU = 0x%08x\n", npc.mtvec, ref_nemu.mtvec);
+    }
+
+    if (has_error) {
         npc_state.state = NPC_ABORT;
         return true;
     }
@@ -617,6 +673,11 @@ void cpu_exec(uint64_t n) {
         // 用宏包裹difftest相关调用
 #ifdef ENABLE_DIFFTEST
         // 同步到NEMU
+        npc.mcause = csr_mcause;
+        npc.mepc = csr_mepc;
+        npc.mstatus = csr_mstatus;
+        npc.mtvec = csr_mtvec;
+
         sync_npc_to_nemu(npc_before);
 
         // 执行NEMU步骤
@@ -795,6 +856,11 @@ void sdb_mainloop() {
                 // 用宏包裹difftest相关调用
 #ifdef ENABLE_DIFFTEST
                 // 同步到NEMU
+                npc.mcause = csr_mcause;
+                npc.mepc = csr_mepc;
+                npc.mstatus = csr_mstatus;
+                npc.mtvec = csr_mtvec;
+
                 sync_npc_to_nemu(npc_before);
 
                 // 执行NEMU步骤

@@ -4,7 +4,7 @@ TOP_MODULE = top
 SIM_EXE = obj_dir/V$(TOP_MODULE)
 
 NEMU_LIB_PATH = /home/ysyxbby/ysyx-workbench/nemu/build
-NEMU_LIB_NAME = riscv32-nemu-interpreter-so  # 修正原可能存在的多余冒号问题
+NEMU_LIB_NAME = :riscv32-nemu-interpreter-so  # 修正原可能存在的多余冒号问题
 
 # 源文件
 VERILOG_SRC = vsrc/top.v
