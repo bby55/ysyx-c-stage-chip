@@ -69,8 +69,8 @@ __EXPORT void difftest_raise_intr(word_t NO) {
 __EXPORT void difftest_init(int port) {
   init_mem();
   init_isa();
-  cpu.csr.mstatus = 0x1800; // 对应NPC侧RegisterFile的初始值
-  cpu.csr.mcause = 0;
-  cpu.csr.mepc = 0;
-  cpu.csr.mtvec = 0;
+  // cpu.csr.mstatus = 0x1800; // 对应NPC侧RegisterFile的初始值
+  // cpu.csr.mcause = 0;
+  // cpu.csr.mepc = 0;
+  // cpu.csr.mtvec = 0;
 }
