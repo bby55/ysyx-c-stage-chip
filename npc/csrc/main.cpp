@@ -562,10 +562,12 @@ bool check_diff_result(const CPUState &npc, const CPUState &ref_nemu, int is_nem
     if (is_nemu <= 1) return false; // 跳过初始状态
 
     bool has_error = false;
-    // 原有通用寄存器比对
+
+    // 通用寄存器比对
     for (int i = 0; i < 32; ++i) {
         if (npc.gpr[i] != ref_nemu.gpr[i]) {
             if (!has_error) {
+                // 首次发现错误，先打印PC
                 printf("\n❌ DiffTest FAILED at PC = 0x%08x\n", pc);
                 has_error = true;
             }
@@ -573,7 +575,7 @@ bool check_diff_result(const CPUState &npc, const CPUState &ref_nemu, int is_nem
         }
     }
 
-    // 原有PC比对
+    // PC比对
     if (npc.pc != ref_nemu.pc) {
         if (!has_error) {
             printf("\n❌ DiffTest FAILED at PC = 0x%08x\n", pc);
@@ -582,7 +584,7 @@ bool check_diff_result(const CPUState &npc, const CPUState &ref_nemu, int is_nem
         printf("PC : NPC = 0x%08x, NEMU = 0x%08x\n", npc.pc, ref_nemu.pc);
     }
 
-    // 新增：特殊寄存器比对
+    // 特殊寄存器比对（修复重点：确保首次错误时打印PC）
     if (npc.mcause != ref_nemu.mcause) {
         if (!has_error) {
             printf("\n❌ DiffTest FAILED at PC = 0x%08x\n", pc);
@@ -592,17 +594,27 @@ bool check_diff_result(const CPUState &npc, const CPUState &ref_nemu, int is_nem
     }
 
     if (npc.mepc != ref_nemu.mepc) {
-        if (!has_error) has_error = true;
+        if (!has_error) {
+            printf("\n❌ DiffTest FAILED at PC = 0x%08x\n", pc);
+            has_error = true;
+        }
         printf("mepc: NPC = 0x%08x, NEMU = 0x%08x\n", npc.mepc, ref_nemu.mepc);
     }
 
     if (npc.mstatus != ref_nemu.mstatus) {
-        if (!has_error) has_error = true;
+        if (!has_error) {
+            printf("\n❌ DiffTest FAILED at PC = 0x%08x\n", pc);
+            has_error = true;
+        }
         printf("mstatus: NPC = 0x%08x, NEMU = 0x%08x\n", npc.mstatus, ref_nemu.mstatus);
     }
 
     if (npc.mtvec != ref_nemu.mtvec) {
-        if (!has_error) has_error = true;
+        if (!has_error) {
+            // 针对你的情况：mtvec首次不匹配时，打印PC
+            printf("\n❌ DiffTest FAILED at PC = 0x%08x\n", pc);
+            has_error = true;
+        }
         printf("mtvec: NPC = 0x%08x, NEMU = 0x%08x\n", npc.mtvec, ref_nemu.mtvec);
     }
 

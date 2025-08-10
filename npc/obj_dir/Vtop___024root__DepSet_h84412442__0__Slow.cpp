@@ -33,6 +33,7 @@ VL_ATTR_COLD void Vtop___024root___eval_triggers__stl(Vtop___024root* vlSelf) {
 }
 
 void Vtop___024unit____Vdpiimwrap_display_ref_TOP____024unit(IData/*31:0*/ rf0, IData/*31:0*/ rf1, IData/*31:0*/ rf2, IData/*31:0*/ rf3, IData/*31:0*/ rf4, IData/*31:0*/ rf5, IData/*31:0*/ rf6, IData/*31:0*/ rf7, IData/*31:0*/ rf8, IData/*31:0*/ rf9, IData/*31:0*/ rf10, IData/*31:0*/ rf11, IData/*31:0*/ rf12, IData/*31:0*/ rf13, IData/*31:0*/ rf14, IData/*31:0*/ rf15, IData/*31:0*/ rf16, IData/*31:0*/ rf17, IData/*31:0*/ rf18, IData/*31:0*/ rf19, IData/*31:0*/ rf20, IData/*31:0*/ rf21, IData/*31:0*/ rf22, IData/*31:0*/ rf23, IData/*31:0*/ rf24, IData/*31:0*/ rf25, IData/*31:0*/ rf26, IData/*31:0*/ rf27, IData/*31:0*/ rf28, IData/*31:0*/ rf29, IData/*31:0*/ rf30, IData/*31:0*/ rf31);
+void Vtop___024unit____Vdpiimwrap_set_csr_values_TOP____024unit(IData/*31:0*/ mcause, IData/*31:0*/ mepc, IData/*31:0*/ mstatus, IData/*31:0*/ mtvec);
 void Vtop___024unit____Vdpiimwrap_rom_read_TOP____024unit(IData/*31:0*/ addr, IData/*31:0*/ &rom_read__Vfuncrtn);
 
 VL_ATTR_COLD void Vtop___024root___stl_sequent__TOP__0(Vtop___024root* vlSelf) {
@@ -105,6 +106,7 @@ VL_ATTR_COLD void Vtop___024root___stl_sequent__TOP__0(Vtop___024root* vlSelf) {
                                                             [0x1eU], 
                                                             vlSelf->top__DOT__u_regfile__DOT__rf
                                                             [0x1fU]);
+    Vtop___024unit____Vdpiimwrap_set_csr_values_TOP____024unit(vlSelf->top__DOT__u_regfile__DOT__mcause, vlSelf->top__DOT__u_regfile__DOT__mepc, vlSelf->top__DOT__u_regfile__DOT__mstatus, vlSelf->top__DOT__u_regfile__DOT__mtvec);
     vlSelf->top__DOT__i10__DOT__i0__DOT__pair_list[0U] 
         = (0x400000000ULL | (QData)((IData)(vlSelf->top__DOT__u_regfile__DOT__mtvec)));
     vlSelf->top__DOT__i10__DOT__i0__DOT__pair_list[1U] 

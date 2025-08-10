@@ -71,6 +71,7 @@ module top(
   
   always @(posedge clk)begin
     display(instr,pc,pc_next);
+
   end
   
   assign rom_index = (pc < 32'h80000000)? (pc >> 2) : (pc - 32'h80000000) >> 2;
@@ -519,7 +520,7 @@ module RegisterFile #(ADDR_WIDTH = 1, DATA_WIDTH = 1) (
   assign a0_val = rf[10];
   always @(posedge clk) begin
     if (wen & (waddr != 0)) rf[waddr] <= wdata;
-
+    
     if(instr_type == 12'd36)begin
       mcause <= rf[17];
       mepc   <= epc_val;
@@ -534,7 +535,6 @@ module RegisterFile #(ADDR_WIDTH = 1, DATA_WIDTH = 1) (
       default: ;
       endcase
     end
-
     if(instr_type == 12'd39)begin
       // 1. 恢复MIE = MPIE（将MPIE位[7]的值赋给MIE位[3]）
       mstatus[3] <= mstatus[7];
@@ -545,7 +545,7 @@ module RegisterFile #(ADDR_WIDTH = 1, DATA_WIDTH = 1) (
       // 3. 清除MPP字段（位11-12），恢复为用户模式（00）
       mstatus[12:11] <= 2'b00;
     end
-    set_csr_values(mcause, mepc, mstatus, mtvec);
+    
   end
 
   
@@ -560,6 +560,7 @@ module RegisterFile #(ADDR_WIDTH = 1, DATA_WIDTH = 1) (
         rf[24], rf[25], rf[26], rf[27],
         rf[28], rf[29], rf[30], rf[31]
     );
+    set_csr_values(mcause_data, mepc_data, mstatus_data, mtvec_data);
 end
 
   
