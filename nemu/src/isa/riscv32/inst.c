@@ -29,7 +29,7 @@ static vaddr_t *csr_register(word_t imm) {
   case 0x342: return &(cpu.csr.mcause);
   case 0x300: return &(cpu.csr.mstatus);
   case 0x305: return &(cpu.csr.mtvec);
-  default: panic("Unknown csr");
+  default: panic("Unknown if (ref_r->csr.mstatus != cpu.csr.mstatus)");
   }
 }
  
