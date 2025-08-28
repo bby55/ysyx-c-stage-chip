@@ -1,4 +1,4 @@
-/*#include "../../include/common.h"
+#include "../../include/common.h"
 
 #define MAX_IRINGBUF 16
 
@@ -50,13 +50,12 @@ void memory_write_dis(paddr_t addr, int len, word_t data)
 }
 
 
-static void etrace() {
-  IFDEF(CONFIG_ETRACE, {
-    printf("\n" 
-      ANSI_FMT("[ETRACE]", ANSI_FG_YELLOW) 
-      "ecall in mepc = " FMT_WORD ", mcause = " FMT_WORD "\n",
-      cpu.csrs.mepc, cpu.csrs.mcause);
-  });
-}
+// static void etrace() {
+//   IFDEF(CONFIG_ETRACE, {
+//     printf("\n" 
+//       ANSI_FMT("[ETRACE]", ANSI_FG_YELLOW) 
+//       "ecall in mepc = " FMT_WORD ", mcause = " FMT_WORD "\n",
+//       cpu.csrs.mepc, cpu.csrs.mcause);
+//   });
+// }
 
-*/
