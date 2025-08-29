@@ -1119,7 +1119,7 @@ int main(int argc, char** argv) {
 
     memset(&cpu_state, 0, sizeof(riscv32_CPU_state));
     cpu_state.pc = 0x80000000;
-
+    
     ctx = new VerilatedContext;
     ctx->commandArgs(argc, argv);
     top = new Vtop(ctx);
