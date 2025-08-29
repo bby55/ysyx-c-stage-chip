@@ -36,10 +36,11 @@ VM_MODPREFIX = Vtop
 # User CFLAGS (from -CFLAGS on Verilator command line)
 VM_USER_CFLAGS = \
 	-I/home/ysyxbby/ysyx-workbench/nemu/include -I/home/ysyxbby/ysyx-workbench/nemu/src/isa/riscv32/include -I/home/ysyxbby/ysyx-workbench/nemu/build/include \
+	-I/home/ysyxbby/ysyx-workbench/nemu/include -I/home/ysyxbby/ysyx-workbench/nemu/src/isa/riscv32/include -I/home/ysyxbby/ysyx-workbench/nemu/build/include -DENABLE_DIFFTEST \
 
 # User LDLIBS (from -LDFLAGS on Verilator command line)
 VM_USER_LDLIBS = \
-	-lreadline \
+	-lreadline -L/home/ysyxbby/ysyx-workbench/nemu/build -lriscv32-nemu-interpreter -Wl,-rpath=/home/ysyxbby/ysyx-workbench/nemu/build \
 
 # User .cpp files (from .cpp's on Verilator command line)
 VM_USER_CLASSES = \
