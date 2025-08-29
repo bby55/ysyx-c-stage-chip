@@ -55,9 +55,9 @@ void init_mem() {
 
 word_t paddr_read(paddr_t addr, int len) {
   IFDEF(CONFIG_MTRACE, memory_read_dis(addr, len));
-  // if (addr == 0xa0000048 || addr == 0xa000004c || addr == 0xa00003f8) {
-  //   return 0; // 返回默认值，避免触发越界检查
-  // }
+  if (addr == 0xa0000048 || addr == 0xa000004c || addr == 0xa00003f8) {
+    return 0; // 返回默认值，避免触发越界检查
+  }
   if (likely(in_pmem(addr))) return pmem_read(addr, len);
   IFDEF(CONFIG_DEVICE, return mmio_read(addr, len));
   out_of_bound(addr);
@@ -66,9 +66,9 @@ word_t paddr_read(paddr_t addr, int len) {
 
 void paddr_write(paddr_t addr, int len, word_t data) {
   IFDEF(CONFIG_MTRACE, memory_write_dis(addr, len, data));
-  // if (addr == 0xa0000048 || addr == 0xa000004c || addr == 0xa00003f8) {
-  //   return; // 返回默认值，避免触发越界检查
-  // }
+  if (addr == 0xa0000048 || addr == 0xa000004c || addr == 0xa00003f8) {
+    return; // 返回默认值，避免触发越界检查
+  }
   if (likely(in_pmem(addr))) { pmem_write(addr, len, data); return; }
   IFDEF(CONFIG_DEVICE, mmio_write(addr, len, data); return);
   out_of_bound(addr);

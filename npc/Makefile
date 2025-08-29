@@ -31,8 +31,9 @@ BASE_VERILATOR_FLAGS = \
 ifdef DIFFTEST
 VERILATOR_FLAGS = $(BASE_VERILATOR_FLAGS) \
     -CFLAGS "-I$(NEMU_INCLUDE_PATH) -I$(NEMU_ISA_INCLUDE_PATH) -I$(NEMU_LIB_PATH)/include -DENABLE_DIFFTEST" \
-    --LDFLAGS "-lreadline -L$(NEMU_LIB_PATH) -lriscv32-nemu-interpreter -Wl,-rpath=$(NEMU_LIB_PATH)"
+    --LDFLAGS "-lreadline -L$(NEMU_LIB_PATH) $(NEMU_LIB_PATH)/riscv32-nemu-interpreter-so -Wl,-rpath=$(NEMU_LIB_PATH)"
 else
+# 其他配置不变
 VERILATOR_FLAGS = $(BASE_VERILATOR_FLAGS) \
     --LDFLAGS "-lreadline"
 endif
