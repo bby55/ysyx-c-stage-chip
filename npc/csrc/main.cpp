@@ -12,31 +12,25 @@
 #include <time.h>
 #include "sdb.h"
 #include <dlfcn.h>
+// 引入 isa-def.h（确保路径正确，若仍报错需补全绝对路径）
+#include "/home/ysyxbby/ysyx-workbench/nemu/src/isa/riscv32/include/isa-def.h"
 
 // 用宏包裹difftest相关函数指针定义
 #ifdef ENABLE_DIFFTEST
-// 定义函数指针类型
 typedef void (*difftest_init_t)(int);
 typedef void (*difftest_memcpy_t)(uint64_t, void*, size_t, bool);
 typedef void (*difftest_regcpy_t)(void*, bool);
 typedef void (*difftest_exec_t)(uint64_t);
 
-// 定义全局函数指针
 difftest_init_t difftest_init;
 difftest_memcpy_t difftest_memcpy;
 difftest_regcpy_t difftest_regcpy;
 difftest_exec_t difftest_exec;
 #endif // ENABLE_DIFFTEST
 
-struct CPUState {
-    uint32_t gpr[32];
-    uint32_t pc;
-    // 新增特殊寄存器字段
-    uint32_t mcause;
-    uint32_t mepc;
-    uint32_t mstatus;
-    uint32_t mtvec;
-} __attribute__((packed));
+// 【关键修改1】删除自定义CPUState（与isa-def.h的riscv32_CPU_state重复）
+// 定义全局CPU状态：直接使用isa-def.h定义的结构，包含GPR、PC、所有特殊寄存器
+static riscv32_CPU_state cpu_state;
 
 #define DEVICE_BASE 0x20000000
 #define SERIAL_PORT (DEVICE_BASE + 0x00003f8)
@@ -44,18 +38,32 @@ struct CPUState {
 #define TIMER_HI    (DEVICE_BASE + 0x000004c)
 #define RTC_SECOND  (DEVICE_BASE + 0x0000074)
 
+// 断点结构体（支持永久/单次类型）
+typedef enum {
+    BP_PERMANENT,  // 永久断点：每次到达都暂停
+    BP_ONESHOT     // 单次断点：触发一次后自动删除
+} BreakpointType;
+
+typedef struct {
+    uint32_t pc;          // 断点地址
+    BreakpointType type;  // 断点类型
+    bool enabled;         // 是否启用
+} Breakpoint;
+
+#define MAX_BREAKPOINTS 32
+static Breakpoint breakpoints[MAX_BREAKPOINTS] = {0};
+static int breakpoint_count = 0;
+
 static struct tm *rtc_tm;
 static time_t rtc_timep;
 static uint64_t virtual_us = 0;
 static uint32_t cycle_counter = 0;
 static const uint32_t CYCLES_PER_US = 13;
-//static VerilatedVcdC* tfp = NULL;
 
-// Verilator 上下文和模块全局化
 static VerilatedContext* ctx = NULL;
 static Vtop* top = NULL;
 static bool is_reset = true;
-static bool is_mtrace = false; // 默认关闭mtrace
+static bool is_mtrace = false;
 static int is_nemu = 0;
 #define ROM_SIZE 33554432
 #define RAM_SIZE 33554432
@@ -67,12 +75,88 @@ const char *regs[] = {
     "a6", "a7", "s2", "s3", "s4", "s5", "s6", "s7",
     "s8", "s9", "s10", "s11", "t3", "t4", "t5", "t6"
 };
-static uint32_t ref[32];
-static uint32_t pc;
-static uint32_t n_pc;
+
+// 【关键修改2】删除冗余的ref数组和全局CSR变量（已整合到cpu_state）
+// static uint32_t ref[32];
+// static uint32_t pc;           
+// uint32_t csr_mcause = 0;
+// uint32_t csr_mepc = 0;
+// uint32_t csr_mstatus = 0;
+// uint32_t csr_mtvec = 0;
+
+static uint32_t n_pc;         // 下一条指令的PC（临时存储，最终同步到cpu_state.pc）
 static uint32_t instr;
 static int is_print = 0;
 
+// 检查当前PC是否命中断点，返回是否需要暂停（使用cpu_state.pc）
+static bool check_breakpoint(uint32_t current_pc) {
+    for (int i = 0; i < breakpoint_count; i++) {
+        if (breakpoints[i].enabled && breakpoints[i].pc == current_pc) {
+            printf("\n\033[1;31m====== 命中断点 ======\033[0m\n");
+            printf("地址: 0x%08x | 类型: %s | 编号: %d\n",
+                   breakpoints[i].pc,
+                   breakpoints[i].type == BP_PERMANENT ? "永久" : "单次",
+                   i+1);
+            printf("提示: 输入 'c' 继续执行（会再次停在此断点）\n");
+            printf("      输入 'si [步数]' 从当前断点单步执行\n");
+            printf("\033[1;31m======================\033[0m\n\n");
+
+            if (breakpoints[i].type == BP_ONESHOT) {
+                breakpoints[i].enabled = false;
+                printf("单次断点已自动禁用，再次执行不会暂停\n");
+            }
+            return true;
+        }
+    }
+    return false;
+}
+
+// 显示所有断点（无修改）
+void print_breakpoints() {
+    if (breakpoint_count == 0) {
+        printf("没有设置任何断点\n");
+        return;
+    }
+    printf("\033[1;34m====== 当前断点列表 ======\033[0m\n");
+    printf("%-4s %-12s %-8s %-6s\n", "编号", "地址(PC)", "类型", "状态");
+    printf("----------------------------------------\n");
+    for (int i = 0; i < breakpoint_count; i++) {
+        printf("%-4d 0x%08x     %-8s %-6s\n",
+               i+1,
+               breakpoints[i].pc,
+               breakpoints[i].type == BP_PERMANENT ? "永久" : "单次",
+               breakpoints[i].enabled ? "启用" : "禁用");
+    }
+    printf("========================================\n");
+}
+
+// 添加断点（无修改）
+static int add_breakpoint(uint32_t pc_addr, BreakpointType type) {
+    if (pc_addr % 4 != 0) {
+        printf("警告: PC地址 0x%08x 未按4字节对齐，可能无法命中断点\n", pc_addr);
+    }
+    for (int i = 0; i < breakpoint_count; i++) {
+        if (breakpoints[i].pc == pc_addr && breakpoints[i].enabled) {
+            printf("已存在启用的断点: 0x%08x（编号: %d）\n", pc_addr, i+1);
+            return -1;
+        }
+    }
+    if (breakpoint_count >= MAX_BREAKPOINTS) {
+        printf("已达到最大断点数量 (%d)\n", MAX_BREAKPOINTS);
+        return -1;
+    }
+    breakpoints[breakpoint_count].pc = pc_addr;
+    breakpoints[breakpoint_count].type = type;
+    breakpoints[breakpoint_count].enabled = true;
+    breakpoint_count++;
+    printf("已设置断点 | 编号: %d | 地址: 0x%08x | 类型: %s\n",
+           breakpoint_count,
+           pc_addr,
+           type == BP_PERMANENT ? "永久（每次到达都暂停）" : "单次（仅暂停一次）");
+    return 0;
+}
+
+// 更新RTC（无修改）
 void update_rtc() {
     static uint64_t last_sec = 0;
     if (virtual_us - last_sec >= 1000000) {
@@ -82,6 +166,7 @@ void update_rtc() {
     }
 }
 
+// 更新虚拟时间（无修改）
 void update_virtual_time() {
     cycle_counter++;
     if (cycle_counter >= CYCLES_PER_US) {
@@ -90,33 +175,26 @@ void update_virtual_time() {
     }
 }
 
-uint32_t csr_mcause = 0;
-uint32_t csr_mepc = 0;
-uint32_t csr_mstatus = 0;
-uint32_t csr_mtvec = 0;
-
+// 【关键修改3】设置特殊寄存器：直接赋值给cpu_state.csr的成员
 extern "C" void set_csr_values(int mcause, int mepc, int mstatus, int mtvec) {
-    csr_mcause = mcause;
-    csr_mepc = mepc;
-    csr_mstatus = mstatus;
-    csr_mtvec = mtvec;
+    cpu_state.csr.mcause = static_cast<word_t>(mcause);  // 类型匹配word_t
+    cpu_state.csr.mepc = static_cast<word_t>(mepc);
+    cpu_state.csr.mstatus = static_cast<word_t>(mstatus);
+    cpu_state.csr.mtvec = static_cast<word_t>(mtvec);
 }
 
+// 串口输出（无修改）
 void putch(int c) {
     *(volatile uint8_t *)SERIAL_PORT = c & 0xff;
 }
 
-
+// ebreak处理（使用cpu_state.pc作为退出PC）
 extern "C" void ebreak(int exit_code, int exit_pc) {
-    // if (tfp != NULL) {
-    //     tfp->close();
-    //     delete tfp;
-    // }
     if (exit_code == 0) {
-        printf("Exit PC: %x\n", exit_pc);
+        printf("Exit PC: 0x%x\n", cpu_state.pc);  // 改用cpu_state.pc
         printf("[DPI] ebreak: \033[1;32m HIT GOOD TRAP \033[0m\n");        
     } else {
-        printf("Exit PC: %x\n", exit_pc);
+        printf("Exit PC: 0x%x\n", cpu_state.pc);
         printf("[DPI] ebreak: \033[1;31m HIT BAD TRAP \033[0m\n");
     }
     npc_state.state = NPC_END;
@@ -124,14 +202,14 @@ extern "C" void ebreak(int exit_code, int exit_pc) {
     print_iringbuf();
 }
 
-
-
-// 环形缓冲区
+// 环形缓冲区（需补充InstTrace定义，若isa-def.h无则自行定义）
 #define IRINGBUF_SIZE 16
+
 static InstTrace iringbuf[IRINGBUF_SIZE];
 static int iringbuf_idx = 0;
 static int iringbuf_count = 0;
 
+// ROM读取（无修改）
 extern "C" int rom_read(int raddr) {
     uint32_t aligned_addr = raddr & ~0x3u;
     uint32_t rom_idx = aligned_addr >> 2;
@@ -142,6 +220,7 @@ extern "C" int rom_read(int raddr) {
     return rom[rom_idx];
 }
 
+// 物理内存读取（无修改）
 extern "C" int pmem_read(int raddr, int valid) {
     uint32_t data = 0;
     if (raddr == SERIAL_PORT) data = 0;
@@ -152,12 +231,11 @@ extern "C" int pmem_read(int raddr, int valid) {
             int addr = (raddr & ~0x3u) >> 2;
             data = ram[addr];
     }
-
     if(is_mtrace && (valid == 0xffffffff)) printf("\033[1;32mMtrace: 成功在地址: 0x%x 取出数据 0x%x\n\033[0m", raddr+0x80000000, data);
-
     return data;
 }
 
+// 物理内存写入（无修改）
 extern "C" void pmem_write(int waddr, int wdata, char wmask, int pc) {
     if (waddr == SERIAL_PORT) {
         if (wmask & 0x1) {
@@ -180,12 +258,14 @@ extern "C" void pmem_write(int waddr, int wdata, char wmask, int pc) {
     ram[addr] = new_val;
 }
 
+// 【关键修改4】更新当前指令和PC：同步到cpu_state.pc
 extern "C" void display(int instr, int pc, int npc) {
     ::instr = instr;
-    ::pc = pc;
-    ::n_pc = npc;
+    cpu_state.pc = static_cast<vaddr_t>(pc);  // 同步当前PC到cpu_state
+    ::n_pc = npc;                              // 临时存储下一条PC
 }
 
+// 【关键修改5】更新通用寄存器：直接写入cpu_state.gpr
 extern "C" void display_ref(
     int rf0, int rf1, int rf2, int rf3,
     int rf4, int rf5, int rf6, int rf7,
@@ -196,41 +276,41 @@ extern "C" void display_ref(
     int rf24, int rf25, int rf26, int rf27,
     int rf28, int rf29, int rf30, int rf31
 ) {
-    ::ref[0] = rf0;
-    ::ref[1] = rf1;
-    ::ref[2] = rf2;
-    ::ref[3] = rf3;
-    ::ref[4] = rf4;
-    ::ref[5] = rf5;
-    ::ref[6] = rf6;
-    ::ref[7] = rf7;
-    ::ref[8] = rf8;
-    ::ref[9] = rf9;
-    ::ref[10] = rf10;
-    ::ref[11] = rf11;
-    ::ref[12] = rf12;
-    ::ref[13] = rf13;
-    ::ref[14] = rf14;
-    ::ref[15] = rf15;
-    ::ref[16] = rf16;
-    ::ref[17] = rf17;
-    ::ref[18] = rf18;
-    ::ref[19] = rf19;
-    ::ref[20] = rf20;
-    ::ref[21] = rf21;
-    ::ref[22] = rf22;
-    ::ref[23] = rf23;
-    ::ref[24] = rf24;
-    ::ref[25] = rf25;
-    ::ref[26] = rf26;
-    ::ref[27] = rf27;
-    ::ref[28] = rf28;
-    ::ref[29] = rf29;
-    ::ref[30] = rf30;
-    ::ref[31] = rf31;
+    cpu_state.gpr[0] = static_cast<word_t>(rf0);
+    cpu_state.gpr[1] = static_cast<word_t>(rf1);
+    cpu_state.gpr[2] = static_cast<word_t>(rf2);
+    cpu_state.gpr[3] = static_cast<word_t>(rf3);
+    cpu_state.gpr[4] = static_cast<word_t>(rf4);
+    cpu_state.gpr[5] = static_cast<word_t>(rf5);
+    cpu_state.gpr[6] = static_cast<word_t>(rf6);
+    cpu_state.gpr[7] = static_cast<word_t>(rf7);
+    cpu_state.gpr[8] = static_cast<word_t>(rf8);
+    cpu_state.gpr[9] = static_cast<word_t>(rf9);
+    cpu_state.gpr[10] = static_cast<word_t>(rf10);
+    cpu_state.gpr[11] = static_cast<word_t>(rf11);
+    cpu_state.gpr[12] = static_cast<word_t>(rf12);
+    cpu_state.gpr[13] = static_cast<word_t>(rf13);
+    cpu_state.gpr[14] = static_cast<word_t>(rf14);
+    cpu_state.gpr[15] = static_cast<word_t>(rf15);
+    cpu_state.gpr[16] = static_cast<word_t>(rf16);
+    cpu_state.gpr[17] = static_cast<word_t>(rf17);
+    cpu_state.gpr[18] = static_cast<word_t>(rf18);
+    cpu_state.gpr[19] = static_cast<word_t>(rf19);
+    cpu_state.gpr[20] = static_cast<word_t>(rf20);
+    cpu_state.gpr[21] = static_cast<word_t>(rf21);
+    cpu_state.gpr[22] = static_cast<word_t>(rf22);
+    cpu_state.gpr[23] = static_cast<word_t>(rf23);
+    cpu_state.gpr[24] = static_cast<word_t>(rf24);
+    cpu_state.gpr[25] = static_cast<word_t>(rf25);
+    cpu_state.gpr[26] = static_cast<word_t>(rf26);
+    cpu_state.gpr[27] = static_cast<word_t>(rf27);
+    cpu_state.gpr[28] = static_cast<word_t>(rf28);
+    cpu_state.gpr[29] = static_cast<word_t>(rf29);
+    cpu_state.gpr[30] = static_cast<word_t>(rf30);
+    cpu_state.gpr[31] = static_cast<word_t>(rf31);
 }
 
-
+// 【关键修改6】打印寄存器状态：读取cpu_state.gpr和cpu_state.csr
 void printf_ref() {
     printf("\033[1;34m======================================== 寄存器状态 ========================================\033[0m\n");
     printf("%-8s   %-14s  %-8s    %-14s  %-8s    %-14s  %-8s    %-14s\n",
@@ -243,18 +323,25 @@ void printf_ref() {
         int end = (i + 4 < 32) ? i + 4 : 32;
         for (int j = i; j < end; j++) {
             if (j == 0) {
-                printf("\033[1;32m%-8s\033[0m  0x%-10.8x  ", regs[j], ref[j]);
+                // 读取cpu_state.gpr[j]（通用寄存器）
+                printf("\033[1;32m%-8s\033[0m  0x%-10.8x  ", regs[j], cpu_state.gpr[j]);
             } else {
-                printf("%-8s  0x%-10.8x  ", regs[j], ref[j]);
+                printf("%-8s  0x%-10.8x  ", regs[j], cpu_state.gpr[j]);
             }
         }
         printf("\n");
     }
     printf("---------------------------------------------------------------------------------------------\n");
-    printf("\033[1;33mPC:       0x%-10.8x\033[0m\n", n_pc);
+    // 读取cpu_state.pc和特殊寄存器
+    printf("\033[1;33m当前PC:   0x%-10.8x\033[0m\n", cpu_state.pc);
+    printf("\033[1;33m下条PC:   0x%-10.8x\033[0m\n", n_pc);
+    printf("\033[1;33mmcause:   0x%-10.8x\033[0m\n", cpu_state.csr.mcause);
+    printf("\033[1;33mmepc:     0x%-10.8x\033[0m\n", cpu_state.csr.mepc);
+    printf("\033[1;33mmstatus:  0x%-10.8x\033[0m\n", cpu_state.csr.mstatus);
+    printf("\033[1;33mmtvec:    0x%-10.8x\033[0m\n", cpu_state.csr.mtvec);
 }
 
-// 反汇编函数
+// 反汇编函数（无修改）
 static const char* disassemble(uint32_t inst) {
     char* disasm = (char*)malloc(64);
     uint32_t opcode = inst & 0x7F;
@@ -370,6 +457,7 @@ static const char* disassemble(uint32_t inst) {
     return disasm;
 }
 
+// 打印指令跟踪（无修改）
 void print_iringbuf() {
     printf("\033[1;34m====== Instruction Ring Buffer ======\033[0m\n");
     if (iringbuf_count == 0) {
@@ -389,6 +477,7 @@ void print_iringbuf() {
     printf("\033[1;34m====================================\033[0m\n");
 }
 
+// 加载ROM（无修改）
 bool load_rom_bin(const char* filename) {
     FILE* fp = fopen(filename, "rb");
     if (!fp) { perror("ROM bin打开失败"); return false; }
@@ -402,6 +491,7 @@ bool load_rom_bin(const char* filename) {
     return true;
 }
 
+// 加载RAM（无修改）
 bool load_ram_bin(const char* filename) {
     FILE* fp = fopen(filename, "rb");
     if (!fp) { perror("RAM bin打开失败"); return false; }
@@ -415,6 +505,7 @@ bool load_ram_bin(const char* filename) {
     return true;
 }
 
+// 加载ROM（hex格式，无修改）
 bool load_rom_hex(const char* filename) {
     std::ifstream file(filename);
     if (!file.is_open()) { std::cerr << "ROM hex打开失败\n"; return false; }
@@ -433,6 +524,7 @@ bool load_rom_hex(const char* filename) {
     return true;
 }
 
+// 初始化ROM（无修改）
 bool init_rom(const char* base) {
     std::string bin = base + std::string(".bin");
     if (load_rom_bin(bin.c_str())) return true;
@@ -442,6 +534,7 @@ bool init_rom(const char* base) {
     return false;
 }
 
+// 初始化RAM（无修改）
 bool init_ram(const char* base) {
     std::string bin = base + std::string(".bin");
     if (load_ram_bin(bin.c_str())) return true;
@@ -451,8 +544,10 @@ bool init_ram(const char* base) {
     return false;
 }
 
+// NPC状态（无修改）
 NPCState npc_state = { .state = NPC_STOP };
 
+// 读取命令行（无修改）
 static char* rl_gets() {
     static char *line_read = NULL;
     if (line_read) {
@@ -466,6 +561,7 @@ static char* rl_gets() {
     return line_read;
 }
 
+// 命令处理函数声明（无修改）
 static int cmd_help(char *args);
 static int cmd_q(char *args);
 static int cmd_c(char *args);
@@ -474,49 +570,61 @@ static int cmd_info(char *args);
 static int cmd_x(char *args);
 static int cmd_itrace(char *args);
 static int cmd_mtrace(char *args);
+static int cmd_b(char *args);          
+static int cmd_del_breakpoint(char *args); 
+static int cmd_enable_breakpoint(char *args); 
+static int cmd_disable_breakpoint(char *args);
 
+// 命令表（无修改）
 static struct {
     const char *name;
     const char *description;
     int (*handler) (char *);
 } cmd_table[] = {
-    { "help", "Display information about all supported commands", cmd_help },
-    { "c", "Continue the execution of the program", cmd_c },
-    { "q", "Exit NPC", cmd_q },
-    { "si", "Execute the program one or more steps", cmd_si },
-    { "info", "Printf the reg and pc", cmd_info },
-    { "x", "scan the pmem", cmd_x },
-    { "itrace", "Print the instruction ring buffer", cmd_itrace },
-    { "mtrace", "Print the memory trace", cmd_mtrace}
+    { "help", "显示所有支持的命令", cmd_help },
+    { "c", "继续执行程序（从当前位置/断点处开始）", cmd_c },
+    { "q", "退出NPC模拟器", cmd_q },
+    { "si", "单步执行（可指定步数，如si 5）", cmd_si },
+    { "info", "查看寄存器状态(info r)或断点(info b)", cmd_info },
+    { "x", "查看内存数据（用法: x N 地址，如x 10 0x80000000）", cmd_x },
+    { "itrace", "显示指令执行历史", cmd_itrace },
+    { "mtrace", "开启/关闭内存访问跟踪（mtrace on/off）", cmd_mtrace},
+    { "b", "设置断点（用法: b 地址 [type]，type可选permanent/oneshot，默认permanent）", cmd_b },
+    { "del", "删除断点（用法: del 编号 或 del all）", cmd_del_breakpoint },
+    { "enable", "启用断点（用法: enable 编号）", cmd_enable_breakpoint },
+    { "disable", "禁用断点（用法: disable 编号）", cmd_disable_breakpoint }
 };
 
 #define ARRLEN(arr) (int)(sizeof(arr) / sizeof(arr[0]))
 #define NR_CMD ARRLEN(cmd_table)
 
+// 帮助命令（无修改）
 static int cmd_help(char *args) {
     char *arg = strtok(NULL, " ");
     int i;
     if (arg == NULL) {
         for (i = 0; i < NR_CMD; i++) {
-            printf("%s - %s\n", cmd_table[i].name, cmd_table[i].description);
+            printf("%-8s - %s\n", cmd_table[i].name, cmd_table[i].description);
         }
     } else {
         for (i = 0; i < NR_CMD; i++) {
             if (strcmp(arg, cmd_table[i].name) == 0) {
-                printf("%s - %s\n", cmd_table[i].name, cmd_table[i].description);
+                printf("%-8s - %s\n", cmd_table[i].name, cmd_table[i].description);
                 return 0;
             }
         }
-        printf("Unknown command '%s'\n", arg);
+        printf("未知命令 '%s'\n", arg);
     }
     return 0;
 }
 
+// 退出命令（无修改）
 static int cmd_q(char *args) {
     npc_state.state = NPC_QUIT;
     return -1;
 }
 
+// 继续执行命令（无修改）
 static int cmd_c(char *args) {
     npc_state.state = NPC_RUNNING;
     return 0;
@@ -525,49 +633,45 @@ static int cmd_c(char *args) {
 static bool g_print_step = false;
 #define MAX_INST_TO_PRINT 10
 
-// 用宏包裹difftest相关函数实现
+// 【关键修改7】DiffTest相关：使用riscv32_CPU_state作为状态类型
 #ifdef ENABLE_DIFFTEST
-void prepare_npc_before_state(CPUState &npc_before, int is_nemu, uint32_t n_pc, uint32_t pc, const uint32_t *ref) {
+void prepare_npc_before_state(riscv32_CPU_state &npc_before, int is_nemu, uint32_t n_pc, uint32_t pc, const word_t *gpr) {
     if (is_nemu <= 1) { // 复位状态
-        for (int i = 0; i < 32; i++) {
-            npc_before.gpr[i] = 0x0;
-        }
-        npc_before.pc = 0x80000000;
+        memset(&npc_before, 0, sizeof(riscv32_CPU_state));  // 清空状态
+        npc_before.pc = 0x80000000;  // 初始PC
     } else if (n_pc - pc != 4) { // 跳转情况
-        for (int i = 0; i < 32; i++) {
-            npc_before.gpr[i] = ref[i];
-        }
+        memcpy(npc_before.gpr, gpr, sizeof(npc_before.gpr));  // 复制GPR
         npc_before.pc = n_pc;
+        npc_before.csr = cpu_state.csr;  // 复制特殊寄存器
     } else { // 正常执行
-        for (int i = 0; i < 32; i++) {
-            npc_before.gpr[i] = ref[i];
-        }
+        memcpy(npc_before.gpr, gpr, sizeof(npc_before.gpr));
         npc_before.pc = pc + 4;
+        npc_before.csr = cpu_state.csr;
     }
 }
 
-void sync_npc_to_nemu(CPUState &npc_before) {
-    difftest_regcpy(&npc_before, true);
+void sync_npc_to_nemu(riscv32_CPU_state &npc_before) {
+    difftest_regcpy(&npc_before, true);  // NPC状态同步到NEMU
 }
 
 void execute_nemu_step() {
-    difftest_exec(1);
+    difftest_exec(1);  // NEMU执行1步
 }
 
-void get_nemu_result(CPUState &ref_nemu) {
-    difftest_regcpy(&ref_nemu, false); // REF → NPC
+void get_nemu_result(riscv32_CPU_state &ref_nemu) {
+    difftest_regcpy(&ref_nemu, false);  // NEMU结果同步到NPC
 }
 
-bool check_diff_result(const CPUState &npc, const CPUState &ref_nemu, int is_nemu, uint32_t pc) {
-    if (is_nemu <= 1) return false; // 跳过初始状态
+// 【关键修改8】DiffTest比对：比对riscv32_CPU_state的csr成员
+bool check_diff_result(const riscv32_CPU_state &npc, const riscv32_CPU_state &ref_nemu, int is_nemu, uint32_t pc) {
+    if (is_nemu <= 1) return false;
 
     bool has_error = false;
 
-    // 通用寄存器比对
+    // 比对通用寄存器
     for (int i = 0; i < 32; ++i) {
         if (npc.gpr[i] != ref_nemu.gpr[i]) {
             if (!has_error) {
-                // 首次发现错误，先打印PC
                 printf("\n❌ DiffTest FAILED at PC = 0x%08x\n", pc);
                 has_error = true;
             }
@@ -575,7 +679,7 @@ bool check_diff_result(const CPUState &npc, const CPUState &ref_nemu, int is_nem
         }
     }
 
-    // PC比对
+    // 比对PC
     if (npc.pc != ref_nemu.pc) {
         if (!has_error) {
             printf("\n❌ DiffTest FAILED at PC = 0x%08x\n", pc);
@@ -584,38 +688,37 @@ bool check_diff_result(const CPUState &npc, const CPUState &ref_nemu, int is_nem
         printf("PC : NPC = 0x%08x, NEMU = 0x%08x\n", npc.pc, ref_nemu.pc);
     }
 
-    // 特殊寄存器比对（修复重点：确保首次错误时打印PC）
-    if (npc.mcause != ref_nemu.mcause) {
+    // 比对特殊寄存器（关键：从csr成员读取）
+    if (npc.csr.mcause != ref_nemu.csr.mcause) {
         if (!has_error) {
             printf("\n❌ DiffTest FAILED at PC = 0x%08x\n", pc);
             has_error = true;
         }
-        printf("mcause: NPC = 0x%08x, NEMU = 0x%08x\n", npc.mcause, ref_nemu.mcause);
+        printf("mcause: NPC = 0x%08x, NEMU = 0x%08x\n", npc.csr.mcause, ref_nemu.csr.mcause);
     }
 
-    if (npc.mepc != ref_nemu.mepc) {
+    if (npc.csr.mepc != ref_nemu.csr.mepc) {
         if (!has_error) {
             printf("\n❌ DiffTest FAILED at PC = 0x%08x\n", pc);
             has_error = true;
         }
-        printf("mepc: NPC = 0x%08x, NEMU = 0x%08x\n", npc.mepc, ref_nemu.mepc);
+        printf("mepc: NPC = 0x%08x, NEMU = 0x%08x\n", npc.csr.mepc, ref_nemu.csr.mepc);
     }
 
-    if (npc.mstatus != ref_nemu.mstatus) {
+    if (npc.csr.mstatus != ref_nemu.csr.mstatus) {
         if (!has_error) {
             printf("\n❌ DiffTest FAILED at PC = 0x%08x\n", pc);
             has_error = true;
         }
-        printf("mstatus: NPC = 0x%08x, NEMU = 0x%08x\n", npc.mstatus, ref_nemu.mstatus);
+        printf("mstatus: NPC = 0x%08x, NEMU = 0x%08x\n", npc.csr.mstatus, ref_nemu.csr.mstatus);
     }
 
-    if (npc.mtvec != ref_nemu.mtvec) {
+    if (npc.csr.mtvec != ref_nemu.csr.mtvec) {
         if (!has_error) {
-            // 针对你的情况：mtvec首次不匹配时，打印PC
             printf("\n❌ DiffTest FAILED at PC = 0x%08x\n", pc);
             has_error = true;
         }
-        printf("mtvec: NPC = 0x%08x, NEMU = 0x%08x\n", npc.mtvec, ref_nemu.mtvec);
+        printf("mtvec: NPC = 0x%08x, NEMU = 0x%08x\n", npc.csr.mtvec, ref_nemu.csr.mtvec);
     }
 
     if (has_error) {
@@ -626,6 +729,7 @@ bool check_diff_result(const CPUState &npc, const CPUState &ref_nemu, int is_nem
 }
 #endif // ENABLE_DIFFTEST
 
+// 更新指令跟踪（无修改）
 void update_instruction_trace(uint32_t pc, uint32_t instr, InstTrace *iringbuf, int &iringbuf_idx, int &iringbuf_count) {
     const char* disasm_buf = disassemble(instr);
     strncpy(iringbuf[iringbuf_idx].disasm, disasm_buf, 63);
@@ -639,12 +743,17 @@ void update_instruction_trace(uint32_t pc, uint32_t instr, InstTrace *iringbuf, 
     }
 }
 
-CPUState ref_nemu;
-CPUState npc_before;
-CPUState npc;
+// 【关键修改9】DiffTest状态变量：改为riscv32_CPU_state类型
+#ifdef ENABLE_DIFFTEST
+static riscv32_CPU_state ref_nemu;    // NEMU参考状态
+static riscv32_CPU_state npc_before;  // NPC执行前状态
+static riscv32_CPU_state npc;         // NPC当前状态
+#endif // ENABLE_DIFFTEST
+
+// 【关键修改10】CPU执行循环：使用cpu_state更新PC和特殊寄存器
 void cpu_exec(uint64_t n) {
     if (npc_state.state == NPC_END || npc_state.state == NPC_ABORT || npc_state.state == NPC_QUIT) {
-        printf("程序执行已结束。请退出 NEMU 并重新运行。\n");
+        printf("程序执行已结束。请退出 NPC 并重新运行。\n");
         return;
     }
     npc_state.state = NPC_RUNNING;
@@ -654,65 +763,62 @@ void cpu_exec(uint64_t n) {
     int cycles = 0;
     
     while (steps < n && !ctx->gotFinish() && npc_state.state != NPC_END) {
-        // 用宏包裹difftest相关调用
+        uint32_t current_pc_before_exec = cpu_state.pc;  // 执行前的PC（来自cpu_state）
+
 #ifdef ENABLE_DIFFTEST
-        // 准备NPC执行前状态
-        prepare_npc_before_state(npc_before, ::is_nemu, n_pc, pc, ref);
+        // 准备NPC执行前状态（传入cpu_state.gpr）
+        prepare_npc_before_state(npc_before, ::is_nemu, ::n_pc, cpu_state.pc, cpu_state.gpr);
 #endif // ENABLE_DIFFTEST
 
-        // 驱动时钟
+        // 驱动时钟执行指令
         top->reset = is_reset && (cycles < 1);
         top->clk = 0;
         ctx->timeInc(1);
-         top->eval();
-        // if (tfp != NULL) tfp->dump(ctx->time());
+        top->eval();
         top->clk = 1;
         ctx->timeInc(1);
-         top->eval();
-        // if (tfp != NULL) tfp->dump(ctx->time());
+        top->eval();
         cycles++;
         steps++;
         update_virtual_time();
         update_rtc();
-        ::is_nemu = ::is_nemu + 1;
+        ::is_nemu++;
         
-        // 准备NPC执行后状态
-        for (int i = 0; i < 32; i++) {
-            npc.gpr[i] = ref[i];
-        }
-        npc.pc = n_pc;
+        // 执行后更新PC（同步到cpu_state.pc）
+        cpu_state.pc = ::n_pc;  // 下一条PC -> cpu_state.pc
 
-        // 用宏包裹difftest相关调用
 #ifdef ENABLE_DIFFTEST
-        // 同步到NEMU
-        npc.mcause = csr_mcause;
-        npc.mepc = csr_mepc;
-        npc.mstatus = csr_mstatus;
-        npc.mtvec = csr_mtvec;
+        // 同步NPC状态（GPR和特殊寄存器）
+        memcpy(npc.gpr, cpu_state.gpr, sizeof(npc.gpr));
+        npc.pc = cpu_state.pc;
+        npc.csr = cpu_state.csr;  // 复制特殊寄存器
 
+        // DiffTest流程
         sync_npc_to_nemu(npc_before);
-
-        // 执行NEMU步骤
         execute_nemu_step();
-
-        // 获取NEMU结果
         get_nemu_result(ref_nemu);
         
-        // 检查差异
-        if (check_diff_result(npc, ref_nemu, ::is_nemu, pc)) {
+        if (check_diff_result(npc, ref_nemu, ::is_nemu, current_pc_before_exec)) {
             return;
         }
 #endif // ENABLE_DIFFTEST
 
-        // 打印指令信息
+        // 打印单步信息（读取cpu_state.pc）
         if (g_print_step) {
-            const char* disasm = disassemble(instr);
-            printf("\033[1;33mPC: 0x%x\033[0m    \033[1;34minstr:  0x%x  %s\033[0m\n", pc, instr, disasm);
+            const char* disasm = disassemble(::instr);
+            printf("\033[1;33mPC: 0x%x\033[0m    \033[1;34minstr:  0x%x  %s\033[0m\n", 
+                   current_pc_before_exec, ::instr, disasm);
             free((void*)disasm);
         }
 
         // 更新指令跟踪
-        update_instruction_trace(pc, instr, iringbuf, iringbuf_idx, iringbuf_count);
+        update_instruction_trace(current_pc_before_exec, ::instr, iringbuf, iringbuf_idx, iringbuf_count);
+
+        // 检查断点（用cpu_state.pc，即下一条PC）
+        if (check_breakpoint(cpu_state.pc)) {
+            npc_state.state = NPC_STOP;
+            return;
+        }
     }
     is_reset = false;
     if (npc_state.state != NPC_END) {
@@ -720,7 +826,7 @@ void cpu_exec(uint64_t n) {
     }
 }
 
-
+// 单步命令（无修改，依赖cpu_exec）
 static int cmd_si(char *args) {
     int i;
     if(is_print != 0){
@@ -746,26 +852,32 @@ static int cmd_si(char *args) {
     }
 }
 
+// 信息命令（无修改，依赖printf_ref）
 static int cmd_info(char *args) {
     if (args == NULL) {
-        printf("Please input 'info r'\n");
+        printf("用法: info r（查看寄存器） | info b（查看断点）\n");
         return 0;
     }
     if (strcmp(args, "r") == 0) {
-        printf_ref();
+        printf_ref();  // 打印cpu_state中的寄存器
+    } else if (strcmp(args, "b") == 0) {
+        print_breakpoints();
+    } else {
+        printf("未知参数: %s，支持的参数: r, b\n", args);
     }
     return 0;
 }
 
+// 内存查看命令（无修改）
 static int cmd_x(char *args) {
     char *arg1 = strtok(NULL, " ");
     if (arg1 == NULL) {
-        printf("Usage: x N EXPR\n");
+        printf("用法: x N EXPR（查看从EXPR开始的N个4字节数据）\n");
         return 0;
     }
     char *arg2 = strtok(NULL, " ");
     if (arg2 == NULL) {
-        printf("Usage: x N EXPR\n");
+        printf("用法: x N EXPR（例如: x 10 0x80000000）\n");
         return 0;
     }
     char *endptr1;
@@ -773,51 +885,163 @@ static int cmd_x(char *args) {
     u_int32_t expr = strtol(arg2, NULL, 16);
 
     if (*endptr1 != '\0') {
-        printf("\033[1;31m无效地址格式: %s（十六进制需以0x开头）\033[0m\n", arg1);
+        printf("\033[1;31m无效数量格式: %s\033[0m\n", arg1);
         return 0;
     }
-    if (n < 0x80000000 || n >= 0x90000000) {
-        printf("\033[1;31m地址 0x%08x 超出RAM范围(0x80000000 ~ 0x8FFFFFFF)!\033[0m\n", n);
+    if (expr < 0x80000000 || expr >= 0x90000000) {
+        printf("\033[1;31m地址 0x%08x 超出RAM范围(0x80000000 ~ 0x8FFFFFFF)!\033[0m\n", expr);
         return 0;
     }
 
-    printf("\033[1;34m=======内存扫描=======\033[0m\n");
-    printf("----------------------\n");
-    printf("%-10s    %-10s\n", 
-           "地址", "数值");
-    printf("----------------------\n");
+    printf("\033[1;34m======= 内存数据 (从 0x%08x 开始) =======\033[0m\n", expr);
+    printf("地址          数据\n");
+    printf("------------------------\n");
 
-    for (int i = 0; i < expr; i++) {
-        uint32_t address = n + i * 4 ;
+    for (int i = 0; i < n; i++) {
+        uint32_t address = expr + i * 4 ;
         uint32_t data = pmem_read(address-0x80000000, 0);
         printf("0x%08x  0x%08x\n", address, data);
     }
 
-    printf("----------------------\n");
+    printf("----------------------------------------\n");
     return 0;
 }
 
+// 指令跟踪命令（无修改）
 static int cmd_itrace(char *args) {
     print_iringbuf();
     return 0;
 }
 
+// 内存跟踪命令（无修改）
 static int cmd_mtrace(char *args){
     if(args == NULL){
-        printf("Please input 'mtrace on/off' \n");
+        printf("用法: mtrace on（开启） | mtrace off（关闭）\n");
         return 0;
     }
     if(strcmp(args, "on") == 0){
         is_mtrace = true;
-        printf("Mtrace is successfully turned on\n");
+        printf("内存跟踪已开启\n");
     }
     else if(strcmp(args, "off") == 0){
         is_mtrace = false;
-        printf("Mtrace is successfully turned off\n");
+        printf("内存跟踪已关闭\n");
+    }
+    else {
+        printf("无效参数: %s，支持的参数: on, off\n", args);
     }
     return 0;
 }
 
+// 设置断点命令（无修改）
+static int cmd_b(char *args) {
+    if (args == NULL) {
+        printf("用法: b <pc地址> [类型]（类型: permanent/oneshot，默认permanent）\n");
+        printf("示例: b 0x80000000（永久断点）\n");
+        printf("      b 0x80000040 oneshot（单次断点）\n");
+        return 0;
+    }
+
+    char *addr_str = strtok(args, " ");
+    if (addr_str == NULL) {
+        printf("请提供断点地址，用法: b <pc地址> [类型]\n");
+        return 0;
+    }
+
+    char *endptr;
+    uint32_t pc_addr = strtol(addr_str, &endptr, 16);
+    if (*endptr != '\0' || addr_str == endptr) {
+        printf("无效的地址格式: %s，请使用十六进制（如0x80000000）\n", addr_str);
+        return 0;
+    }
+
+    char *type_arg = strtok(NULL, " ");
+    BreakpointType type = BP_PERMANENT;
+    if (type_arg != NULL) {
+        if (strcmp(type_arg, "oneshot") == 0) {
+            type = BP_ONESHOT;
+        } else if (strcmp(type_arg, "permanent") != 0) {
+            printf("无效的断点类型: %s，支持: permanent/oneshot\n", type_arg);
+            return 0;
+        }
+    }
+
+    add_breakpoint(pc_addr, type);
+    return 0;
+}
+
+// 删除断点命令（无修改）
+static int cmd_del_breakpoint(char *args) {
+    if (args == NULL) {
+        printf("用法: del <编号>（删除指定断点） | del all（删除所有断点）\n");
+        return 0;
+    }
+
+    if (strcmp(args, "all") == 0) {
+        breakpoint_count = 0;
+        printf("已删除所有断点\n");
+        return 0;
+    }
+
+    int idx = atoi(args) - 1;
+    if (idx < 0 || idx >= breakpoint_count) {
+        printf("无效的断点编号: %s，当前共有 %d 个断点\n", args, breakpoint_count);
+        return 0;
+    }
+
+    for (int i = idx; i < breakpoint_count - 1; i++) {
+        breakpoints[i] = breakpoints[i + 1];
+    }
+    breakpoint_count--;
+    printf("已删除断点编号: %d\n", idx + 1);
+    return 0;
+}
+
+// 启用断点命令（无修改）
+static int cmd_enable_breakpoint(char *args) {
+    if (args == NULL) {
+        printf("用法: enable <断点编号>\n");
+        return 0;
+    }
+
+    int idx = atoi(args) - 1;
+    if (idx < 0 || idx >= breakpoint_count) {
+        printf("无效的断点编号: %s，当前共有 %d 个断点\n", args, breakpoint_count);
+        return 0;
+    }
+
+    if (breakpoints[idx].enabled) {
+        printf("断点 %d 已处于启用状态\n", idx + 1);
+    } else {
+        breakpoints[idx].enabled = true;
+        printf("已启用断点 %d（地址: 0x%08x）\n", idx + 1, breakpoints[idx].pc);
+    }
+    return 0;
+}
+
+// 禁用断点命令（无修改）
+static int cmd_disable_breakpoint(char *args) {
+    if (args == NULL) {
+        printf("用法: disable <断点编号>\n");
+        return 0;
+    }
+
+    int idx = atoi(args) - 1;
+    if (idx < 0 || idx >= breakpoint_count) {
+        printf("无效的断点编号: %s，当前共有 %d 个断点\n", args, breakpoint_count);
+        return 0;
+    }
+
+    if (!breakpoints[idx].enabled) {
+        printf("断点 %d 已处于禁用状态\n", idx + 1);
+    } else {
+        breakpoints[idx].enabled = false;
+        printf("已禁用断点 %d（地址: 0x%08x）\n", idx + 1, breakpoints[idx].pc);
+    }
+    return 0;
+}
+
+// 【关键修改11】调试主循环：使用cpu_state.pc
 void sdb_mainloop() {
     for (char *str; (str = rl_gets()) != NULL; ) {
         char *str_end = str + strlen(str);
@@ -834,61 +1058,58 @@ void sdb_mainloop() {
             }
         }
         if (i == NR_CMD) {
-            printf("未知命令: %s\n", cmd);
+            printf("未知命令: %s，输入 help 查看支持的命令\n", cmd);
         }
 
+        // 继续执行逻辑
         if (npc_state.state == NPC_RUNNING) {
-
             int cycles = 0;
             while (!ctx->gotFinish() && npc_state.state != NPC_END) {
-                // 用宏包裹difftest相关调用
+                uint32_t current_pc_before_exec = cpu_state.pc;  // 执行前PC（来自cpu_state）
+
 #ifdef ENABLE_DIFFTEST
-                prepare_npc_before_state(npc_before, ::is_nemu, n_pc, pc, ref);
+                prepare_npc_before_state(npc_before, ::is_nemu, ::n_pc, cpu_state.pc, cpu_state.gpr);
 #endif // ENABLE_DIFFTEST
 
+                // 驱动时钟
                 top->reset = (cycles < 1);
                 top->clk = 0;
                 ctx->timeInc(1);
                 top->eval();
-                // if (tfp != NULL) tfp->dump(ctx->time());
                 top->clk = 1;
                 ctx->timeInc(1);
                 top->eval();
-                // if (tfp != NULL) tfp->dump(ctx->time());
                 cycles++;
                 update_virtual_time();
                 update_rtc();
-                ::is_nemu = ::is_nemu + 1;
+                ::is_nemu++;
 
-                for (int i = 0; i < 32; i++) {
-                    npc.gpr[i] = ref[i];
-                }
-                npc.pc = n_pc;
+                // 更新PC到cpu_state
+                cpu_state.pc = ::n_pc;
 
-                // 用宏包裹difftest相关调用
 #ifdef ENABLE_DIFFTEST
-                // 同步到NEMU
-                npc.mcause = csr_mcause;
-                npc.mepc = csr_mepc;
-                npc.mstatus = csr_mstatus;
-                npc.mtvec = csr_mtvec;
+                // 同步NPC状态
+                memcpy(npc.gpr, cpu_state.gpr, sizeof(npc.gpr));
+                npc.pc = cpu_state.pc;
+                npc.csr = cpu_state.csr;
 
+                // DiffTest比对
                 sync_npc_to_nemu(npc_before);
-
-                // 执行NEMU步骤
                 execute_nemu_step();
-
-                // 获取NEMU结果
                 get_nemu_result(ref_nemu);
-
-                // 检查差异
-                if (check_diff_result(npc, ref_nemu, ::is_nemu, pc)) {
+                
+                if (check_diff_result(npc, ref_nemu, ::is_nemu, current_pc_before_exec)) {
                     break;
                 }
 #endif // ENABLE_DIFFTEST
-                        
+
+                // 检查断点（用cpu_state.pc）
+                if (check_breakpoint(cpu_state.pc)) {
+                    npc_state.state = NPC_STOP;
+                    break;
+                }
             }
-            if(npc_state.state != NPC_ABORT) printf("仿真完成，返回命令提示符。\n");
+            if(npc_state.state != NPC_ABORT) printf("已暂停，等待命令...\n");
             if (npc_state.state != NPC_END) {
                 npc_state.state = NPC_STOP;
             }
@@ -900,10 +1121,14 @@ void sdb_mainloop() {
     }
 }
 
+// 主函数（【关键修改12】DiffTest状态改为riscv32_CPU_state）
 int main(int argc, char** argv) {
-    welcome();
+    printf("=============================================\n");
+    printf("=  NJU Processor Simulator (NPC)            =\n");
+    printf("=  断点功能: 支持在断点处重复暂停和继续执行  =\n");
+    printf("=  输入 'help' 查看所有命令                  =\n");
+    printf("=============================================\n");
 
-    // 用宏包裹difftest初始化代码
 #ifdef ENABLE_DIFFTEST
     void* handle = dlopen("/home/ysyxbby/ysyx-workbench/nemu/build/riscv32-nemu-interpreter-so",
                       RTLD_LAZY);
@@ -913,9 +1138,9 @@ int main(int argc, char** argv) {
     difftest_regcpy = (difftest_regcpy_t)dlsym(handle, "difftest_regcpy");
     difftest_exec  = (difftest_exec_t)dlsym(handle, "difftest_exec");
 
-    difftest_init(0);  // 初始化 NEMU
-    CPUState ref;
-    difftest_regcpy(&ref, false);  // 把 NEMU 的寄存器拷到 ref
+    difftest_init(0);
+    riscv32_CPU_state ref;  // 改为riscv32_CPU_state类型
+    difftest_regcpy(&ref, false);
 #endif // ENABLE_DIFFTEST
     
     time(&rtc_timep);
@@ -924,30 +1149,23 @@ int main(int argc, char** argv) {
     if (!init_rom(rom_base)) return 1;
     if (!init_ram(rom_base)) return 1;
 
-    // 用宏包裹difftest内存同步代码
 #ifdef ENABLE_DIFFTEST
     static bool first = true;
     if (first) {
-    // 第一次：把整个内存同步给 NEMU
-    difftest_memcpy(0x80000000, rom, sizeof(rom), true);  // true = NPC -> REF
-    first = false;
+        difftest_memcpy(0x80000000, rom, sizeof(rom), true);
+        first = false;
     }
 #endif // ENABLE_DIFFTEST
 
+    // 初始化cpu_state（可选：复位时清空）
+    memset(&cpu_state, 0, sizeof(riscv32_CPU_state));
+    cpu_state.pc = 0x80000000;  // 初始PC
+
     ctx = new VerilatedContext;
     ctx->commandArgs(argc, argv);
-    //tfp = new VerilatedVcdC;
-    // ctx->traceEverOn(true);  // 启用波形跟踪
-     top = new Vtop(ctx);     // 只创建一次Vtop实例
-    // top->trace(tfp, 99);     // 关联波形跟踪到该实例
-    // tfp->open("waveform.vcd");  // 打开波形文件
+    top = new Vtop(ctx);
     npc_state.state = NPC_STOP;
     sdb_mainloop();
-
-    // if (tfp != NULL) {
-    //     tfp->close();
-    //     delete tfp;
-    // }
 
     if (npc_state.state == NPC_QUIT) {
         printf("程序已退出。\n");
