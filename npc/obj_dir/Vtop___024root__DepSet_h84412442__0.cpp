@@ -124,7 +124,7 @@ VL_INLINE_OPT void Vtop___024root___nba_sequent__TOP__0(Vtop___024root* vlSelf) 
     }
     if ((0x24U == (IData)(vlSelf->top__DOT__instr_type))) {
         vlSelf->top__DOT__u_regfile__DOT__mcause = 
-            vlSelf->top__DOT__u_regfile__DOT__rf[0x11U];
+            vlSelf->top__DOT__u_regfile__DOT__rf[0xfU];
         vlSelf->top__DOT__u_regfile__DOT__mepc = ((0U 
                                                    == 
                                                    vlSelf->top__DOT__u_regfile__DOT__rf

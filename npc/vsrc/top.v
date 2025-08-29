@@ -522,7 +522,7 @@ module RegisterFile #(ADDR_WIDTH = 1, DATA_WIDTH = 1) (
     if (wen & (waddr != 0)) rf[waddr] <= wdata;
     
     if(instr_type == 12'd36)begin
-      mcause <= rf[17];
+      mcause <= rf[15];
       mepc   <= epc_val;
     end
 
