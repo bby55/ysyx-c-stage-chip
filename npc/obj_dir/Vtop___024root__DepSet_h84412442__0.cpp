@@ -128,7 +128,7 @@ VL_INLINE_OPT void Vtop___024root___nba_sequent__TOP__0(Vtop___024root* vlSelf) 
         vlSelf->top__DOT__u_regfile__DOT__mepc = ((0U 
                                                    == 
                                                    vlSelf->top__DOT__u_regfile__DOT__rf
-                                                   [0x11U])
+                                                   [0xfU])
                                                    ? 
                                                   ((IData)(4U) 
                                                    + vlSelf->top__DOT__pc)

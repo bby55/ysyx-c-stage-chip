@@ -203,6 +203,7 @@ extern "C" int rom_read(int raddr) {
     uint32_t rom_idx = aligned_addr >> 2;
     if (rom_idx >= ROM_SIZE) {
         fprintf(stderr, "ROM越界: 0x%x\n", aligned_addr);
+        assert(0);
         return 0;
     }
     return rom[rom_idx];
