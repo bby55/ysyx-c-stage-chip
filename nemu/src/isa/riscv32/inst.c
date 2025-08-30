@@ -153,9 +153,11 @@ static int decode_exec(Decode *s) {
   return 0;
 }
 void trace_inst(word_t pc, uint32_t inst);
+void display_inst();
 int isa_exec_once(Decode *s) {
   
   s->isa.inst = inst_fetch(&s->snpc, 4);
   IFDEF(CONFIG_ITRACE, trace_inst(s->pc, s->isa.inst));
+  IFDEF(CONFIG_ITRACE, display_inst());
   return decode_exec(s);
 }
