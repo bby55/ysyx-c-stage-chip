@@ -1083,11 +1083,7 @@ void sdb_mainloop() {
 }
 
 int main(int argc, char** argv) {
-    printf("=============================================\n");
-    printf("=  NJU Processor Simulator (NPC)            =\n");
-    printf("=  断点功能: 支持在断点处重复暂停和继续执行  =\n");
-    printf("=  输入 'help' 查看所有命令                  =\n");
-    printf("=============================================\n");
+    welcome();
 
 #ifdef ENABLE_DIFFTEST
     void* handle = dlopen("/home/ysyxbby/ysyx-workbench/nemu/build/riscv32-nemu-interpreter-so",
