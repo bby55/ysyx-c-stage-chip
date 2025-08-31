@@ -167,13 +167,23 @@ void am_init_monitor() {
 }
 #endif
 
+struct symbol{
+  paddr_t header;
+};
 void analysis_elf(const char* elf_file){
   if (elf_file == NULL) {
     Log("No ELF file provided");
     return;
   }
   FILE *fp;
-  fp = fopen(elf_file,"r");
+  fp = fopen(elf_file,"rb");
   if(fp != NULL) Log("SUCCESS TO OPEN ELF FILE");
+  struct symbol sy;
+  while (fread(&sy, sizeof(struct symbol), 1, fp) != 0)
+  {
+    Log("SUCCESS TO CATCH HEADER");
+    /* code */
+  }
+  
   fclose(fp);
 }
