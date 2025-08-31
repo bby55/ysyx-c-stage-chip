@@ -174,7 +174,6 @@ void analysis_elf(const char* elf_file){
   }
   FILE *fp;
   fp = fopen(elf_file,"r");
-  if(fp == NULL) Log("FAIL TO OPEN ELF FILE");
-  else  Log("SUCCESS TO OPEN ELF FILE");
+  if(fp != NULL) Log("SUCCESS TO OPEN ELF FILE");
   fclose(fp);
 }
