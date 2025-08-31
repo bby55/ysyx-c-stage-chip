@@ -168,7 +168,7 @@ void am_init_monitor() {
 #endif
 
 struct symbol{
-  paddr_t header;
+  int header;
 };
 void analysis_elf(const char* elf_file){
   if (elf_file == NULL) {
