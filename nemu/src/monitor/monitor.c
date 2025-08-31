@@ -172,8 +172,9 @@ void analysis_elf(const char* elf_file){
     Log("No ELF file provided");
     return;
   }
-  else{
-    Log("SUCCESS CATCH ELF FILE");
-    return;
-  }
+  FILE *fp;
+  fp = fopen(elf_file,"r");
+  if(fp == NULL) Log("FAIL TO OPEN ELF FILE");
+  else  Log("SUCCESS TO OPEN ELF FILE");
+  fclose(fp);
 }
