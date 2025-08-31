@@ -172,4 +172,8 @@ void analysis_elf(const char* elf_file){
     Log("No ELF file provided");
     return;
   }
+  else{
+    Log("SUCCESS CATCH ELF FILE");
+    return;
+  }
 }
