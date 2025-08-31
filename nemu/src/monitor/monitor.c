@@ -110,6 +110,7 @@ static int parse_args(int argc, char *argv[]) {
   }
   return 0;
 }
+void analysis_elf(const char* elf_file);
 
 void init_monitor(int argc, char *argv[]) {
   /* Perform some global initialization. */
@@ -117,7 +118,7 @@ void init_monitor(int argc, char *argv[]) {
   /* Parse arguments. */
   parse_args(argc, argv);
 
-  //analysis_elf(elf_file);
+  analysis_elf(elf_file);
   /* Set random seed. */
   init_rand();
 
@@ -167,5 +168,8 @@ void am_init_monitor() {
 #endif
 
 void analysis_elf(const char* elf_file){
-  
+  if (elf_file == NULL) {
+    Log("No ELF file provided");
+    return;
+  }
 }
