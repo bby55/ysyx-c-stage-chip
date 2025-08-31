@@ -182,6 +182,7 @@ void analysis_elf(const char* elf_file){
   if (fread(&sy, sizeof(struct symbol), 1, fp) != 0)
   {
     Log("SUCCESS TO CATCH HEADER");
+    printf("%d\n",sy.header);
     /* code */
   }
   
