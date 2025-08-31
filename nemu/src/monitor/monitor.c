@@ -15,7 +15,7 @@
 
 #include <isa.h>
 #include <memory/paddr.h>
-
+#include <elf.h>
 const char *nemu_logo =
 "\n"
 "███╗   ██╗███████╗███╗   ███╗██╗   ██╗\n"
@@ -167,9 +167,7 @@ void am_init_monitor() {
 }
 #endif
 
-struct symbol{
-  paddr_t header;
-};
+
 void analysis_elf(const char* elf_file){
   if (elf_file == NULL) {
     Log("No ELF file provided");
@@ -178,13 +176,14 @@ void analysis_elf(const char* elf_file){
   FILE *fp;
   fp = fopen(elf_file,"rb");
   if(fp != NULL) Log("SUCCESS TO OPEN ELF FILE");
-  struct symbol sy;
-  if (fread(&sy, sizeof(struct symbol), 1, fp) != 0)
-  {
-    Log("SUCCESS TO CATCH HEADER");
-    printf("%x\n",sy.header);
-    /* code */
+  Elf32_Ehdr elf_header;
+ size_t read_bytes = fread(&elf_header, sizeof(Elf32_Ehdr), 1, fp);
+  if (read_bytes != 1) {
+    Log("Failed to read ELF header (read %zu bytes)", read_bytes);
+    fclose(fp);
+    return;
   }
+  Log("SUCCESS TO CATCH ELF HEADER");
   
   fclose(fp);
 }
