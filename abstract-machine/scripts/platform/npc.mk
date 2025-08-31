@@ -15,8 +15,17 @@ LDFLAGS   += --gc-sections -e _start
 
 MAINARGS_MAX_LEN = 64
 MAINARGS_PLACEHOLDER = the_insert-arg_rule_in_Makefile_will_insert_mainargs_here
-CFLAGS += -DMAINARGS_MAX_LEN=$(MAINARGS_MAX_LEN) -DMAINARGS_PLACEHOLDER="$(MAINARGS_PLACEHOLDER)"  # 这里建议加引号，避免空格问题
-# 在NPC的Makefile中添加
+CFLAGS += -DMAINARGS_MAX_LEN=$(MAINARGS_MAX_LEN) -DMAINARGS_PLACEHOLDER="$(MAINARGS_PLACEHOLDER)"
+
+# 批处理模式控制：通过NEMUFLAGS中的-b标志启用
+NEMUFLAGS += -b
+# 禁用批处理模式：注释掉上面一行即可
+ifneq (,$(findstring -b,$(NEMUFLAGS)))
+CFLAGS += -DBATCH_MODE
+$(info [Makefile] 批处理模式已启用 (BATCH_MODE))
+endif
+
+# 原有编译配置
 EXTRA_SRCS += $(NEMU_HOME)/src/utils/trace.c $(NEMU_HOME)/src/disasm.c
 insert-arg: image
 	@python $(AM_HOME)/tools/insert-arg.py $(IMAGE).bin $(MAINARGS_MAX_LEN) $(MAINARGS_PLACEHOLDER) "$(mainargs)"
@@ -31,11 +40,12 @@ sim: insert-arg
 	@echo "Running $(NAME) on minirv-npc..."
 	@$(MAKE) -C $(NPC_HOME) clean
 	@mkdir -p $(NPC_HOME)/rom
-	@cp $(IMAGE).bin $(NPC_HOME)/rom/text.bin  # 此时的.bin已经被insert-arg替换过
+	@cp $(IMAGE).bin $(NPC_HOME)/rom/text.bin
 	@$(MAKE) -C $(NPC_HOME) LDFLAGS+=-lreadline CFLAGS+=-I$(AM_HOME)/include CFLAGS+=-I$(NEMU_HOME)/include
 	@$(NPC_HOME)/obj_dir/Vtop
 run: insert-arg
-	$(MAKE) -C $(NPC_HOME) ISA=$(ISA) sim ARGS="$(NPCFLAGS)" IMG=$(IMAGE).bin
+	$(MAKE) -C $(NPC_HOME) ISA=$(ISA) sim ARGS="$(NPCFLAGS)" IMG=$(IMAGE).bin $(NEMUFLAGS)
 
 run-diff: insert-arg
-	$(MAKE) -C $(NPC_HOME) ISA=$(ISA) sim ARGS="$(NPCFLAGS)" IMG=$(IMAGE).bin DIFFTEST=1
+	$(MAKE) -C $(NPC_HOME) ISA=$(ISA) sim ARGS="$(NPCFLAGS)" IMG=$(IMAGE).bin DIFFTEST=1 $(NEMUFLAGS)
+    

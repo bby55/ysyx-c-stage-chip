@@ -32,7 +32,7 @@ typedef struct {
 void sdb_mainloop();
 void cpu_exec(uint64_t n);
 static void welcome() {
-    printf("\033[1;36m %s \033[0m\n",npc_logo);
+    printf("\033[5;33m %s \033[0m\n",npc_logo);
     printf("Welcome to \033[33;41mRV32e\033[0m-NPC!\n");
     printf("For help, type \"help\"\n");
 }

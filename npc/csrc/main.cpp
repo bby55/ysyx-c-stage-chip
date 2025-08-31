@@ -12,6 +12,8 @@
 #include <time.h>
 #include "sdb.h"
 #include <dlfcn.h>
+#include <cstdlib>   // 新增：用于EXIT_SUCCESS/EXIT_FAILURE
+#include <cstdint>   // 新增：用于UINT64_MAX
 #include "/home/ysyxbby/ysyx-workbench/nemu/src/isa/riscv32/include/isa-def.h"
 
 #ifdef ENABLE_DIFFTEST
@@ -34,7 +36,7 @@ static riscv32_CPU_state cpu_state;
 #define TIMER_HI    (DEVICE_BASE + 0x000004c)
 #define RTC_SECOND  (DEVICE_BASE + 0x0000074)
 
-// 【新增】步数统计变量
+// 步数统计变量
 static uint64_t total_steps = 0;         // 总执行步数
 static uint64_t start_step = 0;          // 每次"c"命令的起始步数
 static bool is_counting_for_break = false; // 是否处于断点计数状态
@@ -96,7 +98,10 @@ static bool check_breakpoint(uint32_t current_pc) {
                 is_counting_for_break = false; // 重置计数状态
             }
 
+#ifndef BATCH_MODE  // 批处理模式不显示命令提示
             printf("提示: 输入 'c' 继续执行 | 'si [步数]' 单步执行\n");
+#endif
+
             printf("\033[1;31m======================\033[0m\n\n");
 
             if (breakpoints[i].type == BP_ONESHOT) {
@@ -593,7 +598,7 @@ static int cmd_q(char *args) {
     return -1;
 }
 
-// 【修改】"c"命令初始化步数统计
+// "c"命令初始化步数统计
 static int cmd_c(char *args) {
     start_step = total_steps;       // 记录当前总步数作为起始点
     is_counting_for_break = true;   // 标记开始统计到断点的步数
@@ -714,7 +719,7 @@ static riscv32_CPU_state npc_before;
 static riscv32_CPU_state npc;
 #endif // ENABLE_DIFFTEST
 
-// 【修改】cpu_exec中累加总步数
+// cpu_exec中累加总步数
 void cpu_exec(uint64_t n) {
     if (npc_state.state == NPC_END || npc_state.state == NPC_ABORT || npc_state.state == NPC_QUIT) {
         printf("程序执行已结束。请退出 NPC 并重新运行。\n");
@@ -746,7 +751,7 @@ void cpu_exec(uint64_t n) {
         update_rtc();
         ::is_nemu++;
         
-        // 【新增】累加总执行步数
+        // 累加总执行步数
         total_steps++;
         
         cpu_state.pc = ::n_pc;
@@ -991,7 +996,7 @@ static int cmd_disable_breakpoint(char *args) {
     return 0;
 }
 
-// 【修改】sdb_mainloop中累加步数并处理未达断点情况
+// sdb_mainloop中累加步数并处理未达断点情况
 void sdb_mainloop() {
     for (char *str; (str = rl_gets()) != NULL; ) {
         char *str_end = str + strlen(str);
@@ -1034,7 +1039,7 @@ void sdb_mainloop() {
                 update_rtc();
                 ::is_nemu++;
 
-                // 【新增】累加总执行步数
+                // 累加总执行步数
                 total_steps++;
 
                 cpu_state.pc = ::n_pc;
@@ -1060,7 +1065,7 @@ void sdb_mainloop() {
                 }
             }
 
-            // 【新增】处理未达断点的情况
+            // 处理未达断点的情况
             if (is_counting_for_break && !breakpoint_hit) {
                 if (npc_state.state == NPC_END) {
                     printf("\n\033[1;33m程序已结束，未到达指定断点\033[0m\n");
@@ -1082,6 +1087,7 @@ void sdb_mainloop() {
     }
 }
 
+// 在main函数中替换原有逻辑，确保批处理模式完全自动执行
 int main(int argc, char** argv) {
     welcome();
 
@@ -1120,7 +1126,29 @@ int main(int argc, char** argv) {
     ctx->commandArgs(argc, argv);
     top = new Vtop(ctx);
     npc_state.state = NPC_STOP;
+
+#ifdef BATCH_MODE
+    // 批处理模式：完全自动执行，无需任何手动输入
+    printf("\033[1;34m[批处理模式] 自动执行程序...\033[0m\n");
+    
+    // 直接开始执行，无需等待用户输入"c"
+    npc_state.state = NPC_RUNNING;
+    cpu_exec(UINT64_MAX);  // 执行最大可能的步数
+    
+    // 输出执行结果
+    printf("\n\033[1;34m[批处理模式] 执行完成\033[0m\n");
+    printf("总执行步数: %" PRIu64 "\n", total_steps);
+    printf("最终PC: 0x%08x\n", cpu_state.pc);
+    
+    if (npc_state.state == NPC_END) {
+        printf("\033[1;32m[批处理模式] 程序正常结束\033[0m\n");
+    } else {
+        printf("\033[1;31m[批处理模式] 程序异常终止\033[0m\n");
+    }
+#else
+    // 交互模式：进入命令行交互
     sdb_mainloop();
+#endif
 
     if (npc_state.state == NPC_QUIT) {
         printf("程序已退出。\n");
@@ -1129,3 +1157,4 @@ int main(int argc, char** argv) {
     delete ctx;
     return 0;
 }
+    
