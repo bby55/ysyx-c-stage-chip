@@ -179,7 +179,7 @@ void analysis_elf(const char* elf_file){
   fp = fopen(elf_file,"rb");
   if(fp != NULL) Log("SUCCESS TO OPEN ELF FILE");
   struct symbol sy;
-  while (fread(&sy, sizeof(struct symbol), 1, fp) != 0)
+  if (fread(&sy, sizeof(struct symbol), 1, fp) != 0)
   {
     Log("SUCCESS TO CATCH HEADER");
     /* code */
