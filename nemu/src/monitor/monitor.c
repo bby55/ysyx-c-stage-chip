@@ -168,7 +168,7 @@ void am_init_monitor() {
 #endif
 
 struct symbol{
-  int header;
+  paddr_t header;
 };
 void analysis_elf(const char* elf_file){
   if (elf_file == NULL) {
@@ -182,7 +182,7 @@ void analysis_elf(const char* elf_file){
   if (fread(&sy, sizeof(struct symbol), 1, fp) != 0)
   {
     Log("SUCCESS TO CATCH HEADER");
-    printf("%d\n",sy.header);
+    printf("%x\n",sy.header);
     /* code */
   }
   
