@@ -158,6 +158,6 @@ int isa_exec_once(Decode *s) {
   
   s->isa.inst = inst_fetch(&s->snpc, 4);
   IFDEF(CONFIG_ITRACE, trace_inst(s->pc, s->isa.inst));
-  IFDEF(CONFIG_ITRACE, display_inst());
+  IFDEF(CONFIG_ITRACE, display_inst);
   return decode_exec(s);
 }
