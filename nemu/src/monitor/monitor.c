@@ -184,10 +184,10 @@ void analysis_elf(const char* elf_file){
     return;
   }
   Log("=== ELF Header Key Info ===");
-Log("e_machine (architecture): 0x%x (RISC-V)", elf_header.e_machine);
-Log("e_shoff (section header offset): 0x%x (ELF文件中节头表的位置)", elf_header.e_shoff);
-Log("e_shnum (number of sections): %d (节的总数)", elf_header.e_shnum);
-Log("e_shstrndx (shstrtab index): %d (节名字符串表的索引)", elf_header.e_shstrndx);
+  Log("e_machine (architecture): 0x%x (RISC-V)", elf_header.e_machine);
+  Log("e_shoff (section header offset): 0x%x (ELF文件中节头表的位置)", elf_header.e_shoff);
+  Log("e_shnum (number of sections): %d (节的总数)", elf_header.e_shnum);
+  Log("e_shstrndx (shstrtab index): %d (节名字符串表的索引)", elf_header.e_shstrndx);
   Log("SUCCESS TO CATCH ELF HEADER");
   
   fclose(fp);
