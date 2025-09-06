@@ -1,0 +1,139 @@
+/***************************************************************************************
+* Copyright (c) 2014-2024 Zihao Yu, Nanjing University
+*
+* NEMU is licensed under Mulan PSL v2.
+* You can use this software according to the terms and conditions of the Mulan PSL v2.
+* You may obtain a copy of Mulan PSL v2 at:
+*          http://license.coscl.org.cn/MulanPSL2
+*
+* THIS SOFTWARE IS PROVIDED ON AN "AS IS" BASIS, WITHOUT WARRANTIES OF ANY KIND,
+* EITHER EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO NON-INFRINGEMENT,
+* MERCHANTABILITY OR FIT FOR A PARTICULAR PURPOSE.
+*
+* See the Mulan PSL v2 for more details.
+***************************************************************************************/
+
+#include "sdb.h"
+
+#define NR_WP 32
+
+typedef struct watchpoint {
+  int NO;
+  struct watchpoint *next;
+	char expression[320];
+	unsigned int old_val;
+	unsigned int new_val;
+  /* TODO: Add more members if necessary */
+
+} WP;
+
+static WP wp_pool[NR_WP] = {};
+static WP *head = NULL, *free_ = NULL;
+
+void init_wp_pool() {
+  int i;
+  for (i = 0; i < NR_WP; i ++) {
+    wp_pool[i].NO = i;
+    wp_pool[i].next = (i == NR_WP - 1 ? NULL : &wp_pool[i + 1]);
+  }
+
+  head = NULL;
+  free_ = wp_pool;
+}
+
+/* TODO: Implement the functionality of watchpoint */
+WP* new_wp(){
+	WP *wp = NULL;
+	 if (free_ == NULL) {
+      printf("Error: 没有空闲的监视点\n");
+			assert(0);
+    }
+	wp = free_;
+	free_ = free_ -> next;
+	wp -> next = head;
+	head = wp;	
+	return wp;
+}
+
+void free_wp(WP *wp){
+	WP* h = head;
+  if (h == wp){
+	 	head = NULL;
+	}
+  else {
+    while (h && h->next != wp){ 
+			h = h->next;
+	}
+		assert(h);
+    h->next = wp->next;
+  }
+  wp->next = free_;
+  free_ = wp;
+}
+
+void display_watchpoint(){
+	WP *h = head;
+	while(h != NULL){
+		if(strlen(h->expression)>0)
+			printf("第%d个监视点:\n 表达式:%s\n 旧值为:%u\n 新值为:%u\n",h->NO,h->expression,h->old_val,h->new_val); 
+		h = h->next;
+	}
+
+}
+
+void delete_watchpoint(int NO){
+	WP *h = head;
+	int s = 0;
+	while(h != NULL){
+		if(h->NO == NO){
+			s = 1;
+			free_wp(h);
+		}
+		h = h->next;
+	}
+	if(s==0){
+			printf("找不到序号为%d的监视点",NO);
+			assert(0);
+	}
+}
+
+void create_watchpoint(char *args){
+	WP *wp = new_wp();
+	bool success = true;
+	
+	strncpy(wp->expression,args, sizeof(wp->expression)-1);
+	wp -> old_val = expr(args,&success);
+	if(success == true)
+		printf("成功创建序号为%d的监视点\n",wp->NO);
+	else
+		printf("监视点创建失败，表达式不合法\n");
+}
+
+
+void update_watchpoint(){
+	WP *h = head;
+	bool success = true;
+	while(h != NULL){
+		if(strlen(h->expression) > 0){
+			h->new_val = expr(h->expression,&success);
+		}	
+		h = h->next;
+}
+}
+
+#ifdef CONFIG_WATCHPOINT
+int check_watchpoint(){
+	WP *h = head;
+	while(h != NULL){
+		if(h->old_val != h->new_val){
+			//nemu_state.state = NEMU_STOP;
+			display_watchpoint();
+			printf("触发监视点，程序暂停\n");
+			h->old_val = h->new_val;
+			return 1;
+	}
+		h = h->next;
+}
+		return 0;
+}
+#endif
