@@ -31,11 +31,11 @@ BASE_VERILATOR_FLAGS = \
 ifdef DIFFTEST
 VERILATOR_FLAGS = $(BASE_VERILATOR_FLAGS) \
     -CFLAGS "-I$(NEMU_INCLUDE_PATH) -I$(NEMU_ISA_INCLUDE_PATH) -I$(NEMU_LIB_PATH)/include -DENABLE_DIFFTEST" \
-    --LDFLAGS "-lreadline -L$(NEMU_LIB_PATH) $(NEMU_LIB_PATH)/riscv32-nemu-interpreter-so -Wl,-rpath=$(NEMU_LIB_PATH)"
+    --LDFLAGS "-lreadline -lSDL2 -L$(NEMU_LIB_PATH) $(NEMU_LIB_PATH)/riscv32-nemu-interpreter-so -Wl,-rpath=$(NEMU_LIB_PATH)"
 else
-# 其他配置不变
+# 其他配置不变，添加SDL2支持
 VERILATOR_FLAGS = $(BASE_VERILATOR_FLAGS) \
-    --LDFLAGS "-lreadline"
+    --LDFLAGS "-lreadline -lSDL2"
 endif
 
 # 默认目标
@@ -69,4 +69,3 @@ clean:
 	rm -rf obj_dir
 	rm -f *.vcd
 	rm -rf rom
-    

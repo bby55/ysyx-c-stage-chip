@@ -628,7 +628,7 @@ module ALU #(
     input [DATA_WIDTH-1:0] rs2_data,
     input [DATA_WIDTH-1:0] raddr,
     input [DATA_WIDTH-1:0] imm,
-    input [DATA_WIDTH-1:0] pc,`
+    input [DATA_WIDTH-1:0] pc,
     input [DATA_WIDTH-1:0] rdata,
     input [DATA_WIDTH-1:0] t,
     input [11:0] alu_ctrl,
