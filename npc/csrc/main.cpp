@@ -12,9 +12,88 @@
 #include <time.h>
 #include "sdb.h"
 #include <dlfcn.h>
-#include <cstdlib>   // 新增：用于EXIT_SUCCESS/EXIT_FAILURE
-#include <cstdint>   // 新增：用于UINT64_MAX
+#include <cstdlib>   // 用于EXIT_SUCCESS/EXIT_FAILURE
+#include <cstdint>   // 用于UINT64_MAX
 #include "/home/ysyxbby/ysyx-workbench/nemu/src/isa/riscv32/include/isa-def.h"
+#include <SDL2/SDL.h>  // 键盘事件处理
+
+// 设备地址定义
+#define DEVICE_BASE 0x20000000
+#define SERIAL_PORT (DEVICE_BASE + 0x00003f8)
+#define TIMER_LO    (DEVICE_BASE + 0x0000048)
+#define TIMER_HI    (DEVICE_BASE + 0x000004c)
+#define RTC_SECOND  (DEVICE_BASE + 0x0000074)
+#define KBD_ADDR    (DEVICE_BASE + 0x0000060)  // 键盘数据端口地址
+
+// 键盘相关宏定义
+#define KEYDOWN_MASK 0x8000  // 最高位标记按键是否按下
+
+// 自定义键码枚举
+#define NEMU_KEYS(f) \
+  f(ESCAPE) f(F1) f(F2) f(F3) f(F4) f(F5) f(F6) f(F7) f(F8) f(F9) f(F10) f(F11) f(F12) \
+f(GRAVE) f(1) f(2) f(3) f(4) f(5) f(6) f(7) f(8) f(9) f(0) f(MINUS) f(EQUALS) f(BACKSPACE) \
+f(TAB) f(Q) f(W) f(E) f(R) f(T) f(Y) f(U) f(I) f(O) f(P) f(LEFTBRACKET) f(RIGHTBRACKET) f(BACKSLASH) \
+f(CAPSLOCK) f(A) f(S) f(D) f(F) f(G) f(H) f(J) f(K) f(L) f(SEMICOLON) f(APOSTROPHE) f(RETURN) \
+f(LSHIFT) f(Z) f(X) f(C) f(V) f(B) f(N) f(M) f(COMMA) f(PERIOD) f(SLASH) f(RSHIFT) \
+f(LCTRL) f(APPLICATION) f(LALT) f(SPACE) f(RALT) f(RCTRL) \
+f(UP) f(DOWN) f(LEFT) f(RIGHT) f(INSERT) f(DELETE) f(HOME) f(END) f(PAGEUP) f(PAGEDOWN)
+
+#define NEMU_KEY_NAME(k) NEMU_KEY_##k,
+enum {
+  NEMU_KEY_NONE = 0,
+  MAP(NEMU_KEYS, NEMU_KEY_NAME)
+};
+#undef NEMU_KEY_NAME
+
+// 扫描码映射表：SDL扫描码 -> NEMU键码
+static uint32_t keymap[256] = {0};
+
+// 初始化扫描码映射
+#define SDL_KEYMAP(k) keymap[SDL_SCANCODE_##k] = NEMU_KEY_##k;
+static void init_keymap() {
+  MAP(NEMU_KEYS, SDL_KEYMAP)
+}
+#undef SDL_KEYMAP
+
+// 按键队列
+#define KEY_QUEUE_LEN 1024
+static int key_queue[KEY_QUEUE_LEN] = {};
+static int key_f = 0, key_r = 0;
+
+// 按键入队
+static void key_enqueue(uint32_t am_scancode) {
+  int next_r = (key_r + 1) % KEY_QUEUE_LEN;
+  if (next_r != key_f) {
+    key_queue[key_r] = am_scancode;
+    key_r = next_r;
+  } else {
+    fprintf(stderr, "[WARNING] Keyboard queue overflow!\n");
+  }
+}
+
+// 按键出队
+static uint32_t key_dequeue() {
+  if (key_f == key_r) {
+    return NEMU_KEY_NONE;
+  }
+  uint32_t key = key_queue[key_f];
+  key_f = (key_f + 1) % KEY_QUEUE_LEN;
+  return key;
+}
+
+// 处理SDL键盘事件
+static void handle_sdl_key_event(const SDL_Event* event) {
+  if (event->type != SDL_KEYDOWN && event->type != SDL_KEYUP) {
+    return;
+  }
+  SDL_Scancode sc = event->key.keysym.scancode;
+  bool is_keydown = (event->type == SDL_KEYDOWN);
+
+  if (keymap[sc] != NEMU_KEY_NONE) {
+    uint32_t am_scancode = keymap[sc] | (is_keydown ? KEYDOWN_MASK : 0);
+    key_enqueue(am_scancode);
+  }
+}
 
 #ifdef ENABLE_DIFFTEST
 typedef void (*difftest_init_t)(int);
@@ -29,12 +108,6 @@ difftest_exec_t difftest_exec;
 #endif // ENABLE_DIFFTEST
 
 static riscv32_CPU_state cpu_state;
-
-#define DEVICE_BASE 0x20000000
-#define SERIAL_PORT (DEVICE_BASE + 0x00003f8)
-#define TIMER_LO    (DEVICE_BASE + 0x0000048)
-#define TIMER_HI    (DEVICE_BASE + 0x000004c)
-#define RTC_SECOND  (DEVICE_BASE + 0x0000074)
 
 // 步数统计变量
 static uint64_t total_steps = 0;         // 总执行步数
@@ -216,7 +289,11 @@ extern "C" int rom_read(int raddr) {
 
 extern "C" int pmem_read(int raddr, int valid) {
     uint32_t data = 0;
-    if (raddr == SERIAL_PORT) data = 0;
+    // 处理键盘地址读取
+    if (raddr == KBD_ADDR) {
+        data = key_dequeue();
+    }
+    else if (raddr == SERIAL_PORT) data = 0;
     else if (raddr == TIMER_LO) data = (uint32_t)(virtual_us & 0xFFFFFFFF);
     else if (raddr == TIMER_HI) data = (uint32_t)(virtual_us >> 32);
     else if (raddr == RTC_SECOND) data = rtc_tm->tm_sec;
@@ -732,6 +809,21 @@ void cpu_exec(uint64_t n) {
     int cycles = 0;
     
     while (steps < n && !ctx->gotFinish() && npc_state.state != NPC_END) {
+        // 处理SDL键盘事件
+#ifndef BATCH_MODE
+        SDL_Event event;
+        // 非阻塞读取事件
+        while (SDL_PollEvent(&event)) {
+            handle_sdl_key_event(&event);
+            // 处理窗口关闭事件
+            if (event.type == SDL_QUIT) {
+                npc_state.state = NPC_QUIT;
+                break;
+            }
+        }
+        if (npc_state.state == NPC_QUIT) break;
+#endif
+
         uint32_t current_pc_before_exec = cpu_state.pc;
 
 #ifdef ENABLE_DIFFTEST
@@ -1021,6 +1113,19 @@ void sdb_mainloop() {
             bool breakpoint_hit = false;
 
             while (!ctx->gotFinish() && npc_state.state != NPC_END) {
+                // 处理SDL键盘事件
+#ifndef BATCH_MODE
+                SDL_Event event;
+                while (SDL_PollEvent(&event)) {
+                    handle_sdl_key_event(&event);
+                    if (event.type == SDL_QUIT) {
+                        npc_state.state = NPC_QUIT;
+                        break;
+                    }
+                }
+                if (npc_state.state == NPC_QUIT) break;
+#endif
+
                 uint32_t current_pc_before_exec = cpu_state.pc;
 
 #ifdef ENABLE_DIFFTEST
@@ -1091,6 +1196,18 @@ void sdb_mainloop() {
 int main(int argc, char** argv) {
     welcome();
 
+    // SDL初始化
+    bool sdl_inited = false;
+#ifndef BATCH_MODE  // 批处理模式无需键盘输入
+    if (SDL_Init(SDL_INIT_VIDEO) != 0) {
+        fprintf(stderr, "[ERROR] SDL init failed: %s\n", SDL_GetError());
+    } else {
+        init_keymap();  // 初始化扫描码映射表
+        sdl_inited = true;
+        printf("[INFO] SDL keyboard initialized successfully\n");
+    }
+#endif
+
 #ifdef ENABLE_DIFFTEST
     void* handle = dlopen("/home/ysyxbby/ysyx-workbench/nemu/build/riscv32-nemu-interpreter-so",
                       RTLD_LAZY);
@@ -1128,10 +1245,10 @@ int main(int argc, char** argv) {
     npc_state.state = NPC_STOP;
 
 #ifdef BATCH_MODE
-    // 批处理模式：完全自动执行，无需任何手动输入
+    // 批处理模式：完全自动执行
     printf("\033[1;34m[批处理模式] 自动执行程序...\033[0m\n");
     
-    // 直接开始执行，无需等待用户输入"c"
+    // 直接开始执行
     npc_state.state = NPC_RUNNING;
     cpu_exec(UINT64_MAX);  // 执行最大可能的步数
     
@@ -1150,6 +1267,12 @@ int main(int argc, char** argv) {
     sdb_mainloop();
 #endif
 
+    // 清理SDL资源
+    if (sdl_inited) {
+        SDL_Quit();
+        printf("[INFO] SDL resources released\n");
+    }
+
     if (npc_state.state == NPC_QUIT) {
         printf("程序已退出。\n");
     }
@@ -1157,4 +1280,3 @@ int main(int argc, char** argv) {
     delete ctx;
     return 0;
 }
-    
