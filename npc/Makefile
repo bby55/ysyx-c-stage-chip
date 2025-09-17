@@ -15,7 +15,6 @@ NEMU_ISA_INCLUDE_PATH = $(NEMU_BASE_PATH)/src/isa/riscv32/include
 VERILOG_SRC = vsrc/top.v
 CPP_SRC = csrc/main.cpp
 
-# 基础编译选项（注意：反斜杠后直接换行，不要加注释）
 BASE_VERILATOR_FLAGS = \
     --top-module $(TOP_MODULE) \
     -cc -trace \
@@ -25,7 +24,7 @@ BASE_VERILATOR_FLAGS = \
     -Wno-MULTITOP \
     -Wno-UNUSEDSIGNAL \
     -Wno-UNUSEDPARAM \
-    -CFLAGS "-I$(NEMU_INCLUDE_PATH) -I$(NEMU_ISA_INCLUDE_PATH) -I$(NEMU_LIB_PATH)/include"
+    -CFLAGS "-I$(NEMU_INCLUDE_PATH) -I$(NEMU_ISA_INCLUDE_PATH) -I$(NEMU_LIB_PATH)/include -I/usr/include/SDL2"
 
 # 根据DIFFTEST开关添加选项
 ifdef DIFFTEST

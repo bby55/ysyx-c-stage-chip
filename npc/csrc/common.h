@@ -52,7 +52,7 @@ typedef uint16_t ioaddr_t;
  *
  */
 #define CONFIG_AUDIO_CTL_MMIO 0xa0000200
-#define CONFIG_DIFFTEST_REF_NAME "spike"
+//#define CONFIG_DIFFTEST_REF_NAME "spike"
 #define CONFIG_ENGINE "interpreter"
 #define CONFIG_VGA_SIZE_400x300 1
 #define CONFIG_VGA_SHOW_SCREEN 1
@@ -86,7 +86,7 @@ typedef uint16_t ioaddr_t;
 #define CONFIG_ITRACE_COND "true"
 #define CONFIG_SB_SIZE 0x10000
 #define CONFIG_CC "gcc"
-#define CONFIG_DIFFTEST_REF_PATH "tools/spike-diff"
+//#define CONFIG_DIFFTEST_REF_PATH "tools/spike-diff"
 #define CONFIG_TRACE_START 0
 #define CONFIG_DISK_IMG_PATH ""
 #define CONFIG_CC_GCC 1

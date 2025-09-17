@@ -35,7 +35,7 @@ VM_PREFIX = Vtop
 VM_MODPREFIX = Vtop
 # User CFLAGS (from -CFLAGS on Verilator command line)
 VM_USER_CFLAGS = \
-	-I/home/ysyxbby/ysyx-workbench/nemu/include -I/home/ysyxbby/ysyx-workbench/nemu/src/isa/riscv32/include -I/home/ysyxbby/ysyx-workbench/nemu/build/include \
+	-I/home/ysyxbby/ysyx-workbench/nemu/include -I/home/ysyxbby/ysyx-workbench/nemu/src/isa/riscv32/include -I/home/ysyxbby/ysyx-workbench/nemu/build/include -I/usr/include/SDL2 \
 
 # User LDLIBS (from -LDFLAGS on Verilator command line)
 VM_USER_LDLIBS = \

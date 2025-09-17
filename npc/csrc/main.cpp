@@ -11,6 +11,7 @@
 #include <iostream>
 #include <time.h>
 #include "sdb.h"
+#include "vga.h"
 #include <dlfcn.h>
 #include <cstdlib>   // 新增：用于EXIT_SUCCESS/EXIT_FAILURE
 #include <cstdint>   // 新增：用于UINT64_MAX
@@ -36,6 +37,7 @@ static riscv32_CPU_state cpu_state;
 #define TIMER_HI    (DEVICE_BASE + 0x000004c)
 #define RTC_SECOND  (DEVICE_BASE + 0x0000074)
 #define KBD_ADDR    (DEVICE_BASE + 0x0000060)
+#define VGA_ADDR    (DEVICE_BASE + 0x0000100)
 
 // 步数统计变量
 static uint64_t total_steps = 0;         // 总执行步数
@@ -186,6 +188,7 @@ void putch(int c) {
     *(volatile uint8_t *)SERIAL_PORT = c & 0xff;
 }
 
+
 extern "C" void ebreak(int exit_code, int exit_pc) {
     if (exit_code == 0) {
         printf("Exit PC: 0x%x\n", cpu_state.pc);
@@ -219,6 +222,7 @@ extern "C" int pmem_read(int raddr, int valid) {
     uint32_t data = 0;
     if (raddr == SERIAL_PORT) data = 0;
     else if (raddr == KBD_ADDR) data = 0;
+    else if (raddr == VGA_ADDR) data = 0;
     else if (raddr == TIMER_LO) data = (uint32_t)(virtual_us & 0xFFFFFFFF);
     else if (raddr == TIMER_HI) data = (uint32_t)(virtual_us >> 32);
     else if (raddr == RTC_SECOND) data = rtc_tm->tm_sec;
@@ -238,9 +242,10 @@ extern "C" void pmem_write(int waddr, int wdata, char wmask, int pc) {
         }
         return;
     }
-    if(waddr == KBD_ADDR){
+    if(waddr == KBD_ADDR || waddr == VGA_ADDR){
         return;
     }
+    
     if (waddr == TIMER_LO || waddr == TIMER_HI) return;
     int addr = (waddr & ~0x3u) >> 2;
     uint32_t new_val = ram[addr];
@@ -1092,10 +1097,13 @@ void sdb_mainloop() {
     }
 }
 
+void init_vga();
 // 在main函数中替换原有逻辑，确保批处理模式完全自动执行
 int main(int argc, char** argv) {
     welcome();
-
+        printf("chenpang91\n");
+        init_vga();
+        //printf("chenpang666\n");
 #ifdef ENABLE_DIFFTEST
     void* handle = dlopen("/home/ysyxbby/ysyx-workbench/nemu/build/riscv32-nemu-interpreter-so",
                       RTLD_LAZY);
