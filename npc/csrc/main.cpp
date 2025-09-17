@@ -224,7 +224,7 @@ extern "C" int pmem_read(int raddr, int valid) {
     if (raddr == SERIAL_PORT) data = 0;
     else if (raddr == KBD_ADDR) data = 0;
     else if (raddr >= VGA_ADDR && raddr <= VGA_ADDR+0x7) data = 0;
-    else if (raddr >= FB_ADDR && raddr <= FB_ADDR + 0x200000)
+    else if (raddr >= FB_ADDR && raddr <= FB_ADDR + 0x200000) data = 0;
     else if (raddr == TIMER_LO) data = (uint32_t)(virtual_us & 0xFFFFFFFF);
     else if (raddr == TIMER_HI) data = (uint32_t)(virtual_us >> 32);
     else if (raddr == RTC_SECOND) data = rtc_tm->tm_sec;
@@ -247,6 +247,8 @@ extern "C" void pmem_write(int waddr, int wdata, char wmask, int pc) {
     if(waddr == KBD_ADDR || waddr == VGA_ADDR){
         return;
     }
+    if (waddr >= VGA_ADDR && waddr <= VGA_ADDR+0x7) return;
+    if (waddr >= FB_ADDR && waddr <= FB_ADDR + 0x200000) return;
     
     if (waddr == TIMER_LO || waddr == TIMER_HI) return;
     int addr = (waddr & ~0x3u) >> 2;
