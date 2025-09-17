@@ -12,6 +12,7 @@
 #include <time.h>
 #include "sdb.h"
 #include "vga.h"
+#include "keyboard.h"
 #include <dlfcn.h>
 #include <cstdlib>   // 新增：用于EXIT_SUCCESS/EXIT_FAILURE
 #include <cstdint>   // 新增：用于UINT64_MAX
@@ -1102,11 +1103,13 @@ void sdb_mainloop() {
 }
 
 void init_vga();
+void init_i8042();
 // 在main函数中替换原有逻辑，确保批处理模式完全自动执行
 int main(int argc, char** argv) {
     welcome();
-        printf("chenpang91\n");
-        init_vga();
+        //printf("chenpang91\n");
+        //init_vga();
+        //init_i8042();
         //printf("chenpang666\n");
 #ifdef ENABLE_DIFFTEST
     void* handle = dlopen("/home/ysyxbby/ysyx-workbench/nemu/build/riscv32-nemu-interpreter-so",
