@@ -16,19 +16,13 @@
 #include <common.h>
 #include <utils.h>
 #include <device/alarm.h>
-#ifndef CONFIG_TARGET_AM
-#include <SDL2/SDL.h>
-#endif
 
 void init_map();
-void init_serial();
-void init_timer();
+// void init_serial();
+// void init_timer();
 void init_vga();
 void init_i8042();
-void init_audio();
-void init_disk();
-void init_sdcard();
-void init_alarm();
+
 
 void send_key(uint8_t, bool);
 void vga_update_screen();
@@ -41,10 +35,9 @@ void device_update() {
   }
   last = now;
 
-  IFDEF(CONFIG_HAS_VGA, vga_update_screen());
+  vga_update_screen();
 
 #ifndef CONFIG_TARGET_AM
-  printf("if_AM????\n");
   SDL_Event event;
   while (SDL_PollEvent(&event)) {
     switch (event.type) {

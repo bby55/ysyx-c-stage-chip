@@ -224,7 +224,10 @@ extern "C" int pmem_read(int raddr, int valid) {
     uint32_t data = 0;
     if (raddr == SERIAL_PORT) data = 0;
     else if (raddr == KBD_ADDR) data = 0;
-    else if (raddr >= VGA_ADDR && raddr <= VGA_ADDR+0x7) data = 0;
+    else if (raddr >= VGA_ADDR && raddr <= VGA_ADDR+0x7){
+        // paddr_t offset = addr - map->low;
+        // word_t ret = host_read(map->space + offset, len);
+    }
     else if (raddr >= FB_ADDR && raddr <= FB_ADDR + 0x200000) data = 0;
     else if (raddr == TIMER_LO) data = (uint32_t)(virtual_us & 0xFFFFFFFF);
     else if (raddr == TIMER_HI) data = (uint32_t)(virtual_us >> 32);
@@ -1103,9 +1106,10 @@ void sdb_mainloop() {
 }
 
 void init_vga();
-void init_i8042();
+//void init_i8042();
 // 在main函数中替换原有逻辑，确保批处理模式完全自动执行
 int main(int argc, char** argv) {
+    init_vga();
     welcome();
         //printf("chenpang91\n");
         //init_vga();
