@@ -38,6 +38,7 @@ static riscv32_CPU_state cpu_state;
 #define RTC_SECOND  (DEVICE_BASE + 0x0000074)
 #define KBD_ADDR    (DEVICE_BASE + 0x0000060)
 #define VGA_ADDR    (DEVICE_BASE + 0x0000100)
+#define FB_ADDR    (DEVICE_BASE + 0x0100000)
 
 // 步数统计变量
 static uint64_t total_steps = 0;         // 总执行步数
@@ -222,7 +223,8 @@ extern "C" int pmem_read(int raddr, int valid) {
     uint32_t data = 0;
     if (raddr == SERIAL_PORT) data = 0;
     else if (raddr == KBD_ADDR) data = 0;
-    else if (raddr == VGA_ADDR) data = 0;
+    else if (raddr >= VGA_ADDR && raddr <= VGA_ADDR+0x7) data = 0;
+    else if (raddr >= FB_ADDR && raddr <= FB_ADDR + 0x200000)
     else if (raddr == TIMER_LO) data = (uint32_t)(virtual_us & 0xFFFFFFFF);
     else if (raddr == TIMER_HI) data = (uint32_t)(virtual_us >> 32);
     else if (raddr == RTC_SECOND) data = rtc_tm->tm_sec;
