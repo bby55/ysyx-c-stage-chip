@@ -66,6 +66,24 @@ static void report_mmio_overlap(const char *name1, paddr_t l1, paddr_t r1,
   
 }
 
+// static inline void update_screen() {
+//   SDL_UpdateTexture(texture, NULL, vmem, SCREEN_W * sizeof(uint32_t));
+//   SDL_RenderClear(renderer);
+//   SDL_RenderCopy(renderer, texture, NULL, NULL);
+//   SDL_RenderPresent(renderer);
+// }
+
+// void vga_update_screen() {
+//   // TODO: call `update_screen()` when the sync register is non-zero,
+//   // then zero out the sync register
+//   uint32_t sync = vgactl_port_base[1];
+//   if (sync == 1) {
+//     update_screen();
+//     vgactl_port_base[1] = 0;
+//   }
+
+// }
+
 void add_mmio_map(const char *name, paddr_t addr, void *space, uint32_t len, io_callback_t callback) {
   assert(nr_map < NR_MAP);
   paddr_t left = addr, right = addr + len - 1;

@@ -68,7 +68,6 @@ void device_update() {
 
 void sdl_clear_event_queue() {
 #ifndef CONFIG_TARGET_AM
-printf("if_AM????\n");
   SDL_Event event;
   while (SDL_PollEvent(&event));
 #endif

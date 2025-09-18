@@ -1109,7 +1109,7 @@ void init_vga();
 //void init_i8042();
 // 在main函数中替换原有逻辑，确保批处理模式完全自动执行
 int main(int argc, char** argv) {
-    init_vga();
+    //init_vga();
     welcome();
         //printf("chenpang91\n");
         //init_vga();
