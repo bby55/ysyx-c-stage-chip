@@ -119,6 +119,7 @@ ifeq ($(MAKECMDGOALS),archive)
 ### Rule (archive): objects (`*.o`) -> `ARCHIVE.a` (ar)
 $(ARCHIVE): $(OBJS)
 	@echo + AR "->" $(shell realpath $@ --relative-to .)
+	@echo "$(IMAGE_REL)"
 	@$(AR) rcs $@ $^
 else
 # $(1): library name
@@ -136,7 +137,7 @@ endif
 $(IMAGE).elf: $(LINKAGE) $(LDSCRIPTS)
 	@echo \# Creating image [$(ARCH)]
 	@echo + LD "->" $(IMAGE_REL).elf
-ifneq ($(filter $(ARCH),native),)
+ifneq ($(filter $(ARCH)echo "$(IMAGE_REL)",native),)
 	@$(CXX) -o $@ -Wl,--whole-archive $(LINKAGE) -Wl,-no-whole-archive $(LDFLAGS_CXX)
 else
 	@$(LD) $(LDFLAGS) -o $@ --start-group $(LINKAGE) --end-group
