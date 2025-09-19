@@ -510,7 +510,7 @@ module RegisterFile #(ADDR_WIDTH = 1, DATA_WIDTH = 1) (
     end
   assign rdata1 = (raddr1 == 0)? 0 : rf[raddr1];
   assign rdata2 = (raddr2 == 0)? 0 : rf[raddr2];
-  assign epc_val= (rf[15] == 0)? epc + 4 : epc;
+  //assign epc_val= (rf[15] == 0)? epc + 4 : epc;
 
   assign mcause_data = mcause;
   assign mepc_data   = mepc;
