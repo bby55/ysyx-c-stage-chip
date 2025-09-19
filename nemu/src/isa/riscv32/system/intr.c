@@ -22,10 +22,10 @@ word_t isa_raise_intr(word_t NO, vaddr_t epc) {
   cpu.csr.mstatus &= ~(1<<3);
   cpu.csr.mstatus |= ((1<<11)+(1<<12));
 
-  if(NO==0){
-    epc+=4;
-    printf("chenpang91\n");
-  }
+  // if(NO==0){
+  //   epc+=4;
+  //   printf("chenpang91\n");
+  // }
   
   cpu.csr.mcause = NO;
   cpu.csr.mepc = epc;
