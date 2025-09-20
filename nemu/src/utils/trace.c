@@ -60,4 +60,33 @@ void memory_write_dis(paddr_t addr, int len, word_t data)
 // }
 
 
+// void trace_func_call(paddr_t pc, paddr_t target) {
+// 	if (symbol_tbl == NULL) return;
 
+// 	++call_depth;
+
+// 	if (call_depth <= 2) return; // ignore _trm_init & main
+
+// 	int i = find_symbol_func(target, true);
+// 	ftrace_write(FMT_PADDR ": %*scall [%s@" FMT_PADDR "]\n",
+// 		pc,
+// 		(call_depth-3)*2, "",
+// 		i>=0?symbol_tbl[i].name:"???",
+// 		target
+// 	);
+// }
+
+// void trace_func_ret(paddr_t pc) {
+// 	if (symbol_tbl == NULL) return;
+	
+// 	if (call_depth <= 2) return; // ignore _trm_init & main
+
+// 	int i = find_symbol_func(pc, false);
+// 	ftrace_write(FMT_PADDR ": %*sret [%s]\n",
+// 		pc,
+// 		(call_depth-3)*2, "",
+// 		i>=0?symbol_tbl[i].name:"???"
+// 	);
+	
+// 	--call_depth;
+// }

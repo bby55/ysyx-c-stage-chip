@@ -16,6 +16,18 @@
 #include <isa.h>
 #include <memory/paddr.h>
 #include <elf.h>
+typedef struct {
+    char name[64];        // 符号名称（长度64足够存储大多数符号名）
+    uint32_t addr;        // 符号在内存中的地址（Elf32_Sym.st_value）
+    unsigned char info;   // 符号类型信息（Elf32_Sym.st_info）
+    uint32_t size;        // 符号大小（Elf32_Sym.st_size，仅函数/数据符号有效）
+} symbol_table;  // 结构体类型名：symbol_table
+
+// 2. 声明全局符号表数组指针和大小（供整个文件或其他文件使用）
+// 全局变量需在函数外声明，否则函数内无法直接赋值
+symbol_table *symbol_tables = NULL;  // 指向符号表数组的指针（后续用malloc分配内存）
+size_t symbol_tables_size = 0;       // 符号表数组的元素个数（符号总数）
+
 const char *nemu_logo =
 "\n"
 "███╗   ██╗███████╗███╗   ███╗██╗   ██╗\n"
@@ -168,27 +180,93 @@ void am_init_monitor() {
 #endif
 
 
-void analysis_elf(const char* elf_file){
-  if (elf_file == NULL) {
-    Log("No ELF file provided");
-    return;
-  }
-  FILE *fp;
-  fp = fopen(elf_file,"rb");
-  if(fp != NULL) Log("SUCCESS TO OPEN ELF FILE");
-  Elf32_Ehdr elf_header;
- size_t read_bytes = fread(&elf_header, sizeof(Elf32_Ehdr), 1, fp);
-  if (read_bytes != 1) {
-    Log("Failed to read ELF header (read %zu bytes)", read_bytes);
+/**
+ * 解析elf文件并存入symbol_tables
+*/
+void analysis_elf(const char *elf_file) {
+    if (elf_file == NULL)
+        return;
+    // 打开ELF文件
+    FILE *fp = fopen(elf_file, "rb");
+    Assert(fp, "Can not open '%s'", elf_file);
+
+    // 读取ELF header
+    Elf32_Ehdr elf_header;
+    if (fread(&elf_header, sizeof(Elf32_Ehdr), 1, fp) <= 0) {
+        fclose(fp);
+        exit(EXIT_FAILURE);
+    }
+
+    // 检查文件是否为ELF文件
+    if (memcmp(elf_header.e_ident, ELFMAG, SELFMAG) != 0) {
+        fprintf(stderr, "Not an ELF file\n");
+        fclose(fp);
+        exit(EXIT_FAILURE);
+    }
+
+    // 移动到Section header table,寻找字符表节
+    fseek(fp, elf_header.e_shoff, SEEK_SET);
+    Elf32_Shdr strtab_header;
+    while (1) {
+        if (fread(&strtab_header, sizeof(Elf32_Shdr), 1, fp) <= 0) {
+            fclose(fp);
+            exit(EXIT_FAILURE);
+        }
+        if (strtab_header.sh_type == SHT_STRTAB) {
+            break;
+        }
+    }
+
+    // 读取字符串表内容
+    char *string_table = malloc(strtab_header.sh_size);
+    fseek(fp, strtab_header.sh_offset, SEEK_SET);
+    if (fread(string_table, strtab_header.sh_size, 1, fp) <= 0) {
+        fclose(fp);
+        exit(EXIT_FAILURE);
+    }
+
+    // 寻找符号表节
+    Elf32_Shdr symtab_header;
+    fseek(fp, elf_header.e_shoff, SEEK_SET);
+    while (1) {
+        if (fread(&symtab_header, sizeof(Elf32_Shdr), 1, fp) <= 0) {
+            fclose(fp);
+            exit(EXIT_FAILURE);
+        }
+        if (symtab_header.sh_type == SHT_SYMTAB) {
+            break;
+        }
+    }
+
+    /* 读取符号表中的每个符号项 */ 
+
+    fseek(fp, symtab_header.sh_offset, SEEK_SET);
+    Elf32_Sym symbol;
+    // 确定符号表的条数
+    size_t num_symbols = symtab_header.sh_size / symtab_header.sh_entsize;
+    // 分配内存用于存储符号表
+    symbol_tables = malloc(num_symbols * sizeof(symbol_table));
+
+    for (size_t i = 0; i < num_symbols; ++i) {
+        if (fread(&symbol, sizeof(Elf32_Sym), 1, fp) <= 0 ) {
+            fclose(fp);
+            exit(EXIT_FAILURE);
+        }
+
+        // 判断符号是否为函数，并且函数的大小不为零
+        if (ELF64_ST_TYPE(symbol.st_info) == STT_FUNC && symbol.st_size != 0) {
+            // 从字符串表中获取符号名称
+            const char *name = string_table  + symbol.st_name;
+            // 存储符号信息到 symbol_table 结构体数组
+            strncpy(symbol_tables[i].name, name, sizeof(symbol_tables[i].name) - 1);
+            symbol_tables[i].addr = symbol.st_value;
+            symbol_tables[i].info = symbol.st_info;
+            symbol_tables[i].size = symbol.st_size;
+        }
+        symbol_tables_size = num_symbols;
+    }
+
+    // 关闭文件并释放内存
     fclose(fp);
-    return;
-  }
-  Log("=== ELF Header Key Info ===");
-  Log("e_machine (architecture): 0x%x (RISC-V)", elf_header.e_machine);
-  Log("e_shoff (section header offset): 0x%x (ELF文件中节头表的位置)", elf_header.e_shoff);
-  Log("e_shnum (number of sections): %d (节的总数)", elf_header.e_shnum);
-  Log("e_shstrndx (shstrtab index): %d (节名字符串表的索引)", elf_header.e_shstrndx);
-  Log("SUCCESS TO CATCH ELF HEADER");
-  
-  fclose(fp);
+    free(string_table);
 }
