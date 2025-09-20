@@ -57,7 +57,6 @@ static void init_screen() {
 }
 
 static inline void update_screen() {
-  printf("noam\n");
   SDL_UpdateTexture(texture, NULL, vmem, SCREEN_W * sizeof(uint32_t));
   SDL_RenderClear(renderer);
   SDL_RenderCopy(renderer, texture, NULL, NULL);
@@ -66,7 +65,6 @@ static inline void update_screen() {
 
 #else
 static void init_screen() {}
-printf("typinggame\n");
 static inline void update_screen() {
   io_write(AM_GPU_FBDRAW, 0, 0, vmem, screen_width(), screen_height(), true);
 }
