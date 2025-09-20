@@ -32,12 +32,17 @@ bool cte_init(Context*(*handler)(Event, Context*)) {
 }
 
 Context *kcontext(Area kstack, void (*entry)(void *), void *arg) {
-  Context *kctx = (Context *)(kstack.end-sizeof(Context));
-  kctx->mepc=(uintptr_t) entry;
-  kctx->mstatus=0x1800;
-  //printf("cp=%d\n",kctx->mepc);
-  kctx->gpr[10] = (uintptr_t)arg;
-  return kctx;
+  uintptr_t stack_top = (uintptr_t)(kstack.end);
+  stack_top = stack_top & ~0xF;
+  Context *c = (Context*)(stack_top - sizeof(Context));
+  memset(c, 0, sizeof(Context));
+  c->mepc = (uintptr_t)entry;
+  c->gpr[10] = (uintptr_t)arg;
+  c->gpr[2] = stack_top;
+  c->mstatus = 0x1800;
+  // printf("创建上下文: %d -> 大小=%d, 栈顶=%d\n", 
+  //      c, sizeof(Context), stack_top);
+  return c;
 }
 
 void yield() {
