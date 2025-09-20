@@ -131,34 +131,36 @@ int find_symbol_func(paddr_t target, bool exact) {
 
 
 void trace_func_call(paddr_t pc, paddr_t target) {
-  if (symbol_tables == NULL) return;  // 修正变量名
-
+  if (symbol_tables == NULL) return;
   ++call_depth;
 
-  Log("DEBUG: call_depth = %d, pc = 0x%x", call_depth, pc);
-
-  if (call_depth <= 2) return; // 忽略初始化相关函数
-
   int i = find_symbol_func(target, true);
-  ftrace_write(FMT_PADDR ": %*scall [%s@" FMT_PADDR "]\n",
-    pc,
-    (call_depth-3)*2, "",
-    i>=0?symbol_tables[i].name:"???",  // 修正变量名
-    target
+  // 关键：格式字符串中 %*s 的参数顺序必须是“宽度 → 空字符串”
+  ftrace_write(
+    ANSI_FG_GREEN  // call行绿色（可选，需确保ANSI宏定义）
+    "0x%08x: %*scall [%s@0x%08x]\n"  // %*s 对应“缩进宽度”和“”
+    ANSI_NONE,     // 重置颜色
+    pc,                          // 1. 对应 0x%08x（调用指令地址）
+    (call_depth - 2) * 2,        // 2. 对应 %*s 的“宽度”（3-2)*2=2空格
+    "",                          // 3. 对应 %*s 的“填充字符”（空字符串=仅空格）
+    i >= 0 ? symbol_tables[i].name : "???",  // 4. 对应 %s（函数名）
+    target                       // 5. 对应 0x%08x（函数入口地址）
   );
 }
-
 void trace_func_ret(paddr_t pc) {
-  if (symbol_tables == NULL) return;  // 修正变量名
-  Log("DEBUG: ret call_depth = %d, pc = 0x%x", call_depth, pc);
-  if (call_depth <= 2) return;
+  if (symbol_tables == NULL) return;
 
   int i = find_symbol_func(pc, false);
-  ftrace_write(FMT_PADDR ": %*sret [%s]\n",
-    pc,
-    (call_depth-3)*2, "",
-    i>=0?symbol_tables[i].name:"???"  // 修正变量名
+  // 关键：%*s 的参数顺序“宽度 → 空字符串”
+  ftrace_write(
+    ANSI_FG_RED    // ret行红色（可选）
+    "0x%08x: %*sret [%s]\n"
+    ANSI_NONE,
+    pc,                          // 1. 0x%08x（返回指令地址）
+    (call_depth - 2) * 2,        // 2. %*s 的“宽度”（3-2)*2=2空格
+    "",                          // 3. %*s 的“填充字符”
+    i >= 0 ? symbol_tables[i].name : "???"  // 4. %s（函数名）
   );
-  
-  --call_depth;
+
+  --call_depth;  // 最后递减深度（顺序不能错，否则影响下次调用）
 }
