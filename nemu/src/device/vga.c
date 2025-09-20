@@ -64,7 +64,7 @@ static inline void update_screen() {
 }
 #else
 static void init_screen() {}
-
+printf("typinggame\n");
 static inline void update_screen() {
   io_write(AM_GPU_FBDRAW, 0, 0, vmem, screen_width(), screen_height(), true);
 }
