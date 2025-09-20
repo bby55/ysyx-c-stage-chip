@@ -58,14 +58,14 @@ void memory_write_dis(paddr_t addr, int len, word_t data)
 }
 
 
-// static void etrace() {
-//   IFDEF(CONFIG_ETRACE, {
-//     printf("\n" 
-//       ANSI_FMT("[ETRACE]", ANSI_FG_YELLOW) 
-//       "ecall in mepc = " FMT_WORD ", mcause = " FMT_WORD "\n",
-//       cpu.csrs.mepc, cpu.csrs.mcause);
-//   });
-// }
+void etrace() {
+  IFDEF(CONFIG_ETRACE, {
+    printf("\n" 
+      ANSI_FMT("[ETRACE]", ANSI_FG_YELLOW) 
+      "ecall in mepc = " FMT_WORD ", mcause = " FMT_WORD "\n",
+      cpu.csrs.mepc, cpu.csrs.mcause);
+  });
+}
 
 void ftrace_write(const char *fmt, ...) {
     va_list args;

@@ -35,8 +35,8 @@ static vaddr_t *csr_register(word_t imm) {
   default: panic("Unknown if (ref_r->csr.mstatus != cpu.csr.mstatus)");
   }
 }
- 
-#define ECALL(dnpc) { bool success; dnpc = (isa_raise_intr(isa_reg_str2val("a7", &success), s->pc)); }
+void etrace();
+#define ECALL(dnpc) { bool success; dnpc = (isa_raise_intr(isa_reg_str2val("a7", &success), s->pc)); IFDEF(CONFIG_ETRACE,etrace();)}
 #define CSR(i) *csr_register(i)
 
 #define MRET() { \
