@@ -135,6 +135,8 @@ void trace_func_call(paddr_t pc, paddr_t target) {
 
   ++call_depth;
 
+  Log("DEBUG: call_depth = %d, pc = 0x%x", call_depth, pc);
+
   if (call_depth <= 2) return; // 忽略初始化相关函数
 
   int i = find_symbol_func(target, true);
@@ -148,7 +150,7 @@ void trace_func_call(paddr_t pc, paddr_t target) {
 
 void trace_func_ret(paddr_t pc) {
   if (symbol_tables == NULL) return;  // 修正变量名
-  
+  Log("DEBUG: ret call_depth = %d, pc = 0x%x", call_depth, pc);
   if (call_depth <= 2) return;
 
   int i = find_symbol_func(pc, false);
