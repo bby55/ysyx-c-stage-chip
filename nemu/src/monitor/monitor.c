@@ -16,17 +16,10 @@
 #include <isa.h>
 #include <memory/paddr.h>
 #include <elf.h>
-typedef struct {
-    char name[64];        // 符号名称（长度64足够存储大多数符号名）
-    uint32_t addr;        // 符号在内存中的地址（Elf32_Sym.st_value）
-    unsigned char info;   // 符号类型信息（Elf32_Sym.st_info）
-    uint32_t size;        // 符号大小（Elf32_Sym.st_size，仅函数/数据符号有效）
-} symbol_table;  // 结构体类型名：symbol_table
+#include "../../../include/symbol.h"
 
-// 2. 声明全局符号表数组指针和大小（供整个文件或其他文件使用）
-// 全局变量需在函数外声明，否则函数内无法直接赋值
-symbol_table *symbol_tables = NULL;  // 指向符号表数组的指针（后续用malloc分配内存）
-size_t symbol_tables_size = 0;       // 符号表数组的元素个数（符号总数）
+symbol_table *symbol_tables = NULL;    // 初始化为空指针（未解析ELF时无符号表）
+size_t symbol_tables_size = 0;         // 初始化为0（无符号时大小为0）
 
 const char *nemu_logo =
 "\n"
