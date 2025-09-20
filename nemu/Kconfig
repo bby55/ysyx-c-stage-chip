@@ -155,6 +155,14 @@ config MTRACE
   depends on TRACE && TARGET_NATIVE_ELF && ENGINE_INTERPRETER
   bool "Enable memory tracer"
   default y
+config DTRACE
+    depends on XXXX
+    bool "XXX"
+    default y
+config DTRACE_COND
+    depends on DTRACE
+    string "XXX"
+    default "true"
 
 config DIFFTEST
   depends on TARGET_NATIVE_ELF
