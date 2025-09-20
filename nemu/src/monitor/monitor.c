@@ -16,7 +16,7 @@
 #include <isa.h>
 #include <memory/paddr.h>
 #include <elf.h>
-#include "../../../include/symbol.h"
+#include <symbol.h>
 
 symbol_table *symbol_tables = NULL;    // 初始化为空指针（未解析ELF时无符号表）
 size_t symbol_tables_size = 0;         // 初始化为0（无符号时大小为0）
