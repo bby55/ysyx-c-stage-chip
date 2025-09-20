@@ -59,9 +59,9 @@ word_t map_read(paddr_t addr, int len, IOMap *map) {
   invoke_callback(map->callback, offset, len, false); // prepare data to read
   word_t ret = host_read(map->space + offset, len);
 
-  #ifdef CONFIG_DTARCE_COND
+  // #ifdef CONFIG_DTARCE_COND
    log_write("dtrace: read %10s at " FMT_PADDR ",%d\n", map->name, addr, len);
- #endif
+//  #endif
 
   return ret;
 }
