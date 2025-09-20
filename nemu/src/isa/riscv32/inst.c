@@ -22,6 +22,9 @@
 #define Mr vaddr_read
 #define Mw vaddr_write
 
+void trace_func_ret(paddr_t pc);
+void trace_func_call(paddr_t pc, paddr_t target);
+
 static vaddr_t *csr_register(word_t imm) {
   switch (imm)
   {
@@ -104,12 +107,12 @@ static int decode_exec(Decode *s) {
   INSTPAT("0000001 ????? ????? 111 ????? 01100 11", remu   , R, R(rd) = src1 % src2);
 
   INSTPAT("??????? ????? ????? ??? ????? 11011 11", jal    , J, s->dnpc = s->pc + (imm << 1), R(rd) = s->snpc; 
-  IFDEF(CONFIG_FTRACE, {
+  
     if (rd == 1) {
         trace_func_call(s->pc, s->dnpc);
     }
-   }
-   )
+   
+   
    );
   INSTPAT("??????? ????? ????? 000 ????? 11001 11", jalr   , I, R(rd) = s->snpc, s->dnpc = src1 + imm;
   IFDEF(CONFIG_FTRACE,{
