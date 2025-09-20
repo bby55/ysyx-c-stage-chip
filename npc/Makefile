@@ -1,71 +1,66 @@
-# 定义工具和目标名称
+TOP_NAME = ysyx_25020042
+IMG ?= /home/long/ysyx-workbench/npc/demo/add-minirv-npc.bin
+#IMG ?= 
+ELF ?= $(IMG:.bin=.elf)
+NEMU_SO := $(NEMU_HOME)/build/riscv32-nemu-interpreter-so
+
+WORK_DIR = $(shell pwd)
+BUILD_DIR = $(WORK_DIR)/build
+TEST ?=
+TEST_OBJ = $(shell find $(VPATH) -name $(TEST).v)
+VPATH = $(WORK_DIR)/vsrc
+CPATH = $(WORK_DIR)/csrc
+INC_PATH := $(WORK_DIR)/include $(INC_PATH)
+INCLUDES = $(addprefix -I, $(INC_PATH))
+
+VSRCS := $(shell find $(VPATH) -name *.v)
+CSRCS := $(wildcard $(CPATH)/*.cpp)
+CSRCS += $(shell find $(CPATH) -name *.c)
+
+CFLAGS ?= -Wall 
+CFLAGS += -CFLAGS "$(INCLUDES)" 
+CFLAGS += -CFLAGS -fpermissive
+VFLAGS ?= --cc --exe -I$(VPATH) --build -j 0 --trace
+VFLAGS += --top-module $(TOP_NAME) 
+VFLAGS += --Mdir $(BUILD_DIR)/obj_dir 
+LDFLAGS += -LDFLAGS -lreadline -LDFLAGS -ltinfo
+LDFLAGS += -LDFLAGS -lSDL2
+#LDFLAGS += -LDFLAGS -L$(dir $(NEMU_SO))
+#LDFLAGS += -LDFLAGS -l:$(notdir $(NEMU_SO))
+#LDFLAGS += -LDFLAGS "-Wl,-rpath,$(dir $(NEMU_SO))"
+
 VERILATOR = verilator
-TOP_MODULE = top
-SIM_EXE = obj_dir/V$(TOP_MODULE)
+ARGS ?= 
+#ARGS += -d $(NEMU_SO) # 启用difftest
+ARGS += -i $(IMG)     # 启用镜像文件
+#ARGS += -e $(ELF)	  # 启用ftrace
+#ARGS += -b      	  # 启用批处理
+ARGS += -l $(BUILD_DIR)/npc.log # 启用日志
 
-# NEMU根路径（必须正确定义）
-NEMU_BASE_PATH = /home/ysyxbby/ysyx-workbench/nemu
+$(shell mkdir -p $(BUILD_DIR))
 
-# NEMU相关路径
-NEMU_LIB_PATH = $(NEMU_BASE_PATH)/build
-NEMU_INCLUDE_PATH = $(NEMU_BASE_PATH)/include
-NEMU_ISA_INCLUDE_PATH = $(NEMU_BASE_PATH)/src/isa/riscv32/include
+all:run wave
 
-# 源文件
-VERILOG_SRC = vsrc/top.v
-CPP_SRC = csrc/main.cpp
+run:
+	$(call git_commit, "sim RTL") # DO NOT REMOVE THIS LINE!!!
+	@$(VERILATOR) $(CFLAGS) $(LDFLAGS) $(CSRCS) $(VSRCS) $(VFLAGS)
+	$(BUILD_DIR)/obj_dir/V$(TOP_NAME) $(ARGS)
+	
+	
+include ../Makefile
 
-BASE_VERILATOR_FLAGS = \
-    --top-module $(TOP_MODULE) \
-    -cc -trace \
-    -build -exe $(CPP_SRC) \
-    -Wno-EOFNEWLINE \
-    -Wno-DECLFILENAME \
-    -Wno-MULTITOP \
-    -Wno-UNUSEDSIGNAL \
-    -Wno-UNUSEDPARAM \
-    -CFLAGS "-I$(NEMU_INCLUDE_PATH) -I$(NEMU_ISA_INCLUDE_PATH) -I$(NEMU_LIB_PATH)/include -I/usr/include/SDL2"
+wave:
+	gtkwave $(BUILD_DIR)/wave.vcd
 
-# 根据DIFFTEST开关添加选项
-ifdef DIFFTEST
-VERILATOR_FLAGS = $(BASE_VERILATOR_FLAGS) \
-    -CFLAGS "-I$(NEMU_INCLUDE_PATH) -I$(NEMU_ISA_INCLUDE_PATH) -I$(NEMU_LIB_PATH)/include -DENABLE_DIFFTEST" \
-    --LDFLAGS "-lreadline -lSDL2 -L$(NEMU_LIB_PATH) $(NEMU_LIB_PATH)/riscv32-nemu-interpreter-so -Wl,-rpath=$(NEMU_LIB_PATH)"
-else
-# 其他配置不变，添加SDL2支持
-VERILATOR_FLAGS = $(BASE_VERILATOR_FLAGS) \
-    --LDFLAGS "-lreadline -lSDL2"
-endif
 
-# 默认目标
-.PHONY: all sim clean run run-diff
+PHONY: clean test
 
-all: sim
+test:
+	$(VERILATOR) --lint-only -Wall $(TEST_OBJ)
+	$(VERILATOR) --cc -Wall --Mdir $(BUILD_DIR)/obj_dir $(TEST_OBJ)
+	@echo PASS
 
-# 仿真目标（命令行必须用Tab缩进，不能用空格）
-sim: $(SIM_EXE)
-	@echo "Starting simulation..."
-ifdef IMG
-	@mkdir -p rom
-	@cp $(IMG) rom/text.bin
-endif
-	@./$(SIM_EXE) $(ARGS)
-
-# 便捷目标
-run: sim
-
-run-diff:
-	@$(MAKE) DIFFTEST=1 sim
-
-# 编译目标（命令行用Tab缩进）
-$(SIM_EXE): $(VERILOG_SRC) $(CPP_SRC)
-	@echo "Compiling with Verilator..."
-	$(VERILATOR) $(VERILATOR_FLAGS) $(VERILOG_SRC)
-
-# 清理目标（命令行用Tab缩进）
 clean:
-	@echo "Cleaning up..."
-	rm -rf obj_dir
-	rm -f *.vcd
-	rm -rf rom
+	-rm -rf *.vcd $(BUILD_DIR)
+
 
