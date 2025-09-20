@@ -3,17 +3,33 @@
 #include <klib.h>
 
 static Context* (*user_handler)(Event, Context*) = NULL;
+#define CONFIG_ETRACE
 
 Context* __am_irq_handle(Context *c) {
+
   if (user_handler) {
     Event ev = {0};
-    switch (c->mcause) {
-      case 11: ev.event = EVENT_YIELD; c->mepc += 4;break;
-      default: ev.event = EVENT_ERROR; break;
-    }
 
+    uint32_t cause = c->mcause;
+
+    switch (cause) {
+      case 8: case 9: case 11:
+        ev.event=EVENT_YIELD;
+          c->mepc += 4;
+          #ifdef CONFIG_ETRACE
+          // printf("Trap: EVENT_YIELD\n"); 
+          #endif
+        break;
+      default: ev.event = EVENT_ERROR; 
+          #ifdef CONFIG_ETRACE
+          printf("Trap: EVENT_ERROR\n"); 
+          #endif
+        break;
+    }
+    // printf("处理前上下文: %d\n", c);
     c = user_handler(ev, c);
     assert(c != NULL);
+    // printf("处理后上下文: %d\n", c);
   }
 
   return c;
@@ -31,6 +47,8 @@ bool cte_init(Context*(*handler)(Event, Context*)) {
   return true;
 }
 
+// #define CONTEXT_SIZE  ((NR_REGS + 3) * 4)
+
 Context *kcontext(Area kstack, void (*entry)(void *), void *arg) {
   uintptr_t stack_top = (uintptr_t)(kstack.end);
   stack_top = stack_top & ~0xF;
@@ -46,10 +64,12 @@ Context *kcontext(Area kstack, void (*entry)(void *), void *arg) {
 }
 
 void yield() {
+
+  // printf("Sizeof Context: %d bytes\n", sizeof(Context));
 #ifdef __riscv_e
   asm volatile("li a5, -1; ecall");
 #else
-  asm volatile("li a7, 11; ecall");
+  asm volatile("li a7, -1; ecall");
 #endif
 }
 
