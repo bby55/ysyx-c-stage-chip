@@ -68,6 +68,7 @@ typedef uint16_t ioaddr_t;
 #define CONFIG_HAS_KEYBOARD 1
 #define CONFIG_MODE_SYSTEM 1
 #define CONFIG_ITRACE 1
+#define CONFIG_FTRACE 1
 #define CONFIG_DIFFTEST 1
 #define CONFIG_HAS_SERIAL 1
 #define CONFIG_ISA_riscv 1
