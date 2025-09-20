@@ -63,7 +63,7 @@ void etrace() {
     printf("\n" 
       ANSI_FMT("[ETRACE]", ANSI_FG_YELLOW) 
       "ecall in mepc = " FMT_WORD ", mcause = " FMT_WORD "\n",
-      cpu.csrs.mepc, cpu.csrs.mcause);
+      cpu.csr.mepc, cpu.csr.mcause);
   });
 }
 
