@@ -173,93 +173,111 @@ void am_init_monitor() {
 #endif
 
 
-/**
- * 解析elf文件并存入symbol_tables
-*/
-void analysis_elf(const char *elf_file) {
-    if (elf_file == NULL)
-        return;
-    // 打开ELF文件
-    FILE *fp = fopen(elf_file, "rb");
-    Assert(fp, "Can not open '%s'", elf_file);
+void analysis_elf(const char *elf_path) {
+    // 若未指定ELF文件，直接返回
+    if (elf_path == NULL) return;
 
-    // 读取ELF header
-    Elf32_Ehdr elf_header;
-    if (fread(&elf_header, sizeof(Elf32_Ehdr), 1, fp) <= 0) {
-        fclose(fp);
+    // 打开目标ELF文件，以二进制只读模式
+    FILE *elf_stream = fopen(elf_path, "rb");
+    Assert(elf_stream, "Failed to open ELF file: %s", elf_path);
+
+    // 读取ELF文件头部信息
+    Elf32_Ehdr elf_hdr;
+    if (!fread(&elf_hdr, sizeof(Elf32_Ehdr), 1, elf_stream)) {
+        fclose(elf_stream);
+        fprintf(stderr, "Failed to read ELF header\n");
         exit(EXIT_FAILURE);
     }
 
-    // 检查文件是否为ELF文件
-    if (memcmp(elf_header.e_ident, ELFMAG, SELFMAG) != 0) {
-        fprintf(stderr, "Not an ELF file\n");
-        fclose(fp);
+    // 验证ELF文件标识（魔数检查）
+    if (memcmp(elf_hdr.e_ident, ELFMAG, SELFMAG) != 0) {
+        fclose(elf_stream);
+        fprintf(stderr, "Invalid ELF file format\n");
         exit(EXIT_FAILURE);
     }
 
-    // 移动到Section header table,寻找字符表节
-    fseek(fp, elf_header.e_shoff, SEEK_SET);
-    Elf32_Shdr strtab_header;
-    while (1) {
-        if (fread(&strtab_header, sizeof(Elf32_Shdr), 1, fp) <= 0) {
-            fclose(fp);
+    // 定位并读取字符串表节头（.strtab）
+    Elf32_Shdr strtab_hdr;
+    fseek(elf_stream, elf_hdr.e_shoff, SEEK_SET); // 移动到节头表起始位置
+    int found_strtab = 0;
+    for (int i = 0; i < elf_hdr.e_shnum; i++) {
+        if (!fread(&strtab_hdr, sizeof(Elf32_Shdr), 1, elf_stream)) {
+            fclose(elf_stream);
             exit(EXIT_FAILURE);
         }
-        if (strtab_header.sh_type == SHT_STRTAB) {
+        if (strtab_hdr.sh_type == SHT_STRTAB) { // 找到字符串表
+            found_strtab = 1;
             break;
         }
     }
-
-    // 读取字符串表内容
-    char *string_table = malloc(strtab_header.sh_size);
-    fseek(fp, strtab_header.sh_offset, SEEK_SET);
-    if (fread(string_table, strtab_header.sh_size, 1, fp) <= 0) {
-        fclose(fp);
+    if (!found_strtab) {
+        fclose(elf_stream);
+        fprintf(stderr, "No string table found in ELF\n");
         exit(EXIT_FAILURE);
     }
 
-    // 寻找符号表节
-    Elf32_Shdr symtab_header;
-    fseek(fp, elf_header.e_shoff, SEEK_SET);
-    while (1) {
-        if (fread(&symtab_header, sizeof(Elf32_Shdr), 1, fp) <= 0) {
-            fclose(fp);
+    // 加载字符串表内容到内存
+    char *str_table = malloc(strtab_hdr.sh_size);
+    fseek(elf_stream, strtab_hdr.sh_offset, SEEK_SET);
+    if (!fread(str_table, strtab_hdr.sh_size, 1, elf_stream)) {
+        fclose(elf_stream);
+        free(str_table);
+        exit(EXIT_FAILURE);
+    }
+
+    // 定位并读取符号表节头（.symtab）
+    Elf32_Shdr symtab_hdr;
+    fseek(elf_stream, elf_hdr.e_shoff, SEEK_SET); // 重新定位到节头表
+    int found_symtab = 0;
+    for (int i = 0; i < elf_hdr.e_shnum; i++) {
+        if (!fread(&symtab_hdr, sizeof(Elf32_Shdr), 1, elf_stream)) {
+            fclose(elf_stream);
+            free(str_table);
             exit(EXIT_FAILURE);
         }
-        if (symtab_header.sh_type == SHT_SYMTAB) {
+        if (symtab_hdr.sh_type == SHT_SYMTAB) { // 找到符号表
+            found_symtab = 1;
             break;
         }
     }
+    if (!found_symtab) {
+        fclose(elf_stream);
+        free(str_table);
+        fprintf(stderr, "No symbol table found in ELF\n");
+        exit(EXIT_FAILURE);
+    }
 
-    /* 读取符号表中的每个符号项 */ 
+    // 解析符号表并提取函数符号
+    size_t sym_count = symtab_hdr.sh_size / symtab_hdr.sh_entsize; // 符号总数
+    symbol_tables = malloc(sym_count * sizeof(symbol_table)); // 分配符号表内存
+    Assert(symbol_tables, "Memory allocation failed for symbol tables");
 
-    fseek(fp, symtab_header.sh_offset, SEEK_SET);
-    Elf32_Sym symbol;
-    // 确定符号表的条数
-    size_t num_symbols = symtab_header.sh_size / symtab_header.sh_entsize;
-    // 分配内存用于存储符号表
-    symbol_tables = malloc(num_symbols * sizeof(symbol_table));
+    fseek(elf_stream, symtab_hdr.sh_offset, SEEK_SET); // 定位到符号表起始位置
+    Elf32_Sym curr_sym; // 当前解析的符号
 
-    for (size_t i = 0; i < num_symbols; ++i) {
-        if (fread(&symbol, sizeof(Elf32_Sym), 1, fp) <= 0 ) {
-            fclose(fp);
+    for (size_t i = 0; i < sym_count; i++) {
+        // 读取单个符号信息
+        if (!fread(&curr_sym, sizeof(Elf32_Sym), 1, elf_stream)) {
+            fclose(elf_stream);
+            free(str_table);
+            free(symbol_tables);
             exit(EXIT_FAILURE);
         }
 
-        // 判断符号是否为函数，并且函数的大小不为零
-        if (ELF64_ST_TYPE(symbol.st_info) == STT_FUNC && symbol.st_size != 0) {
-            // 从字符串表中获取符号名称
-            const char *name = string_table  + symbol.st_name;
-            // 存储符号信息到 symbol_table 结构体数组
-            strncpy(symbol_tables[i].name, name, sizeof(symbol_tables[i].name) - 1);
-            symbol_tables[i].addr = symbol.st_value;
-            symbol_tables[i].info = symbol.st_info;
-            symbol_tables[i].size = symbol.st_size;
+        // 筛选出有效的函数符号（类型为函数且大小非零）
+        if (ELF32_ST_TYPE(curr_sym.st_info) == STT_FUNC && curr_sym.st_size != 0) {
+            const char *sym_name = str_table + curr_sym.st_name; // 从字符串表获取符号名
+            // 存储符号信息（截断过长名称以避免溢出）
+            strncpy(symbol_tables[i].name, sym_name, sizeof(symbol_tables[i].name) - 1);
+            symbol_tables[i].addr = curr_sym.st_value;  // 函数起始地址
+            symbol_tables[i].info = curr_sym.st_info;   // 符号类型信息
+            symbol_tables[i].size = curr_sym.st_size;   // 函数大小
         }
-        symbol_tables_size = num_symbols;
     }
 
-    // 关闭文件并释放内存
-    fclose(fp);
-    free(string_table);
+    symbol_tables_size = sym_count; // 记录符号总数
+
+    // 清理资源
+    fclose(elf_stream);
+    free(str_table);
 }
