@@ -22,9 +22,6 @@
 #define Mr vaddr_read
 #define Mw vaddr_write
 
-void trace_func_ret(paddr_t pc);
-void trace_func_call(paddr_t pc, paddr_t target);
-
 static vaddr_t *csr_register(word_t imm) {
   switch (imm)
   {
@@ -35,8 +32,8 @@ static vaddr_t *csr_register(word_t imm) {
   default: panic("Unknown if (ref_r->csr.mstatus != cpu.csr.mstatus)");
   }
 }
-void etrace();
-#define ECALL(dnpc) { bool success; dnpc = (isa_raise_intr(isa_reg_str2val("a7", &success), s->pc)); IFDEF(CONFIG_ETRACE,etrace();)}
+ 
+#define ECALL(dnpc) { bool success; dnpc = (isa_raise_intr(isa_reg_str2val("a7", &success), s->pc)); }
 #define CSR(i) *csr_register(i)
 
 #define MRET() { \
@@ -106,20 +103,8 @@ static int decode_exec(Decode *s) {
   INSTPAT("0000001 ????? ????? 110 ????? 01100 11", rem    , R, R(rd) = (sword_t)src1 % (sword_t)src2);
   INSTPAT("0000001 ????? ????? 111 ????? 01100 11", remu   , R, R(rd) = src1 % src2);
 
-  INSTPAT("??????? ????? ????? ??? ????? 11011 11", jal    , J, s->dnpc = s->pc + (imm << 1), R(rd) = s->snpc; 
-  
-    if (rd == 1) {
-        trace_func_call(s->pc, s->dnpc);
-    }
-   
-   
-   );
-  INSTPAT("??????? ????? ????? 000 ????? 11001 11", jalr   , I, R(rd) = s->snpc, s->dnpc = src1 + imm;
-    if (s->isa.inst == 0x00008067)
-        trace_func_ret(s->pc);
-    else if (rd == 1)//跳转到某个寄存器的位置时，因为rd默认为1
-        trace_func_call(s->pc, s->dnpc);
-   );
+  INSTPAT("??????? ????? ????? ??? ????? 11011 11", jal    , J, s->dnpc = s->pc + (imm << 1), R(rd) = s->snpc);
+  INSTPAT("??????? ????? ????? 000 ????? 11001 11", jalr   , I, R(rd) = s->snpc, s->dnpc = src1 + imm);
   INSTPAT("??????? ????? ????? 010 ????? 01000 11", sw     , S, Mw(src1 + imm, 4, src2));
   INSTPAT("??????? ????? ????? 010 ????? 00000 11", lw     , I, R(rd) =  SEXT(Mr(src1 + imm, 4), 32));
   INSTPAT("??????? ????? ????? 001 ????? 00000 11", lh     , I, R(rd) = SEXT(Mr(src1 + imm, 2), 16));
@@ -173,6 +158,6 @@ int isa_exec_once(Decode *s) {
   
   s->isa.inst = inst_fetch(&s->snpc, 4);
   IFDEF(CONFIG_ITRACE, trace_inst(s->pc, s->isa.inst));
-  IFDEF(CONFIG_ITRACE, display_inst());
+  IFDEF(CONFIG_ITRACE, display_inst);
   return decode_exec(s);
 }
