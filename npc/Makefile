@@ -1,4 +1,4 @@
-TOP_NAME = Rv32e
+TOP_NAME = RV32e
 NEMU_SO := $(NEMU_HOME)/build/riscv32-nemu-interpreter-so
 
 WORK_DIR = $(shell pwd)
