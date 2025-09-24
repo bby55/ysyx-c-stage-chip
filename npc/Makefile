@@ -14,7 +14,7 @@ VSRCS := $(shell find $(VPATH) -name *.v)
 CSRCS := $(wildcard $(CPATH)/*.cpp)
 CSRCS += $(shell find $(CPATH) -name *.c)
 
-CFLAGS ?= -Wall 
+# CFLAGS ?= -Wall 
 CFLAGS += -CFLAGS "$(INCLUDES)" 
 CFLAGS += -CFLAGS -fpermissive
 VFLAGS ?= --cc --exe -I$(VPATH) --build -j 0 --trace
