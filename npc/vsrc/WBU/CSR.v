@@ -37,13 +37,15 @@ module ysyx_25010028_CsrFile #(
 
   assign EpcData = (i_A5Data == {DATA_WIDTH{1'b0}}) ? (i_PC + 32'd4) : i_PC;
 
-  ysyx_25010028_MuxKeyWithDefault #(6, 12, 32) i10 (o_CsrData, i_CsrNum, 32'd0, {
+  ysyx_25010028_MuxKeyWithDefault #(8, 12, 32) i10 (o_CsrData, i_CsrNum, 32'd0, {
     12'd1, mepc, //mepc
     12'd2, mcause,//mcause
     12'd3, mstatus,//mstatus
     12'd4, mtvec,//mtvec
     12'd5, mcycle,
-    12'd6, mcycleh
+    12'd6, mcycleh,
+    12'd7, mvendorid,
+    12'd8, marchid
     //.....
   });
 
@@ -73,6 +75,8 @@ module ysyx_25010028_CsrFile #(
         12'd4: mtvec  <= i_CsrExuData;
         12'd5: mcycle <= i_CsrExuData;
         12'd6: mcycleh<= i_CsrExuData;
+        12'd7: mvendorid <= i_CsrExuData;
+        12'd8: marchid <= i_CsrExuData;
         default: ;
       endcase
     end

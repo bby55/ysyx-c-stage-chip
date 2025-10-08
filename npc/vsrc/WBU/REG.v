@@ -21,7 +21,7 @@ module ysyx_25010028_RegisterFile #(ADDR_WIDTH = 1, DATA_WIDTH = 1)
   output [DATA_WIDTH-1:0] o_ReturnA0,
   output [DATA_WIDTH-1:0] o_A5Data
   );
-  reg [DATA_WIDTH-1:0] rf [2**ADDR_WIDTH-1:0];
+  reg [DATA_WIDTH-1:0] rf [15:0];
 
   initial begin
       for (integer i = 0; i < 32; i = i + 1) begin
@@ -29,26 +29,26 @@ module ysyx_25010028_RegisterFile #(ADDR_WIDTH = 1, DATA_WIDTH = 1)
       end
   end
 
-  assign o_Rs1Data = (i_Rs1Raddr == 0)? 0 : rf[i_Rs1Raddr];
-  assign o_Rs2Data = (i_Rs2Raddr == 0)? 0 : rf[i_Rs2Raddr];
+  assign o_Rs1Data = (i_Rs1Raddr == 0)? 0 : rf[i_Rs1Raddr[3:0]];
+  assign o_Rs2Data = (i_Rs2Raddr == 0)? 0 : rf[i_Rs2Raddr[3:0]];
   assign o_ReturnA0 = rf[10];
   assign o_A5Data   = rf[15];
 
   always @(posedge i_clk) begin
-    if (i_RegWen & (i_RdRaddr != 0)) rf[i_RdRaddr] <= i_ExuRes;
+    if (i_RegWen & (i_RdRaddr != 0)) rf[i_RdRaddr[3:0]] <= i_ExuRes;
   end
 
-  always @(*) begin
-    display_ref(
-        rf[0], rf[1], rf[2], rf[3],
-        rf[4], rf[5], rf[6], rf[7],
-        rf[8], rf[9], rf[10], rf[11],
-        rf[12], rf[13], rf[14], rf[15],
-        rf[16], rf[17], rf[18], rf[19],
-        rf[20], rf[21], rf[22], rf[23],
-        rf[24], rf[25], rf[26], rf[27],
-        rf[28], rf[29], rf[30], rf[31]
-    );
-end
+//   always @(*) begin
+//     display_ref(
+//         rf[0], rf[1], rf[2], rf[3],
+//         rf[4], rf[5], rf[6], rf[7],
+//         rf[8], rf[9], rf[10], rf[11],
+//         rf[12], rf[13], rf[14], rf[15],
+//         rf[16], rf[17], rf[18], rf[19],
+//         rf[20], rf[21], rf[22], rf[23],
+//         rf[24], rf[25], rf[26], rf[27],
+//         rf[28], rf[29], rf[30], rf[31]
+//     );
+// end
 endmodule
  

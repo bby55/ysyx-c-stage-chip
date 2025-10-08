@@ -1,6 +1,7 @@
 #include <am.h>
 #include <klib-macros.h>
 #include "../riscv.h"
+#include <stdio.h>
 extern char _heap_start;
 int main(const char *args);
 #define UART_BASE 0x10000000
@@ -42,7 +43,12 @@ void halt(int code) {
 }
 
 void _trm_init() {
+  uint32_t mvendorid;
+  uint32_t marchid;
   uart_init();
+  asm volatile ("csrr %0, 0xf11" : "=r"(mvendorid));
+  asm volatile ("csrr %0, 0xf12" : "=r"(marchid));
+  printf("vendor: %d, arch: %d\n", mvendorid, marchid);
   int ret = main(mainargs);
   halt(ret);
 }

@@ -237,7 +237,7 @@ ysyx_25010028_MuxKeyWithDefault #(
 );
 
 ysyx_25010028_MuxKeyWithDefault #(
-  .NR_KEY(2),
+  .NR_KEY(4),
   .KEY_LEN(12),  
   .DATA_LEN(12)
 ) i9 (
@@ -250,7 +250,9 @@ ysyx_25010028_MuxKeyWithDefault #(
     // {32'h300, 12'd3},  // mstatus → 编号3IVal
     // {32'h305, 12'd4},   // mtvec → 编号4
     {12'hB00, 12'd5},    //mcycle
-    {12'hB80, 12'd6}    //mcycleh
+    {12'hB80, 12'd6},    //mcycleh
+    {12'hf11, 12'd7},
+    {12'hf12, 12'd8}
   })
 );
 
