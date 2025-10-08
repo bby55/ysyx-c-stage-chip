@@ -12,13 +12,13 @@ static inline void outw(uintptr_t addr, uint16_t data) { *(volatile uint16_t *)a
 static inline void outl(uintptr_t addr, uint32_t data) { *(volatile uint32_t *)addr = data; }
 
 void __am_timer_init() {
-  outl(RTC_ADDR,0);    
-  outl(RTC_ADDR + 4, 0);
 }
 void __am_timer_uptime(AM_TIMER_UPTIME_T *uptime) {
-  uptime->us = inl(RTC_ADDR+4);
-  uptime->us <<= 32;
-  uptime->us += inl(RTC_ADDR);
+  uint32_t mcycle;
+  uint32_t mcycleh;
+  asm volatile ("csrr %0, 0xb80" : "=r"(mcycleh));
+  asm volatile ("csrr %0, 0xb00" : "=r"(mcycle));
+  uptime->us = (((uint64_t)mcycleh << 32) | mcycle) / 4;
 }
 
 void __am_timer_rtc(AM_TIMER_RTC_T *rtc) {
