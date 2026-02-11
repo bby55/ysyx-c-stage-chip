@@ -17,11 +17,10 @@ module ysyx_25010028_LSU (
   input              i_reqValid,
   //input              i_MemWen,
   //input      [31:0]  i_PC,
-  input              i_IfuValid,
+  input              io_ifu_respValid,
   input              io_lsu_respValid,
   output   reg       io_lsu_reqValid
-  //output reg [31:0]  o_LsuRData,
-  //output reg         o_respValid
+  output reg         o_respValid
 
 );
 
@@ -39,33 +38,24 @@ module ysyx_25010028_LSU (
   always @(*) begin
     NextState = CurrentState;
     //o_LsuRData = 32'd0;
-    //o_respValid = 1'b0;
+    o_respValid = 1'b0;
     case(CurrentState)
       IDLE: begin
-        //o_respValid  = 1'b0;
-        if (i_reqValid && i_IfuValid) begin
+        o_respValid  = 1'b0;
+        if (i_reqValid && io_ifu_respValid) begin
           io_lsu_reqValid = 1'b1;
           NextState = WAIT;
+        end else if(i_reqValid && i_reqReady) begin
+          o_respValid  = 1'b1;
+          NextState = WAIT;
+        end else begin
+          o_respValid = 1'b0;
+          io_lsu_reqValid = 1'b0;
+          NextState = IDLE;
         end
       end
 
       WAIT: begin
-            //o_LsuRData = 0;
-            // if(i_reqValid)begin
-            //   if ((i_InstrNum == 12'd2) || (i_InstrNum == 12'd8) || 
-            //       (i_InstrNum == 12'd31) || (i_InstrNum == 12'd32) || 
-            //       (i_InstrNum == 12'd35)) begin
-            //     //$monitor("PC=%h Lsuraddr=%h", i_PC, i_LsuRaddr);
-            //     o_LsuRData = pmem_read(i_LsuRaddr - 32'h30000000, {32{i_reqValid}});                
-            //       end
-            //   if (i_MemWen) begin
-            //     pmem_write(i_LsuWaddr-32'h30000000, i_LsuWdata, i_LsuWmask, i_PC);
-            //   end
-            //   o_respValid = 1'b1;
-            // end
-            // else begin
-            //   o_LsuRData = 0;
-            // end
             io_lsu_reqValid = 1'b0;
             if(io_lsu_respValid)begin
               NextState  = IDLE;
@@ -76,6 +66,7 @@ module ysyx_25010028_LSU (
       default: begin
         //o_respValid  = 1'b0;
         NextState  = IDLE;
+        io_lsu_reqValid = 1'b0;
       end
     endcase
   end

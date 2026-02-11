@@ -1,4 +1,4 @@
-module ysyx_25010028_IFU #(parameter PC_START = 32'h80000000) (
+module ysyx_25010028_IFU #(parameter PC_START = 32'h30000000) (
   input               i_clk,
   input               i_rst,
   input       [31:0]  i_IfuRdata,
@@ -52,31 +52,42 @@ module ysyx_25010028_IFU #(parameter PC_START = 32'h80000000) (
   end
 
   // 组合逻辑：计算下一状态和控制信号
-  always @(*) begin
+  // 组合逻辑：计算下一状态和控制信号（修改后）
+always @(*) begin
+    // 新增：默认值覆盖所有分支
+    o_IfuRaddr = 32'h0;    // 默认地址0
+    o_instr = 32'h0;       // 默认指令0
+    o_IfuValid_next = 1'b0;
+    UpdatePC_en = 1'b0;
+    NextState = IDLE;
+
     case(CurrentState)
       IDLE: begin
-        o_IfuRaddr      = PC;
-        o_IfuValid_next = 1'b1;  // IDLE状态下有效
+        o_IfuRaddr      = PC;  // 覆盖默认值
+        o_IfuValid_next = 1'b1;
         UpdatePC_en     = 1'b0;
         NextState       = WAIT;
+        // IDLE分支中o_instr使用默认值（不影响，因IDLE状态下未接收指令）
       end
 
       WAIT: begin
-        o_instr         = i_IfuRdata;
+        o_instr         = i_IfuRdata;  // 覆盖默认值
+        o_IfuRaddr      = PC;  // 覆盖默认值（保持当前PC，或根据需求调整）
         
         if( (i_respValid ) || (~i_reqValid && io_ifu_respValid))begin
           UpdatePC_en     = 1'b1;
           NextState       = IDLE;
-          o_IfuValid_next = 1'b0;  // 准备回到IDLE时先无效
+          o_IfuValid_next = 1'b0;
         end
         else begin
-          o_IfuValid_next = 1'b0;  // WAIT状态保持无效
+          o_IfuValid_next = 1'b0;
           UpdatePC_en     = 1'b0;
           NextState       = WAIT;
         end
       end
 
       default: begin
+        // 保持默认值，或显式赋值（与默认值一致）
         o_IfuRaddr      = 32'h0;
         o_instr         = 32'h0;
         o_IfuValid_next = 1'b0;

@@ -11,7 +11,7 @@ module ysyx_25010028_PC #(PC_START = 32'h30000000) (
   //根据i_UpdatePC_en和i_JumpPC_en判断PC是否需要更新或跳转
   always @(posedge i_clk) begin
     d_PC <= i_rst ? PC_START :
-            i_UpdatePC_en ? (i_JumpPC_en ? i_JumpPC : d_PC + 32'h4) :
+            i_UpdatePC_en ? (i_JumpPC_en ?  i_JumpPC : d_PC + 32'h4) :
             d_PC;
   end
 

@@ -10,7 +10,8 @@ module ysyx_25010028_CsrFile #(
   input [DATA_WIDTH-1:0]      i_ExuRes,
   input [DATA_WIDTH-1:0]      i_A5Data,
   input [DATA_WIDTH-1:0]      i_CsrExuData,
-  output [DATA_WIDTH-1:0]     o_CsrData
+  output [DATA_WIDTH-1:0]     o_CsrData,
+  input                       i_ifu_rlast
 );
 
   reg [DATA_WIDTH-1:0] mcause;
@@ -34,6 +35,7 @@ module ysyx_25010028_CsrFile #(
     mvendorid = 32'h79737978;
     marchid   = 32'h017D9F6C;
   end
+
 
   assign EpcData = (i_A5Data == {DATA_WIDTH{1'b0}}) ? (i_PC + 32'd4) : i_PC;
 
@@ -61,7 +63,7 @@ module ysyx_25010028_CsrFile #(
       end
     end
 
-    if (i_InstrNum == 12'd36) begin
+    if (i_InstrNum == 12'd36 && i_ifu_rlast) begin
       mcause <= i_A5Data;
       mepc   <= EpcData;
     end
@@ -81,11 +83,15 @@ module ysyx_25010028_CsrFile #(
       endcase
     end
 
-    if (i_InstrNum == 12'd39) begin
+    if (i_InstrNum == 12'd39 && i_ifu_rlast) begin
       mstatus[3]      <= mstatus[7];
       mstatus[7]      <= 1'b1;
       mstatus[12:11]  <= 2'b00;
     end
   end
 
+import "DPI-C" function void set_csr_values(input int mcause, input int mepc, input int mstatus, input int mtvec);
+always @(*) begin
+    set_csr_values(mcause, mepc, mstatus, mtvec);
+end
 endmodule

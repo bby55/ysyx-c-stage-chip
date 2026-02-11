@@ -20,21 +20,9 @@ VL_INLINE_OPT void VysyxSoCFull___024unit____Vdpiimwrap_ebreak_TOP____024unit(ID
     ebreak(a0_val__Vcvt, exit_pc__Vcvt);
 }
 
-extern "C" int rom_read(int addr);
+extern "C" void display_ref(int rf0, int rf1, int rf2, int rf3, int rf4, int rf5, int rf6, int rf7, int rf8, int rf9, int rf10, int rf11, int rf12, int rf13, int rf14, int rf15);
 
-VL_INLINE_OPT void VysyxSoCFull___024unit____Vdpiimwrap_rom_read_TOP____024unit(IData/*31:0*/ addr, IData/*31:0*/ &rom_read__Vfuncrtn) {
-    VL_DEBUG_IF(VL_DBG_MSGF("+        VysyxSoCFull___024unit____Vdpiimwrap_rom_read_TOP____024unit\n"); );
-    // Body
-    int addr__Vcvt;
-    for (size_t addr__Vidx = 0; addr__Vidx < 1; ++addr__Vidx) addr__Vcvt = addr;
-    int rom_read__Vfuncrtn__Vcvt;
-    rom_read__Vfuncrtn__Vcvt = rom_read(addr__Vcvt);
-    rom_read__Vfuncrtn = rom_read__Vfuncrtn__Vcvt;
-}
-
-extern "C" void display_ref(int rf0, int rf1, int rf2, int rf3, int rf4, int rf5, int rf6, int rf7, int rf8, int rf9, int rf10, int rf11, int rf12, int rf13, int rf14, int rf15, int rf16, int rf17, int rf18, int rf19, int rf20, int rf21, int rf22, int rf23, int rf24, int rf25, int rf26, int rf27, int rf28, int rf29, int rf30, int rf31);
-
-VL_INLINE_OPT void VysyxSoCFull___024unit____Vdpiimwrap_display_ref_TOP____024unit(IData/*31:0*/ rf0, IData/*31:0*/ rf1, IData/*31:0*/ rf2, IData/*31:0*/ rf3, IData/*31:0*/ rf4, IData/*31:0*/ rf5, IData/*31:0*/ rf6, IData/*31:0*/ rf7, IData/*31:0*/ rf8, IData/*31:0*/ rf9, IData/*31:0*/ rf10, IData/*31:0*/ rf11, IData/*31:0*/ rf12, IData/*31:0*/ rf13, IData/*31:0*/ rf14, IData/*31:0*/ rf15, IData/*31:0*/ rf16, IData/*31:0*/ rf17, IData/*31:0*/ rf18, IData/*31:0*/ rf19, IData/*31:0*/ rf20, IData/*31:0*/ rf21, IData/*31:0*/ rf22, IData/*31:0*/ rf23, IData/*31:0*/ rf24, IData/*31:0*/ rf25, IData/*31:0*/ rf26, IData/*31:0*/ rf27, IData/*31:0*/ rf28, IData/*31:0*/ rf29, IData/*31:0*/ rf30, IData/*31:0*/ rf31) {
+VL_INLINE_OPT void VysyxSoCFull___024unit____Vdpiimwrap_display_ref_TOP____024unit(IData/*31:0*/ rf0, IData/*31:0*/ rf1, IData/*31:0*/ rf2, IData/*31:0*/ rf3, IData/*31:0*/ rf4, IData/*31:0*/ rf5, IData/*31:0*/ rf6, IData/*31:0*/ rf7, IData/*31:0*/ rf8, IData/*31:0*/ rf9, IData/*31:0*/ rf10, IData/*31:0*/ rf11, IData/*31:0*/ rf12, IData/*31:0*/ rf13, IData/*31:0*/ rf14, IData/*31:0*/ rf15) {
     VL_DEBUG_IF(VL_DBG_MSGF("+        VysyxSoCFull___024unit____Vdpiimwrap_display_ref_TOP____024unit\n"); );
     // Body
     int rf0__Vcvt;
@@ -69,39 +57,7 @@ VL_INLINE_OPT void VysyxSoCFull___024unit____Vdpiimwrap_display_ref_TOP____024un
     for (size_t rf14__Vidx = 0; rf14__Vidx < 1; ++rf14__Vidx) rf14__Vcvt = rf14;
     int rf15__Vcvt;
     for (size_t rf15__Vidx = 0; rf15__Vidx < 1; ++rf15__Vidx) rf15__Vcvt = rf15;
-    int rf16__Vcvt;
-    for (size_t rf16__Vidx = 0; rf16__Vidx < 1; ++rf16__Vidx) rf16__Vcvt = rf16;
-    int rf17__Vcvt;
-    for (size_t rf17__Vidx = 0; rf17__Vidx < 1; ++rf17__Vidx) rf17__Vcvt = rf17;
-    int rf18__Vcvt;
-    for (size_t rf18__Vidx = 0; rf18__Vidx < 1; ++rf18__Vidx) rf18__Vcvt = rf18;
-    int rf19__Vcvt;
-    for (size_t rf19__Vidx = 0; rf19__Vidx < 1; ++rf19__Vidx) rf19__Vcvt = rf19;
-    int rf20__Vcvt;
-    for (size_t rf20__Vidx = 0; rf20__Vidx < 1; ++rf20__Vidx) rf20__Vcvt = rf20;
-    int rf21__Vcvt;
-    for (size_t rf21__Vidx = 0; rf21__Vidx < 1; ++rf21__Vidx) rf21__Vcvt = rf21;
-    int rf22__Vcvt;
-    for (size_t rf22__Vidx = 0; rf22__Vidx < 1; ++rf22__Vidx) rf22__Vcvt = rf22;
-    int rf23__Vcvt;
-    for (size_t rf23__Vidx = 0; rf23__Vidx < 1; ++rf23__Vidx) rf23__Vcvt = rf23;
-    int rf24__Vcvt;
-    for (size_t rf24__Vidx = 0; rf24__Vidx < 1; ++rf24__Vidx) rf24__Vcvt = rf24;
-    int rf25__Vcvt;
-    for (size_t rf25__Vidx = 0; rf25__Vidx < 1; ++rf25__Vidx) rf25__Vcvt = rf25;
-    int rf26__Vcvt;
-    for (size_t rf26__Vidx = 0; rf26__Vidx < 1; ++rf26__Vidx) rf26__Vcvt = rf26;
-    int rf27__Vcvt;
-    for (size_t rf27__Vidx = 0; rf27__Vidx < 1; ++rf27__Vidx) rf27__Vcvt = rf27;
-    int rf28__Vcvt;
-    for (size_t rf28__Vidx = 0; rf28__Vidx < 1; ++rf28__Vidx) rf28__Vcvt = rf28;
-    int rf29__Vcvt;
-    for (size_t rf29__Vidx = 0; rf29__Vidx < 1; ++rf29__Vidx) rf29__Vcvt = rf29;
-    int rf30__Vcvt;
-    for (size_t rf30__Vidx = 0; rf30__Vidx < 1; ++rf30__Vidx) rf30__Vcvt = rf30;
-    int rf31__Vcvt;
-    for (size_t rf31__Vidx = 0; rf31__Vidx < 1; ++rf31__Vidx) rf31__Vcvt = rf31;
-    display_ref(rf0__Vcvt, rf1__Vcvt, rf2__Vcvt, rf3__Vcvt, rf4__Vcvt, rf5__Vcvt, rf6__Vcvt, rf7__Vcvt, rf8__Vcvt, rf9__Vcvt, rf10__Vcvt, rf11__Vcvt, rf12__Vcvt, rf13__Vcvt, rf14__Vcvt, rf15__Vcvt, rf16__Vcvt, rf17__Vcvt, rf18__Vcvt, rf19__Vcvt, rf20__Vcvt, rf21__Vcvt, rf22__Vcvt, rf23__Vcvt, rf24__Vcvt, rf25__Vcvt, rf26__Vcvt, rf27__Vcvt, rf28__Vcvt, rf29__Vcvt, rf30__Vcvt, rf31__Vcvt);
+    display_ref(rf0__Vcvt, rf1__Vcvt, rf2__Vcvt, rf3__Vcvt, rf4__Vcvt, rf5__Vcvt, rf6__Vcvt, rf7__Vcvt, rf8__Vcvt, rf9__Vcvt, rf10__Vcvt, rf11__Vcvt, rf12__Vcvt, rf13__Vcvt, rf14__Vcvt, rf15__Vcvt);
 }
 
 extern "C" int pmem_read(int raddr, int valid);
@@ -132,6 +88,30 @@ VL_INLINE_OPT void VysyxSoCFull___024unit____Vdpiimwrap_pmem_write_TOP____024uni
     int pc__Vcvt;
     for (size_t pc__Vidx = 0; pc__Vidx < 1; ++pc__Vidx) pc__Vcvt = pc;
     pmem_write(waddr__Vcvt, wdata__Vcvt, wmask__Vcvt, pc__Vcvt);
+}
+
+extern "C" void psram_read(int addr, int* data);
+
+VL_INLINE_OPT void VysyxSoCFull___024unit____Vdpiimwrap_psram_read_TOP____024unit(IData/*31:0*/ addr, IData/*31:0*/ &data) {
+    VL_DEBUG_IF(VL_DBG_MSGF("+        VysyxSoCFull___024unit____Vdpiimwrap_psram_read_TOP____024unit\n"); );
+    // Body
+    int addr__Vcvt;
+    for (size_t addr__Vidx = 0; addr__Vidx < 1; ++addr__Vidx) addr__Vcvt = addr;
+    int data__Vcvt;
+    psram_read(addr__Vcvt, &data__Vcvt);
+    data = data__Vcvt;
+}
+
+extern "C" void psram_write(int addr, char data);
+
+VL_INLINE_OPT void VysyxSoCFull___024unit____Vdpiimwrap_psram_write_TOP____024unit(IData/*31:0*/ addr, CData/*7:0*/ data) {
+    VL_DEBUG_IF(VL_DBG_MSGF("+        VysyxSoCFull___024unit____Vdpiimwrap_psram_write_TOP____024unit\n"); );
+    // Body
+    int addr__Vcvt;
+    for (size_t addr__Vidx = 0; addr__Vidx < 1; ++addr__Vidx) addr__Vcvt = addr;
+    char data__Vcvt;
+    for (size_t data__Vidx = 0; data__Vidx < 1; ++data__Vidx) data__Vcvt = data;
+    psram_write(addr__Vcvt, data__Vcvt);
 }
 
 extern "C" void flash_read(int addr, int* data);

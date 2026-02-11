@@ -1,3 +1,4 @@
+.PHONY: insert-arg sim run run-diff
 AM_SRCS := riscv/npc/start.S \
            riscv/npc/trm.c \
            riscv/npc/ioe.c \
@@ -35,7 +36,7 @@ image: image-dep
 	@echo + OBJCOPY "->" $(IMAGE_REL).bin
 	@$(OBJCOPY) -S --set-section-flags .bss=alloc,contents -O binary $(IMAGE).elf $(IMAGE).bin
 
-NPC_HOME ?= /home/ysyxbby/ysyx-workbench/npc
+NPC_HOME = /home/ysyxbby/ysyx-workbench/npc/single_npc
 sim: insert-arg
 	@echo "Running $(NAME) on minirv-npc..."
 	@$(MAKE) -C $(NPC_HOME) clean

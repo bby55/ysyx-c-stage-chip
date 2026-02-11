@@ -5,10 +5,12 @@
 #include <memory/paddr.h>
 #include <difftest-def.h>
 
+
+
 __EXPORT void difftest_memcpy(paddr_t addr, void *buf, size_t n, bool direction) {
-  if(addr == 0xa0000048 || addr == 0xa000004c){
-    return;
-  }
+  // if(addr == 0xa0000048 || addr == 0xa000004c){
+  //   return;
+  // }
   if (direction == DIFFTEST_TO_REF) {
     for (size_t i = 0; i < n; i++) {
       //printf("0x%x\n",((uint32_t *)buf)[i]);
@@ -39,13 +41,13 @@ __EXPORT void difftest_regcpy(void *dut, bool direction) {
 }
 
 __EXPORT void difftest_exec(uint64_t n) {
-    static int skip_count = 1; // 延缓两个周期
+    // static int skip_count = 1; // 延缓两个周期
     Decode s;
-    if (skip_count > 0) {
-        Log("difftest_exec: skipping cycle %d, cpu.pc = " FMT_WORD, skip_count, cpu.pc);
-        skip_count--;
-        return;
-    }
+    // if (skip_count > 0) {
+    //     Log("difftest_exec: skipping cycle %d, cpu.pc = " FMT_WORD, skip_count, cpu.pc);
+    //     skip_count--;
+    //     return;
+    // }
     for (uint64_t i = 0; i < n; i++) {
         s.pc = cpu.pc;
         s.snpc = s.pc;

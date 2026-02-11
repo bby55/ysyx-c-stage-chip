@@ -15,7 +15,8 @@ module ysyx_25010028_WBU #(
   output [DATA_WIDTH-1:0] o_Rs1Data,
   output [DATA_WIDTH-1:0] o_Rs2Data,
   output [DATA_WIDTH-1:0] o_ReturnA0,
-  output [DATA_WIDTH-1:0] o_CsrData
+  output [DATA_WIDTH-1:0] o_CsrData,
+  input                   i_ifu_rlast
 );
   wire [DATA_WIDTH-1:0] A5Data;
 
@@ -47,7 +48,8 @@ module ysyx_25010028_WBU #(
     .i_ExuRes(i_ExuRes),
     .i_A5Data(A5Data),
     .i_CsrExuData(i_CsrExuData),
-    .o_CsrData(o_CsrData)
+    .o_CsrData(o_CsrData),
+    .i_ifu_rlast(i_ifu_rlast)
   );
 
 endmodule

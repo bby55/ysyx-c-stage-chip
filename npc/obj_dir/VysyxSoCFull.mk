@@ -35,15 +35,20 @@ VM_PREFIX = VysyxSoCFull
 VM_MODPREFIX = VysyxSoCFull
 # User CFLAGS (from -CFLAGS on Verilator command line)
 VM_USER_CFLAGS = \
-	-I/home/ysyxbby/ysyx-workbench/nemu/include -I/home/ysyxbby/ysyx-workbench/nemu/src/isa/riscv32/include -I/home/ysyxbby/ysyx-workbench/nemu/build/include -I/usr/include/SDL2 \
+	-I. -I/home/ysyxbby/ysyx-workbench/nemu/include -I/home/ysyxbby/ysyx-workbench/nemu/src/isa/riscv32/include -I/home/ysyxbby/ysyx-workbench/nemu/build/include -I/usr/include/SDL2 \
 
 # User LDLIBS (from -LDFLAGS on Verilator command line)
 VM_USER_LDLIBS = \
-	-lreadline -lSDL2 \
+	-lreadline -lSDL2 -ldl -pthread -mcmodel=large \
 
 # User .cpp files (from .cpp's on Verilator command line)
 VM_USER_CLASSES = \
+	cmd \
+	dpi \
+	exec \
 	main \
+	mem \
+	utils \
 
 # User .cpp directories (from .cpp's on Verilator command line)
 VM_USER_DIR = \
@@ -59,7 +64,17 @@ include $(VERILATOR_ROOT)/include/verilated.mk
 ### Executable rules... (from --exe)
 VPATH += $(VM_USER_DIR)
 
+cmd.o: csrc/cmd.c
+	$(OBJCACHE) $(CXX) $(CXXFLAGS) $(CPPFLAGS) $(OPT_FAST) -c -o $@ $<
+dpi.o: csrc/dpi.c
+	$(OBJCACHE) $(CXX) $(CXXFLAGS) $(CPPFLAGS) $(OPT_FAST) -c -o $@ $<
+exec.o: csrc/exec.c
+	$(OBJCACHE) $(CXX) $(CXXFLAGS) $(CPPFLAGS) $(OPT_FAST) -c -o $@ $<
 main.o: csrc/main.cpp
+	$(OBJCACHE) $(CXX) $(CXXFLAGS) $(CPPFLAGS) $(OPT_FAST) -c -o $@ $<
+mem.o: csrc/mem.c
+	$(OBJCACHE) $(CXX) $(CXXFLAGS) $(CPPFLAGS) $(OPT_FAST) -c -o $@ $<
+utils.o: csrc/utils.c
 	$(OBJCACHE) $(CXX) $(CXXFLAGS) $(CPPFLAGS) $(OPT_FAST) -c -o $@ $<
 
 ### Link rules... (from --exe)

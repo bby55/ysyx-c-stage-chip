@@ -16,6 +16,15 @@ $(V_FILE_FINAL): $(SCALA_FILES)
 	sed -i -e 's/_\(aw\|ar\|w\|r\|b\)_\(\|bits_\)/_\1/g' $@
 	sed -i '/firrtl_black_box_resource_files.f/, $$d' $@
 
+	sed -i 's/\[\s*15\s*:\s*0\s*\]\(\s*sdram_dq\)/[31:0]\1/g' build/ysyxSoCFull.v
+	sed -i 's/\[\s*12\s*:\s*0\s*\]\(\s*sdram_a\)/[13:0]\1/g' build/ysyxSoCFull.v
+	sed -i 's/\[\s*1\s*:\s*0\s*\]\(\s*_asic_sdram_dqm\)/[3:0]\1/g' build/ysyxSoCFull.v
+	sed -i 's/\[\s*12\s*:\s*0\s*\]\(\s*_asic_sdram_a\)/[13:0]\1/g' build/ysyxSoCFull.v
+	sed -i 's/wire \[15:0\] _dq_wire/wire [31:0] _dq_wire/g' $@
+	sed -i 's/\[\s*12\s*:\s*0\s*\]\(\s*sdram_bundle_a\)/[13:0]\1/g' build/ysyxSoCFull.v
+	sed -i 's/\[\s*15\s*:\s*0\s*\]\(\s*sdram_bundle_dq\)/[31:0]\1/g' build/ysyxSoCFull.v
+	sed -i '/^\s*sdram_dqm,/s/^\s*sdram_dqm,/  output [3:0]  sdram_dqm,/' build/ysyxSoCFull.v
+	sed -i '/^\s*sdram_bundle_dqm,/s/^\s*sdram_bundle_dqm,/  output [3:0]  sdram_bundle_dqm,/' build/ysyxSoCFull.v
 verilog: $(V_FILE_FINAL)
 
 clean:

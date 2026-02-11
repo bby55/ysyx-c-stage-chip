@@ -33,7 +33,7 @@ static vaddr_t *csr_register(word_t imm) {
   case 0x300: return &(cpu.csr.mstatus);
   case 0x305: return &(cpu.csr.mtvec);
   default: panic("Unknown if (ref_r->csr.mstatus != cpu.csr.mstatus)");
-  }
+  } 
 }
 void etrace();
 #define ECALL(dnpc) { bool success; dnpc = (isa_raise_intr(isa_reg_str2val("a7", &success), s->pc)); IFDEF(CONFIG_ETRACE,etrace();)}
