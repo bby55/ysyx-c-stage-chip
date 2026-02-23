@@ -1,9 +1,10 @@
 .PHONY: insert-arg sim run run-diff
 AM_SRCS := riscv/soc/start.S \
            riscv/soc/trm.c \
-           riscv/npc/ioe.c \
+           riscv/soc/ioe.c \
            riscv/npc/timer.c \
-           riscv/npc/input.c \
+           riscv/soc/input.c \
+           riscv/soc/gpu.c \
            riscv/npc/cte.c \
            riscv/npc/trap.S \
            platform/dummy/vme.c \

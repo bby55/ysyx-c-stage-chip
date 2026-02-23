@@ -29,7 +29,7 @@
 #define TRACE_DISABLED 1 
 // #define ENABLE_DIFFTEST 1
 // #define AUTO_RUN_ON_START 1
-
+#define ENABLE_NVBOARD 1
 // 硬件地址定义
 #define DEVICE_BASE 0x20000000
 #define SERIAL_PORT (DEVICE_BASE + 0x00003f8)
@@ -47,7 +47,7 @@
 #define FLASH_SIZE 1024*4096
 #define PSRAM_SIZE 134217727
 
-// 复位配置
+// 复位配置 
 #define RESET_TOTAL_CYCLES 10  // 复位持续10个周期
 
 // 调试相关定义
@@ -154,6 +154,7 @@ extern uint64_t wave_cycle_cnt;
 extern bool wave_file_reopened;
 extern bool wave_reset_flag;
 
+extern uint64_t total_cycles;
 // 寄存器名称数组
 extern const char *regs[];
 
@@ -179,6 +180,10 @@ void execute_nemu_step();
 void get_nemu_result(riscv32_CPU_state &ref_nemu);
 bool check_diff_result(const riscv32_CPU_state &npc, const riscv32_CPU_state &ref_nemu, int is_nemu, uint32_t pc);
 #endif // ENABLE_DIFFTEST
+
+#ifdef ENABLE_NVBOARD
+void nvboard_bind_all_pins(VysyxSoCFull* top);
+#endif 
 
 // ===================== 函数声明 =====================
 // --- mem_ops.c 存储操作 ---

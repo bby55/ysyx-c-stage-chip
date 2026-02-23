@@ -3,20 +3,16 @@ MEMORY {
   flash (rx)  : ORIGIN = 0x30000000, LENGTH = 16M 
   psram (rwx) : ORIGIN = 0x80000000, LENGTH = 4M
   sram (rwx)  : ORIGIN = 0x0f000000, LENGTH = 8K 
+  sdram (rwx) : ORIGIN = 0xa0000000, LENGTH = 64M
 }
 
 _sram_start = ORIGIN(sram);
 _stack_size = 0x1000;
+_psram_start = ORIGIN(psram);
+_psram_end = _psram_start + LENGTH(psram);
 SECTIONS {
-  . = ORIGIN(flash);
   
-  .text : {
-    . = ALIGN(4);
-    *(entry)
-    *(.text*)
-    . = ALIGN(4);
-  } > flash AT> flash
-  etext = .;
+  . = ORIGIN(flash);
 
   _fbl_start = .;
   .fbl : {
@@ -36,6 +32,7 @@ SECTIONS {
   _sbl_end = .;
   _sbl_lma = LOADADDR(.sbl);
 
+  . = ORIGIN(flash);
   .rodata : {
     . = ALIGN(4);
     *(.rodata) *(.rodata*)
@@ -43,7 +40,23 @@ SECTIONS {
   } > flash AT> flash
 
 
-  . = ORIGIN(psram); 
+  . = ORIGIN(sdram); 
+  _text_vma_start = .;
+  _text_lma_start = .;
+
+  .text : {
+    . = ALIGN(4);
+    *(entry)
+    *(.text*)
+    . = ALIGN(4);
+  } > sdram AT> flash
+  etext = .;
+  
+  _text_vma_end = .; 
+  _text_lma_start = LOADADDR(.text); 
+  _text_len       = _text_vma_end - _text_vma_start;
+
+
   _data_vma_start = .;
   _data_lma_start = .;
 
@@ -78,7 +91,7 @@ SECTIONS {
     *(__am_apps.sdata*)
     __am_apps_data_end = .;
     . = ALIGN(4);
-  } > psram AT> flash
+  } > sdram AT> flash
 
   _data_vma_end = .; 
   _data_lma_start = LOADADDR(.data); 
@@ -100,7 +113,7 @@ SECTIONS {
     __am_apps_bss_end = .;
     . = ALIGN(4);
     _bss_vma_end = .;
-  } > psram AT>flash
+  } > sdram AT>flash
 
     
     . = ORIGIN(sram) + LENGTH(sram) - _stack_size;
@@ -112,7 +125,7 @@ SECTIONS {
 
   . = _bss_vma_end;
   end = .;
-  _heap_start = ALIGN(0x100);
+  _heap_start = _psram_start;
 }
 
 /* 低地址

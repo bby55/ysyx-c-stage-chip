@@ -1,5 +1,3 @@
-import "DPI-C" function int pmem_read(input int raddr, input int valid);
-import "DPI-C" function void pmem_write(input int waddr, input int wdata, input byte wmask, input int pc);
 module ysyx_25010028_LSU (
   // input    [31:0]  i_instr,
   // output   [4:0]   o_Rs1Raddr,
@@ -23,6 +21,8 @@ module ysyx_25010028_LSU (
   output reg         o_respValid
 
 );
+import "DPI-C" function int pmem_read(input int raddr, input int valid);
+import "DPI-C" function void pmem_write(input int waddr, input int wdata, input byte wmask, input int pc);
 
   parameter IDLE = 1'b0;
   parameter WAIT = 1'b1;

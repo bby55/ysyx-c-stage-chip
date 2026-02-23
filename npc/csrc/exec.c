@@ -4,15 +4,17 @@
 #include <cstring>
 #include <cassert>
 #include <unistd.h>  // for unlink
+#include <nvboard.h>
 
 // ===================== 全局变量定义（exec.c专属） =====================
 riscv32_CPU_state cpu_state = {0};
 InstTrace iringbuf[IRINGBUF_SIZE] = {0};
 int iringbuf_idx = 0;
 int iringbuf_count = 0;
-uint64_t total_steps = 0;
+uint64_t total_steps = 0;          // 总有效指令数
 uint64_t start_step = 0;
 bool is_counting_for_break = false;
+uint64_t total_cycles = 0;         // 新增：总时钟周期数（关键统计量）
 
 // 差分测试全局变量
 #ifdef ENABLE_DIFFTEST
@@ -112,7 +114,7 @@ bool check_diff_result(const riscv32_CPU_state &npc, const riscv32_CPU_state &re
     // 检查通用寄存器
     for (int i = 0; i < 16; ++i) {
         if (npc.gpr[i] != ref_nemu.gpr[i]) {
-            if (!has_error && npc.pc != 0x3001ffa8) {
+            if (!has_error && npc.pc != 0xa000010c) {
                 printf("\n❌ DiffTest FAILED at PC = 0x%08x\n", pc);
                 has_error = true;
                 printf("x%-2d: NPC = 0x%08x, NEMU = 0x%08x\n", i, npc.gpr[i], ref_nemu.gpr[i]);
@@ -182,8 +184,8 @@ void cpu_exec(uint64_t n) {
     npc_state.state = NPC_RUNNING;
     g_print_step = (n <= MAX_INST_TO_PRINT && is_print);
 
-    uint64_t steps = 0;                // 有效指令执行步数
-    int cycles = 0;                    // 总时钟周期数
+    uint64_t steps = 0;                // 本轮有效指令执行步数
+    int cycles = 0;                    // 本轮时钟周期数
     uint64_t remaining_steps = n;      // 剩余需要执行的有效步数
 
     // 初始化波形计数器
@@ -225,14 +227,17 @@ void cpu_exec(uint64_t n) {
         top->eval();
         write_waveform_with_check(ctx->time());  // 写入高电平波形
 
+        #ifdef ENABLE_NVBOARD
+        nvboard_update();
+        #endif
         // 时间更新和统计
         cycles++;
-        wave_total_cycles++;  // 累计波形周期数
-        wave_cycle_cnt++;     // 兼容main.cpp的计数器
+        total_cycles++;                // 新增：累加总周期数（全局）
+        wave_total_cycles++;           // 累计波形周期数
+        wave_cycle_cnt++;              // 兼容main.cpp的计数器
         update_virtual_time();
         update_rtc();
         ::is_nemu++;
-        total_steps++;
 
         // 同步硬件PC到软件CPU状态
         cpu_state.pc = ::n_pc;
@@ -240,7 +245,8 @@ void cpu_exec(uint64_t n) {
         // 有效指令判断：PC变化则为有效指令（RISC-V单步4字节）
         if (reset_finished && (cpu_state.pc != current_pc_before_exec)) {
             is_valid_instr = true;
-            steps++; // 有效步数+1
+            steps++; // 本轮有效步数+1
+            total_steps++; // 新增：累加总有效指令数（全局）
 
             // 差分测试：执行后状态对比
 #ifdef ENABLE_DIFFTEST
@@ -297,4 +303,26 @@ void cpu_exec(uint64_t n) {
                    steps, cycles, wave_total_cycles);
         }
     }
+}
+
+// ===================== 性能统计函数 =====================
+void print_performance_stats() {
+    // 避免除零错误：如果总指令数为0，直接返回
+    if (total_steps == 0) {
+        // 无指令时也用蓝色提示
+        printf("\n\033[1;34m[性能统计] 无有效指令执行，无法计算IPC\033[0m");
+        return;
+    }
+
+    // 计算核心指标
+    double ipc = (double)total_steps / total_cycles;          // IPC = 总指令数 / 总周期数
+    double cycles_per_instr = (double)total_cycles / total_steps;  // 平均每条指令的周期数
+
+    // 格式化打印（蓝色字体，保留4位小数，更易读）
+    // ANSI转义序列说明：\033[1;34m 是高亮蓝色，\033[0m 恢复默认样式
+    printf("\n\033[1;34m[性能统计]\033[0m");
+    printf("\n\033[1;34m总有效指令数: %lu\033[0m", total_steps);
+    printf("\n\033[1;34m总时钟周期数: %lu\033[0m", total_cycles);
+    printf("\n\033[1;34mIPC: %.4f\033[0m", ipc);
+    printf("\n\033[1;34m平均每条指令周期数: %.4f\033[0m\n", cycles_per_instr);
 }

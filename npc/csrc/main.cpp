@@ -4,6 +4,10 @@
 #include <dlfcn.h>
 #include <cstdio>
 #include <cinttypes>
+#include "verilated.h"
+#include "VysyxSoCFull.h"
+#include "verilated_vcd_c.h"
+#include <nvboard.h>
 #ifdef ENABLE_DIFFTEST
 // 全局函数指针（补充类型声明）
 difftest_init_t difftest_init = NULL;
@@ -20,7 +24,8 @@ uint32_t reset_cycle_cnt = 0;
 bool reset_finished = false;
 bool is_reset = true;
 NPCState npc_state = { .state = NPC_STOP };
-
+void nvboard_bind_all_pins(VysyxSoCFull* top);
+void print_performance_stats();
 // 关闭波形文件函数
 static void close_waveform() {
     if (tfp != NULL) {
@@ -31,10 +36,18 @@ static void close_waveform() {
     }
 }
 
+#ifdef ENABLE_NVBOARD
+static void nvboard_cleanup() {
+    if (top != NULL) {
+        nvboard_quit();
+        printf("[INFO] nvboard已退出\n");
+    }
+}
+#endif
+
 // 主函数
 int main(int argc, char** argv) {
     welcome();
-
 #ifdef ENABLE_DIFFTEST
     // 加载NEMU动态库
     const char* nemu_so_path = "/home/ysyxbby/ysyx-workbench/nemu/build/riscv32-nemu-interpreter-so";
@@ -154,7 +167,12 @@ int main(int argc, char** argv) {
     close_waveform(); // 立即关闭，按需开启
     printf("[INFO] 波形文件已手动关闭，停止生成\n");
 #endif
-
+#ifdef ENABLE_NVBOARD
+    nvboard_bind_all_pins(top);
+    nvboard_init();
+    printf("[INFO] nvboard已初始化\n");
+    
+#endif
     // 复位状态初始化
     reset_cycle_cnt = 0;
     reset_finished = false;
@@ -189,14 +207,16 @@ int main(int argc, char** argv) {
         dlclose(handle); // 关闭动态库句柄
     }
 #endif
-
+    print_performance_stats();
     // 关闭波形文件
     if (tfp != NULL) {
         tfp->close();
         delete tfp;
         tfp = NULL;
     }
-
+    #ifdef ENABLE_NVBOARD
+        nvboard_cleanup();
+    #endif
     // 打印退出信息
     if (npc_state.state == NPC_QUIT) {
         printf("程序已退出。\n");

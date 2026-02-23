@@ -1,4 +1,4 @@
-.section entry, "ax"
+.section .fbl, "ax"
 .globl _start
 .type _start, @function
 
@@ -12,7 +12,7 @@ _start:
   la ra, .fbl_copy
   jalr ra
 
-.section .fbl, "ax"
+
 .global .fbl_copy
 .type .fbl_copy, @function
 
@@ -32,13 +32,39 @@ _start:
   mv t0, zero
   mv t1, zero
   mv t2, zero
+  la a0, _text_vma_start
+  la a1, _text_lma_start
+  la a2, _text_len
+  la ra, .sbl_text_copy
+  jalr ra
+
+
+.section .sbl, "ax"
+.global .sbl_text_copy
+.type .sbl_text_copy, @function
+
+.sbl_text_copy:
+  bgeu t0, a2, .sbl_text_copy_end
+  add t1, a1, t0
+  lw t2, 0(t1)
+  add t1, a0, t0
+  sw t2, 0(t1)
+  addi t0, t0, 4
+  j .sbl_text_copy
+
+.sbl_text_copy_end:
+  mv a0, zero
+  mv a1, zero
+  mv a2, zero
+  mv t0, zero
+  mv t1, zero
+  mv t2, zero
   la a0, _data_vma_start
   la a1, _data_lma_start
   la a2, _data_len
   la ra, .sbl_copy
   jalr ra
 
-.section .sbl, "ax"
 .global .sbl_copy
 .type .sbl_copy, @function
 

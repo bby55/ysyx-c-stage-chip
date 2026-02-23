@@ -134,11 +134,14 @@ module ysyx_25010028_IFU #(parameter PC_START = 32'h20000000) (
 
   assign o_PC = PC;
 //[DEBUG]
+`ifdef verilator
 import "DPI-C" function void display(input int instr, input int pc, input int npc, input int update_en);
-wire [31:0] npc;
-assign npc = (!i_rst) ? (i_JumpPC_en) ? i_JumpPC: PC + 32'h4 : PC;
 always @(posedge i_clk)begin
   display(instruction_r, PC, npc, {31'd0, UpdatePC_en});
   end
+`endif
+wire [31:0] npc;
+assign npc = (!i_rst) ? (i_JumpPC_en) ? i_JumpPC: PC + 32'h4 : PC;
+
 
 endmodule

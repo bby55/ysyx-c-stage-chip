@@ -11,15 +11,8 @@ _stack_size = 0x1000;
 _psram_start = ORIGIN(psram);
 _psram_end = _psram_start + LENGTH(psram);
 SECTIONS {
-  . = ORIGIN(flash);
   
-  .text : {
-    . = ALIGN(4);
-    *(entry)
-    *(.text*)
-    . = ALIGN(4);
-  } > flash AT> flash
-  etext = .;
+  . = ORIGIN(flash);
 
   _fbl_start = .;
   .fbl : {
@@ -39,6 +32,7 @@ SECTIONS {
   _sbl_end = .;
   _sbl_lma = LOADADDR(.sbl);
 
+  . = ORIGIN(flash);
   .rodata : {
     . = ALIGN(4);
     *(.rodata) *(.rodata*)
@@ -47,6 +41,22 @@ SECTIONS {
 
 
   . = ORIGIN(sdram); 
+  _text_vma_start = .;
+  _text_lma_start = .;
+
+  .text : {
+    . = ALIGN(4);
+    *(entry)
+    *(.text*)
+    . = ALIGN(4);
+  } > sdram AT> flash
+  etext = .;
+  
+  _text_vma_end = .; 
+  _text_lma_start = LOADADDR(.text); 
+  _text_len       = _text_vma_end - _text_vma_start;
+
+
   _data_vma_start = .;
   _data_lma_start = .;
 

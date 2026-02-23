@@ -1,4 +1,4 @@
-STUID = ysyx_22040000
+STUID = ysyx_25010028
 STUNAME = 白冰洋 
 
 # DO NOT modify the following code!!!

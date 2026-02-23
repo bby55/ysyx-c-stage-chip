@@ -35,14 +35,24 @@ VM_PREFIX = VysyxSoCFull
 VM_MODPREFIX = VysyxSoCFull
 # User CFLAGS (from -CFLAGS on Verilator command line)
 VM_USER_CFLAGS = \
-	-I. -I/home/ysyxbby/ysyx-workbench/nemu/include -I/home/ysyxbby/ysyx-workbench/nemu/src/isa/riscv32/include -I/home/ysyxbby/ysyx-workbench/nemu/build/include -I/usr/include/SDL2 \
+	-I. -I/home/ysyxbby/ysyx-workbench/nemu/include -I/home/ysyxbby/ysyx-workbench/nemu/src/isa/riscv32/include -I/home/ysyxbby/ysyx-workbench/nemu/build/include  -I/home/ysyxbby/ysyx-workbench/nvboard/usr/include \
+	-MMD \
+	-O3 \
+	-I/usr/include/SDL2 \
+	-D_REENTRANT \
 
 # User LDLIBS (from -LDFLAGS on Verilator command line)
 VM_USER_LDLIBS = \
-	-lreadline -lSDL2 -ldl -pthread -mcmodel=large \
+	-lreadline -lSDL2 -ldl -pthread -mcmodel=large -lSDL2 -lSDL2_image -lSDL2_ttf \
+	/home/ysyxbby/ysyx-workbench/nvboard/build/nvboard.a \
+	-lSDL2 \
+	-lSDL2_image \
+	-lSDL2_ttf \
+	/home/ysyxbby/ysyx-workbench/nvboard/build/nvboard.a \
 
 # User .cpp files (from .cpp's on Verilator command line)
 VM_USER_CLASSES = \
+	auto_bind \
 	cmd \
 	dpi \
 	exec \
@@ -52,6 +62,7 @@ VM_USER_CLASSES = \
 
 # User .cpp directories (from .cpp's on Verilator command line)
 VM_USER_DIR = \
+	/home/ysyxbby/ysyx-workbench/npc/build \
 	csrc \
 
 
@@ -64,6 +75,8 @@ include $(VERILATOR_ROOT)/include/verilated.mk
 ### Executable rules... (from --exe)
 VPATH += $(VM_USER_DIR)
 
+auto_bind.o: /home/ysyxbby/ysyx-workbench/npc/build/auto_bind.cpp
+	$(OBJCACHE) $(CXX) $(CXXFLAGS) $(CPPFLAGS) $(OPT_FAST) -c -o $@ $<
 cmd.o: csrc/cmd.c
 	$(OBJCACHE) $(CXX) $(CXXFLAGS) $(CPPFLAGS) $(OPT_FAST) -c -o $@ $<
 dpi.o: csrc/dpi.c

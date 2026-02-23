@@ -66,6 +66,32 @@ static int itoa(int num, char *buf)
     return buf - start; // 返回写入的字符数
 }
 
+static int itox(int num, char *out) {
+    char *start = out;
+    // 处理0的特殊情况
+    if (num == 0) {
+        *out++ = '0';
+        return out - start;
+    }
+    // 处理负数（按无符号数处理，补码形式）
+    unsigned int n = (unsigned int)num;
+    // 临时缓冲区（存储逆序的十六进制字符）
+    char buf[32];
+    int idx = 0;
+    // 逐位转换为十六进制
+    while (n > 0) {
+        int rem = n % 16;
+        buf[idx++] = (rem < 10) ? (rem + '0') : (rem - 10 + 'a');
+        n = n / 16;
+    }
+    // 逆序写入输出缓冲区
+    while (idx > 0) {
+        *out++ = buf[--idx];
+    }
+    return out - start;
+}
+
+
 // 核心：格式化字符串，支持 %d、%s、%%
 int vsprintf(char *out, const char *fmt, va_list ap)
 {
@@ -87,6 +113,9 @@ int vsprintf(char *out, const char *fmt, va_list ap)
             break;
         case 'd':                              // 处理整数
             out += itoa(va_arg(ap, int), out); // 调用itoa转换
+            break;
+        case 'x':                              // 新增：处理十六进制（小写）
+            out += itox(va_arg(ap, int), out); // 调用itox转换
             break;
         case 's':
         {

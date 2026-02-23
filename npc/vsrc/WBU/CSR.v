@@ -33,7 +33,7 @@ module ysyx_25010028_CsrFile #(
     mcycle    = {DATA_WIDTH{1'b0}};
     mcycleh   = {DATA_WIDTH{1'b0}};
     mvendorid = 32'h79737978;
-    marchid   = 32'h017D9F6C;
+    marchid   = 32'h25010028;
   end
 
 
@@ -90,8 +90,10 @@ module ysyx_25010028_CsrFile #(
     end
   end
 
+`ifdef verilator
 import "DPI-C" function void set_csr_values(input int mcause, input int mepc, input int mstatus, input int mtvec);
 always @(*) begin
     set_csr_values(mcause, mepc, mstatus, mtvec);
 end
+`endif
 endmodule

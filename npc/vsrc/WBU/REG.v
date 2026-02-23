@@ -1,9 +1,3 @@
-import "DPI-C" function void display_ref(
-    input int rf0, input int rf1, input int rf2, input int rf3,
-    input int rf4, input int rf5, input int rf6, input int rf7,
-    input int rf8, input int rf9, input int rf10, input int rf11,
-    input int rf12, input int rf13, input int rf14, input int rf15
-);
 module ysyx_25010028_RegisterFile #(ADDR_WIDTH = 1, DATA_WIDTH = 1)
   (
   input i_clk,
@@ -34,6 +28,13 @@ module ysyx_25010028_RegisterFile #(ADDR_WIDTH = 1, DATA_WIDTH = 1)
     if (i_RegWen & (i_RdRaddr != 0)) rf[i_RdRaddr[3:0]] <= i_ExuRes;
   end
 
+`ifdef verilator
+import "DPI-C" function void display_ref(
+    input int rf0, input int rf1, input int rf2, input int rf3,
+    input int rf4, input int rf5, input int rf6, input int rf7,
+    input int rf8, input int rf9, input int rf10, input int rf11,
+    input int rf12, input int rf13, input int rf14, input int rf15
+);
   always @(*) begin
     display_ref(
         rf[0], rf[1], rf[2], rf[3],
@@ -42,5 +43,6 @@ module ysyx_25010028_RegisterFile #(ADDR_WIDTH = 1, DATA_WIDTH = 1)
         rf[12], rf[13], rf[14], rf[15]
     );
 end
+`endif
 endmodule
  

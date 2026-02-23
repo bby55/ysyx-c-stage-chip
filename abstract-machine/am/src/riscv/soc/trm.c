@@ -3,26 +3,17 @@
 #include "../riscv.h"
 #include <stdio.h>
 #include <stdint.h>
-
+#include </home/ysyxbby/ysyx-workbench/abstract-machine/am/src/riscv/soc/include/soc.h>
 extern char _heap_start;
 int main(const char *args);
 
-#define UART_BASE 0x10000000
-#define THR_ADDR (UART_BASE + 0x0)
-#define LER_ADDR (UART_BASE + 0x1)
-#define IIR_ADDR (UART_BASE + 0x2)
-#define FCR_ADDR (UART_BASE + 0x2)
-#define LCR_ADDR (UART_BASE + 0x3)
-#define MCR_ADDR (UART_BASE + 0x4)
-#define LSR_ADDR (UART_BASE + 0x5)
-#define MSR_ADDR (UART_BASE + 0x6)
-#define LSB_ADDR (UART_BASE + 0x0)
-#define MSB_ADDR (UART_BASE + 0x1)
+
 
 
 void uart_init() {
-  outb(LCR_ADDR, 0x80); 
-  outb(LSB_ADDR, 0x36); 
+  outb(LCR_ADDR, inb(LCR_ADDR) | 0x80);
+  outb(LSB_ADDR, 0x01); 
+  outb(LCR_ADDR, inb(LCR_ADDR) & 0x7f);
   outb(MSB_ADDR, 0x00); 
   outb(LCR_ADDR, 0x03);
   outb(FCR_ADDR, 0x07);
@@ -48,6 +39,10 @@ extern char _sbl_lma_end;
 extern char _sbl_lma_start;
 extern char _sbl_vma_end;
 extern char _sbl_len;
+extern char _text_lma_start;
+extern char _text_lma_end;
+extern char _text_len;
+
 
 #define FLASH_SIZE 0x10000000
 #define FLASH_END  ((uintptr_t)&_flash_start + FLASH_SIZE)
@@ -90,7 +85,7 @@ void _trm_init() {
   // uint32_t marchid;
   // asm volatile ("csrr %0, 0xf11" : "=r"(mvendorid));
   // asm volatile ("csrr %0, 0xf12" : "=r"(marchid));
-  // printf("vendor: %d, arch: ysyx_%d\n", mvendorid, marchid);
+  // printf("vendor: %d, arch: ysyx_%x\n", mvendorid, marchid);
   int ret = main(mainargs);
   halt(ret);
 }

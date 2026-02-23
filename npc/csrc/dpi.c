@@ -8,7 +8,7 @@
 // ==============================================
 uint32_t n_pc = 0;
 uint32_t instr = 0;
-
+void print_performance_stats();
 // ==============================================
 // DPI接口：设置CSR寄存器值（硬件→软件）
 // ==============================================
@@ -26,10 +26,43 @@ void putch(int c) {
     *(volatile uint8_t *)SERIAL_PORT = c & 0xff;
 }
 
+uint32_t Ifu_count = 0;
+uint32_t Lsu_count = 0;
+uint32_t Compute_count = 0;
+uint32_t Csr_count = 0;
+uint32_t Jump_count = 0;
+uint32_t Mem_count = 0;
+uint32_t Exu_count = 0;
+uint32_t IFU_cycles = 0;
+uint32_t LSU_cycles = 0;
+extern "C" void perfomance(int ifu_count, int lsu_count, int compute_count, int csr_count, int jump_count, int mem_count, int exu_count, int ifu_cycles, int lsu_cycles) {
+        Ifu_count = ifu_count;
+        Lsu_count = lsu_count;
+        Compute_count = compute_count;
+        Csr_count = csr_count;
+        Jump_count = jump_count;
+        Mem_count = mem_count;
+        Exu_count = exu_count;
+        IFU_cycles = ifu_cycles;
+        LSU_cycles = lsu_cycles;
+}
+
+void print_performance_count() {
+    printf("\n\033[1;36m[Performance Count]\033[0m\n");
+    printf("\033[1;36mIFU Count: %u IFU Cycles: %u  Spent: %.4f\033[0m\n", Ifu_count, IFU_cycles, (float)IFU_cycles/total_cycles);
+    printf("\033[1;36mLSU Count: %u LSU Cycles: %u  Spent: %.4f\033[0m\n", Lsu_count, LSU_cycles, (float)LSU_cycles/total_cycles);
+    printf("\033[1;36mEXU Count: %u\033[0m\n", Exu_count);
+    printf("\033[1;36m[Instruction Count]\033[0m\n");
+    printf("\033[1;36mCompute Count: %u\033[0m\n", Compute_count);
+    printf("\033[1;36mCSR Count: %u\033[0m\n", Csr_count);
+    printf("\033[1;36mJump Count: %u\033[0m\n", Jump_count);
+    printf("\033[1;36mMem Count: %u\033[0m\n", Mem_count);
+}
+
 // ==============================================
 // DPI接口：程序异常/正常退出（硬件→软件）
 // ==============================================
-extern "C" void ebreak(int exit_code, int exit_pc) {
+extern "C" void ebreak(int exit_code, int exit_pc) { 
     if (tfp != NULL) { tfp->close(); delete tfp; tfp = NULL; }
     if (exit_code == 0) {
         printf("Exit PC: 0x%x\n", cpu_state.pc);
@@ -39,7 +72,9 @@ extern "C" void ebreak(int exit_code, int exit_pc) {
         printf("[DPI] ebreak: \033[1;31m HIT BAD TRAP \033[0m\n");
     }
     npc_state.state = NPC_END;
-    print_iringbuf();
+    // print_iringbuf();
+    print_performance_stats();
+    print_performance_count();
     exit(exit_code);
 }
 
@@ -218,3 +253,4 @@ extern "C" void display_ref(int rf0, int rf1, int rf2, int rf3,
     cpu_state.gpr[14] = static_cast<uint32_t>(rf14);
     cpu_state.gpr[15] = static_cast<uint32_t>(rf15);
 }
+

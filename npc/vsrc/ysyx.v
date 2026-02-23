@@ -1,4 +1,3 @@
-import "DPI-C" function void ebreak(input int a0_val, input int exit_pc);
 module ysyx(
   input         clock,
   input         reset,
@@ -79,8 +78,10 @@ module ysyx(
   input  [ 3:0] io_master_bid    //     -->写响应ID
 );
 
-parameter PC_START = 32'h30000000; //mrom
+parameter PC_START = 32'h30000000;
 
+`ifdef verilator
+import "DPI-C" function void ebreak(input int a0_val, input int exit_pc);
 always @(posedge clock) begin
       if(instruction == 32'h00100073)begin
         ebreak(ReturnA0,PC);
@@ -89,7 +90,7 @@ always @(posedge clock) begin
       //   $display("pc = %x",PC);
       // end
   end
-
+`endif
 // 将这些由 reg 改为 wire（因为它们由 IFU 模块输出驱动）
   wire         ifu_arvalid;
   wire [31:0]  ifu_araddr;
@@ -380,6 +381,18 @@ ysyx_25010028_IDU U_IDU (
     .i_master_bid(io_master_bid)
   );
 
-  
+perfomance U_perfomance (
+    .clock(clock),
+    .reset(reset),
+    .ifu_rlast(ifu_rlast),
+    .ifu_rready(ifu_rready),
+    .lsu_rlast(lsu_rlast),
+    .lsu_rready(lsu_rready),
+    .InstrNum(InstrNum),
+    .ExuRes(ExuRes),
+    .ifu_arvalid(ifu_arvalid),
+    .lsu_arvalid(lsu_arvalid),
+    .lsu_awvalid(lsu_awvalid)
+  );
 
   endmodule
