@@ -143,8 +143,9 @@ always @(posedge clock) begin
   reg  [31:0]       instruction;
   wire              icache_rlast;
   wire              icache_arvalid;
-  
+  wire              icache_wash;
 
+  assign icache_wash = (InstrNum == 12'd40)?1'b1:1'b0;
 
 icache #(
     .PC_START(PC_START)
@@ -171,7 +172,8 @@ icache #(
     .i_icache_data   (ifu_rdata),
     .o_instruction(instruction),
     .o_icache_rlast (icache_rlast),
-    .o_ifu_arvalid (icache_arvalid)
+    .o_ifu_arvalid (icache_arvalid),
+    .i_icache_wash (icache_wash)
   );
 
   wire         is_loadmemory;

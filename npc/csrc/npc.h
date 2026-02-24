@@ -26,7 +26,7 @@
 #define LOAD_MROM    1
 #define LOAD_FLASH   2
 #define LOAD_MEM_TYPE LOAD_FLASH
-#define TRACE_DISABLED 1 
+// #define TRACE_DISABLED 1 
 // #define ENABLE_DIFFTEST 1
 // #define AUTO_RUN_ON_START 1
 #define ENABLE_NVBOARD 1

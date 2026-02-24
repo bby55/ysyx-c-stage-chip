@@ -27,13 +27,15 @@ module icache #(parameter PC_START = 32'h30000000)(
   output      [31:0]  o_instruction,  // 恢复为wire，组合逻辑同步更新
 
   output              o_icache_rlast,
-  output              o_ifu_arvalid    
+  output              o_ifu_arvalid,
+
+  input               i_icache_wash    
 
 );
 
     parameter K_icache = 16;
-    parameter B_icache = 32; //4B
-    parameter M_icache = 2;
+    parameter B_icache = 128; //16B
+    parameter M_icache = 4;
     parameter N_icache = 4; //2^N = K
     
     parameter OFFSET_WIDTH = M_icache - 1;
@@ -60,22 +62,35 @@ module icache #(parameter PC_START = 32'h30000000)(
     reg [31:0] ifu_data;
     reg        ifu_rvalid;
     reg        ifu_rlast;
+    reg [31:0] ifu_araddr;
 
-    assign offset = o_icache_araddr[M_icache-1:0];
-    assign index = o_icache_araddr[M_icache + N_icache - 1:M_icache];
-    assign tag = o_icache_araddr[31:M_icache + N_icache];
+    assign offset = ifu_araddr[M_icache-1:0];
+    assign index = ifu_araddr[M_icache + N_icache - 1:M_icache];
+    assign tag = ifu_araddr[31:M_icache + N_icache];
 
+    reg [1:0] icache_count;
     always @(posedge i_clk) begin
-        if(ifu_rlast && (o_icache_araddr <= 32'h0f000000 || o_icache_araddr >= 32'h0f001fff)) begin
-            cache_data[index] <= o_instruction;
+        if(i_icache_wash)begin
+            cache_data[index] <= 128'b0;
+            cache_tags[index] <= 24'b0;
+            cache_valid[index] <= 1'b0;
+        end else if(i_icache_rvalid && (ifu_araddr < 32'h0f000000 || ifu_araddr > 32'h0f001fff)) begin
+            case(icache_count)
+                2'b00:cache_data[index][31:0] <= i_icache_data;
+                2'b01:cache_data[index][63:32] <= i_icache_data;
+                2'b10:cache_data[index][95:64] <= i_icache_data;
+                2'b11:cache_data[index][127:96] <= i_icache_data;
+            endcase
+            icache_count <= (i_icache_rlast )? 2'b00 : icache_count + 1;
             cache_tags[index] <= tag;
-            cache_valid[index] <= 1'b1;
+            cache_valid[index] <= 1'b1; 
         end
        
     end
 
     assign    o_icache_rlast = ifu_rlast;
     assign    o_ifu_arvalid = ifu_arvalid;
+    assign    o_icache_araddr = (ifu_araddr < 32'h0f000000 || ifu_araddr > 32'h0f001fff) ? {tag,index,4'b0} : ifu_araddr;
     always @(posedge i_clk) begin
         if(i_rst) begin
             state <= IDLE;
@@ -108,7 +123,12 @@ module icache #(parameter PC_START = 32'h30000000)(
                 end
             end
             TRANSFER: begin
-                ifu_data = cache_data[index];
+                case(offset[3:2])
+                    2'b00:ifu_data = cache_data[index][31:0];
+                    2'b01:ifu_data = cache_data[index][63:32];
+                    2'b10:ifu_data = cache_data[index][95:64];
+                    2'b11:ifu_data = cache_data[index][127:96];
+                endcase 
                 ifu_arready = 1'b1;
                 ifu_rvalid = 1'b1;
                 ifu_rlast = 1'b1;
@@ -116,10 +136,15 @@ module icache #(parameter PC_START = 32'h30000000)(
                 next_state = IDLE;
             end
             WAIT: begin
-                ifu_data = i_icache_data;
+                case(offset[3:2])
+                    2'b00:ifu_data = (ifu_araddr < 32'h0f000000 || ifu_araddr > 32'h0f001fff) ? cache_data[index][31:0]     : i_icache_data;
+                    2'b01:ifu_data = (ifu_araddr < 32'h0f000000 || ifu_araddr > 32'h0f001fff) ? cache_data[index][63:32]    : i_icache_data;
+                    2'b10:ifu_data = (ifu_araddr < 32'h0f000000 || ifu_araddr > 32'h0f001fff) ? cache_data[index][95:64]    : i_icache_data;
+                    2'b11:ifu_data =  i_icache_data;
+                endcase 
                 ifu_arready = i_icache_arready;
                 ifu_rvalid = i_icache_rvalid;
-                ifu_rlast = i_icache_rlast;
+                ifu_rlast = i_icache_rlast ;
                 o_icache_arvalid = ifu_arvalid;
                 if(i_icache_rvalid && i_icache_rlast) begin
                     next_state = IDLE;
@@ -151,7 +176,7 @@ ysyx_25010028_IFU #(
     .i_ifu_rvalid (ifu_rvalid),
     .o_ifu_rready (o_icache_rready),
     .i_ifu_rlast  (ifu_rlast),
-    .o_ifu_araddr (o_icache_araddr),
+    .o_ifu_araddr (ifu_araddr),
     .o_ifu_arsize (o_icache_arsize),
     .o_ifu_arburst(o_icache_arburst),
     .o_ifu_arlen  (o_icache_arlen),

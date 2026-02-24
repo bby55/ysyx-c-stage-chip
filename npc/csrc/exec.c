@@ -114,7 +114,7 @@ bool check_diff_result(const riscv32_CPU_state &npc, const riscv32_CPU_state &re
     // 检查通用寄存器
     for (int i = 0; i < 16; ++i) {
         if (npc.gpr[i] != ref_nemu.gpr[i]) {
-            if (!has_error && npc.pc != 0xa000010c) {
+            if (!has_error && npc.pc != 0xa0000010) {
                 printf("\n❌ DiffTest FAILED at PC = 0x%08x\n", pc);
                 has_error = true;
                 printf("x%-2d: NPC = 0x%08x, NEMU = 0x%08x\n", i, npc.gpr[i], ref_nemu.gpr[i]);

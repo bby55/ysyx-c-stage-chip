@@ -143,9 +143,9 @@ ysyx_25010028_MuxKeyWithDefault #(
   })
 );
 
-// CSR指令译码（匹配模板参数/端口）
+// CSR指令译码（匹配模板参数/端口）//fence.i
 ysyx_25010028_MuxKeyWithDefault #(
-  .NR_KEY(2),
+  .NR_KEY(3),
   .KEY_LEN(32),
   .DATA_LEN(12)
 ) i8 (
@@ -154,7 +154,8 @@ ysyx_25010028_MuxKeyWithDefault #(
   .default_out(12'd0),
   .lut({
     {32'b00000000000000000000000001110011, 12'd36},
-    {32'b00110000001000000000000001110011, 12'd39}
+    {32'b00110000001000000000000001110011, 12'd39},
+    {32'b00000000000000000001000000001111, 12'd40}
   })
 );
 
@@ -165,7 +166,7 @@ assign InstrType = (InstrCsr != 12'd0)    ? InstrCsr    :
 
 // 立即数选择MUX（匹配模板参数/端口）
 ysyx_25010028_MuxKeyWithDefault #(
-  .NR_KEY(40),
+  .NR_KEY(41),
   .KEY_LEN(12),
   .DATA_LEN(32)
 ) i1 (
@@ -182,14 +183,15 @@ ysyx_25010028_MuxKeyWithDefault #(
     12'd24, B_ex,  12'd25, I_ex,  12'd26, R_ex,  12'd27, B_ex,
     12'd28, B_ex,  12'd29, R_ex,  12'd30, I_ex,  12'd31, I_ex,
     12'd32, I_ex,  12'd33, R_ex,  12'd34, R_ex,  12'd35, I_ex,
-    12'd36, I_ex,  12'd37, I_ex,  12'd38, I_ex,  12'd39, R_ex
+    12'd36, I_ex,  12'd37, I_ex,  12'd38, I_ex,  12'd39, R_ex,
+    12'd40, I_ex
   })
 );
 
 wire reg_wen;
 // 寄存器写使能控制（匹配模板参数/端口）
 ysyx_25010028_MuxKeyWithDefault #(
-  .NR_KEY(11),
+  .NR_KEY(12),
   .KEY_LEN(12),
   .DATA_LEN(1)
 ) i2 (
@@ -199,7 +201,7 @@ ysyx_25010028_MuxKeyWithDefault #(
   .lut({
     12'd3,  1'b0, 12'd4,  1'b0, 12'd7,  1'b0, 12'd13, 1'b0,
     12'd14, 1'b0, 12'd16, 1'b0, 12'd23, 1'b0, 12'd24, 1'b0,
-    12'd27, 1'b0, 12'd28, 1'b0, 12'd36, 1'b0
+    12'd27, 1'b0, 12'd28, 1'b0, 12'd36, 1'b0, 12'd40, 1'b0
   })
 );
 

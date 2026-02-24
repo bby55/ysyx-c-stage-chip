@@ -28,7 +28,7 @@ module apb_delayer(
   parameter WAIT = 2'b01;
   parameter DELAY = 2'b10;
 
-  parameter r = 5.16;
+  parameter r = 4.11;
   parameter s = 100;
 
   parameter r_s = 516;

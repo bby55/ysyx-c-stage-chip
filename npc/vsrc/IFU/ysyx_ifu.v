@@ -113,9 +113,9 @@ module ysyx_25010028_IFU #(parameter PC_START = 32'h30000000) (
       o_ifu_arvalid <= 1'b1;
       o_ifu_araddr  <= PC;
       o_ifu_arid    <= 4'b0;
-      o_ifu_arlen   <= 8'b0;
+      o_ifu_arlen   <= (PC >= 32'h0f000000 && PC <= 32'h0f001fff) ? 8'd0 : 8'd3;
       o_ifu_arsize  <= 3'b010;
-      o_ifu_arburst <= 2'b00;
+      o_ifu_arburst <= (PC >= 32'h0f000000 && PC <= 32'h0f001fff) ? 2'b00: 2'b01;
     end else if (o_ifu_arvalid && i_ifu_arready) begin
       o_ifu_arvalid <= 1'b0;
     end
