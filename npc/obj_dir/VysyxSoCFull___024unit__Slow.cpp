@@ -2,25 +2,21 @@
 // DESCRIPTION: Verilator output: Design implementation internals
 // See VysyxSoCFull.h for the primary calling header
 
-#include "verilated.h"
-#include "verilated_dpi.h"
-
-#include "VysyxSoCFull__Syms.h"
-#include "VysyxSoCFull___024unit.h"
+#include "VysyxSoCFull__pch.h"
 
 void VysyxSoCFull___024unit___ctor_var_reset(VysyxSoCFull___024unit* vlSelf);
 
-VysyxSoCFull___024unit::VysyxSoCFull___024unit(VysyxSoCFull__Syms* symsp, const char* v__name)
-    : VerilatedModule{v__name}
-    , vlSymsp{symsp}
- {
+void VysyxSoCFull___024unit::ctor(VysyxSoCFull__Syms* symsp, const char* namep) {
+    vlSymsp = symsp;
+    vlNamep = strdup(Verilated::catName(vlSymsp->name(), namep));
     // Reset structure values
     VysyxSoCFull___024unit___ctor_var_reset(this);
 }
 
 void VysyxSoCFull___024unit::__Vconfigure(bool first) {
-    if (false && first) {}  // Prevent unused
+    (void)first;  // Prevent unused variable warning
 }
 
-VysyxSoCFull___024unit::~VysyxSoCFull___024unit() {
+void VysyxSoCFull___024unit::dtor() {
+    VL_DO_DANGLING(std::free(const_cast<char*>(vlNamep)), vlNamep);
 }

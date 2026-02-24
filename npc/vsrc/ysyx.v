@@ -86,7 +86,7 @@ always @(posedge clock) begin
       if(instruction == 32'h00100073)begin
         ebreak(ReturnA0,PC);
       end
-      // if(ifu_rlast)begin
+      // if(icache_rlast)begin
       //   $display("pc = %x",PC);
       // end
   end
@@ -141,13 +141,14 @@ always @(posedge clock) begin
   wire [3:0]   lsu_bid;
 
   reg  [31:0]       instruction;
-
+  wire              icache_rlast;
+  wire              icache_arvalid;
   
 
 
-ysyx_25010028_IFU #(
+icache #(
     .PC_START(PC_START)
-  ) U_IFU (
+  ) u_icache (
     .i_clk      (clock),
     .i_rst      (reset),
     .i_JumpPC   (JumpPC),
@@ -155,20 +156,22 @@ ysyx_25010028_IFU #(
     .o_PC       (PC),
     .i_is_loadmemory(is_loadmemory),
     .i_is_storememory(is_storememory),
-    .o_ifu_arvalid(ifu_arvalid),
-    .i_ifu_arready(ifu_arready),
-    .i_ifu_rvalid (ifu_rvalid),
-    .o_ifu_rready (ifu_rready),
-    .i_ifu_rlast  (ifu_rlast),
-    .o_ifu_araddr (ifu_araddr),
-    .o_ifu_arsize (ifu_arsize),
-    .o_ifu_arburst(ifu_arburst), //   -->读地址突发类型
-    .o_ifu_arlen  (ifu_arlen),  //   -->读地址突发长度
-    .o_ifu_arid   (ifu_arid),   //   -->读地址ID
+    .o_icache_arvalid(ifu_arvalid),
+    .i_icache_arready(ifu_arready),
+    .i_icache_rvalid (ifu_rvalid),
+    .o_icache_rready (ifu_rready),
+    .i_icache_rlast  (ifu_rlast),
+    .o_icache_araddr (ifu_araddr),
+    .o_icache_arsize (ifu_arsize),
+    .o_icache_arburst(ifu_arburst), //   -->读地址突发类型
+    .o_icache_arlen  (ifu_arlen),  //   -->读地址突发长度
+    .o_icache_arid   (ifu_arid),   //   -->读地址ID
     .i_lsu_bvalid (lsu_bvalid),
     .i_lsu_rlast  (lsu_rlast),
-    .i_ifu_data   (ifu_rdata),
-    .o_instruction(instruction)
+    .i_icache_data   (ifu_rdata),
+    .o_instruction(instruction),
+    .o_icache_rlast (icache_rlast),
+    .o_ifu_arvalid (icache_arvalid)
   );
 
   wire         is_loadmemory;
@@ -195,7 +198,7 @@ ysyx_25010028_IFU #(
 
 ysyx_25010028_IDU U_IDU (
     .i_instr    (instruction),
-    .i_ifu_rlast (ifu_rlast),
+    .i_ifu_rlast (icache_rlast),
     .i_lsu_rlast(lsu_rlast),
     .o_Rs1Raddr (Rs1Raddr),
     .o_Rs2Raddr (Rs2Raddr),
@@ -276,14 +279,14 @@ ysyx_25010028_IDU U_IDU (
     .o_Rs2Data     (Rs2Data),      // Rs2读数据（输出至EXU/LSU等）
     .o_CsrData     (CsrData),      // CSR写数据（暂接0，需连相关逻辑）
     .o_ReturnA0    (ReturnA0),     // A0返回值（输出至系统调用等）
-    .i_ifu_rlast   (ifu_rlast)
+    .i_ifu_rlast   (icache_rlast)
     
   );
 
   ysyx_25010028_LSU U_LSU (
     .i_clk          (clock),                // 时钟
     .i_rst          (reset),                // 复位
-    .i_ifu_rlast    (ifu_rlast),            // IFU最后一拍信号 → LSU
+    .i_ifu_rlast    (icache_rlast),            // IFU最后一拍信号 → LSU
     .o_lsu_arvalid  (lsu_arvalid),          // LSU读地址有效 → Arbiter
     .i_lsu_arready  (lsu_arready),          // Arbiter读地址就绪 → LSU
     .i_lsu_rvalid   (lsu_rvalid),           // Arbiter读数据有效 → LSU
@@ -384,13 +387,14 @@ ysyx_25010028_IDU U_IDU (
 perfomance U_perfomance (
     .clock(clock),
     .reset(reset),
+    .icache_rlast(icache_rlast),
     .ifu_rlast(ifu_rlast),
     .ifu_rready(ifu_rready),
     .lsu_rlast(lsu_rlast),
     .lsu_rready(lsu_rready),
     .InstrNum(InstrNum),
     .ExuRes(ExuRes),
-    .ifu_arvalid(ifu_arvalid),
+    .ifu_arvalid(icache_arvalid),
     .lsu_arvalid(lsu_arvalid),
     .lsu_awvalid(lsu_awvalid)
   );

@@ -1,6 +1,6 @@
 
 `ifdef verilator
-import "DPI-C" function void perfomance(input int ifu_count, input int lsu_count, input int compute_count, input int csr_count, input int jump_count, input int mem_count, input int exu_count, input int ifu_cycles, input int lsu_cycles);
+import "DPI-C" function void perfomance(input int ifu_count, input int lsu_count, input int compute_count, input int csr_count, input int jump_count, input int mem_count, input int exu_count, input int ifu_cycles, input int lsu_cycles, input int no_icache_count);
 `endif
 module perfomance(
   input         clock,
@@ -9,6 +9,7 @@ module perfomance(
   input         lsu_arvalid,
   input         lsu_awvalid,
   input         ifu_rlast,
+  input         icache_rlast,
   input         ifu_rready,
   input         lsu_rlast,
   input         lsu_rready,
@@ -17,6 +18,7 @@ module perfomance(
 );
 
 reg [31:0] ifu_count;
+reg [31:0] no_icache_count;
 reg [31:0] lsu_count;
 reg [31:0] compute_count;
 reg [31:0] csr_count;
@@ -54,7 +56,7 @@ always @(*) begin
       end
     end
     ifu_start: begin
-      if (ifu_rlast && ifu_rready) begin
+      if (icache_rlast && ifu_rready) begin
         next_state = IDLE;
       end else begin
         next_state = ifu_start;
@@ -75,6 +77,7 @@ end
 always @(posedge clock) begin
   if (reset) begin
     ifu_count <= 0;
+    no_icache_count <= 0;
     lsu_count <= 0;
     compute_count <= 0;
     csr_count <= 0;
@@ -83,8 +86,11 @@ always @(posedge clock) begin
     exu_count <= 0;
     prev_ExuRes <= 0;
   end else begin
-    if (ifu_rlast && ifu_rready) begin
+    if (icache_rlast && ifu_rready) begin
       ifu_count <= ifu_count + 1;
+    end
+    if(ifu_rlast && ifu_rready) begin
+      no_icache_count <= no_icache_count + 1;
     end
 
 
@@ -99,7 +105,7 @@ always @(posedge clock) begin
         lsu_cycles <= lsu_cycles + 1;
     end
 
-    if (ifu_rlast && ifu_rready) begin
+    if (icache_rlast && ifu_rready) begin
 
         if(ExuRes != prev_ExuRes) begin
         prev_ExuRes <= ExuRes;
@@ -138,7 +144,7 @@ end
 
 `ifdef verilator
 always @(*) begin
-  perfomance(ifu_count, lsu_count, compute_count, csr_count, jump_count, mem_count, exu_count, ifu_cycles, lsu_cycles);
+  perfomance(ifu_count, lsu_count, compute_count, csr_count, jump_count, mem_count, exu_count, ifu_cycles, lsu_cycles, no_icache_count);
 end
 `endif
 endmodule

@@ -1,4 +1,4 @@
-module ysyx_25010028_IFU #(parameter PC_START = 32'h20000000) (
+module ysyx_25010028_IFU #(parameter PC_START = 32'h30000000) (
   input               i_clk,
   input               i_rst,
   input       [31:0]  i_JumpPC,

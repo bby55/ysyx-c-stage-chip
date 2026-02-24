@@ -20,7 +20,7 @@
 // DPI TYPES for DPI Export callbacks (Internal use)
 
 // SYMS CLASS (contains all model state)
-class VysyxSoCFull__Syms final : public VerilatedSyms {
+class alignas(VL_CACHE_LINE_BYTES) VysyxSoCFull__Syms final : public VerilatedSyms {
   public:
     // INTERNAL STATE
     VysyxSoCFull* const __Vm_modelp;
@@ -34,22 +34,22 @@ class VysyxSoCFull__Syms final : public VerilatedSyms {
     VysyxSoCFull___024unit         TOP____024unit;
 
     // SCOPE NAMES
-    VerilatedScope __Vscope_ysyxSoCFull__asic__axi42apb;
-    VerilatedScope __Vscope_ysyxSoCFull__asic__axi4frag;
-    VerilatedScope __Vscope_ysyxSoCFull__asic__axi4xbar_1;
-    VerilatedScope __Vscope_ysyxSoCFull__asic__axi4yank;
-    VerilatedScope __Vscope_ysyxSoCFull__asic__axi4yank__unnamedblk1;
-    VerilatedScope __Vscope_ysyxSoCFull__asic__lmrom;
-    VerilatedScope __Vscope_ysyxSoCFull__flash;
-    VerilatedScope __Vscope_ysyxSoCFull__flash__flash_cmd_i;
-    VerilatedScope __Vscope_ysyxSoCFull__psram__psram_cmd_i;
+    VerilatedScope* __Vscopep_ysyxSoCFull__asic__axi42apb;
+    VerilatedScope* __Vscopep_ysyxSoCFull__asic__axi4frag;
+    VerilatedScope* __Vscopep_ysyxSoCFull__asic__axi4xbar_1;
+    VerilatedScope* __Vscopep_ysyxSoCFull__asic__axi4yank;
+    VerilatedScope* __Vscopep_ysyxSoCFull__asic__axi4yank__unnamedblk1;
+    VerilatedScope* __Vscopep_ysyxSoCFull__asic__lmrom;
+    VerilatedScope* __Vscopep_ysyxSoCFull__flash;
+    VerilatedScope* __Vscopep_ysyxSoCFull__flash__flash_cmd_i;
+    VerilatedScope* __Vscopep_ysyxSoCFull__psram__psram_cmd_i;
 
     // CONSTRUCTORS
     VysyxSoCFull__Syms(VerilatedContext* contextp, const char* namep, VysyxSoCFull* modelp);
     ~VysyxSoCFull__Syms();
 
     // METHODS
-    const char* name() { return TOP.name(); }
-} VL_ATTR_ALIGNED(VL_CACHE_LINE_BYTES);
+    const char* name() const { return TOP.vlNamep; }
+};
 
 #endif  // guard

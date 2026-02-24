@@ -35,7 +35,8 @@ uint32_t Mem_count = 0;
 uint32_t Exu_count = 0;
 uint32_t IFU_cycles = 0;
 uint32_t LSU_cycles = 0;
-extern "C" void perfomance(int ifu_count, int lsu_count, int compute_count, int csr_count, int jump_count, int mem_count, int exu_count, int ifu_cycles, int lsu_cycles) {
+uint32_t NO_ICACHE_count = 0;
+extern "C" void perfomance(int ifu_count, int lsu_count, int compute_count, int csr_count, int jump_count, int mem_count, int exu_count, int ifu_cycles, int lsu_cycles, int no_icache_count) {
         Ifu_count = ifu_count;
         Lsu_count = lsu_count;
         Compute_count = compute_count;
@@ -45,6 +46,7 @@ extern "C" void perfomance(int ifu_count, int lsu_count, int compute_count, int 
         Exu_count = exu_count;
         IFU_cycles = ifu_cycles;
         LSU_cycles = lsu_cycles;
+        NO_ICACHE_count = no_icache_count;
 }
 
 void print_performance_count() {
@@ -57,6 +59,7 @@ void print_performance_count() {
     printf("\033[1;36mCSR Count: %u\033[0m\n", Csr_count);
     printf("\033[1;36mJump Count: %u\033[0m\n", Jump_count);
     printf("\033[1;36mMem Count: %u\033[0m\n", Mem_count);
+    printf("\033[1;36mHIT ICache useage: %.4f\033[0m\n", (float)(Ifu_count - NO_ICACHE_count) / Ifu_count);
 }
 
 // ==============================================

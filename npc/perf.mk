@@ -7,9 +7,9 @@ yosys:
 	cd $(NPC_HOME)/../yosys-sta && make sta
 
 microbench:
-	@echo "运行microbench测试(test)..."
+	@echo "运行microbench测试(train)..."
 	cd /home/ysyxbby/ysyx-workbench/am-kernels/benchmarks/microbench && \
-    echo c | make ARCH=riscv32e-ysyxsoc run mainargs=test > microbench_test.log
+    echo c | make ARCH=riscv32e-ysyxsoc run mainargs=train > microbench_test.log
 
 perf:
 	@cd $(NPC_HOME)/../yosys-sta && make sta > /dev/null 2>&1

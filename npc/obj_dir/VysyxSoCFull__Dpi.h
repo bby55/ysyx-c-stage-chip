@@ -27,7 +27,7 @@ extern "C" {
     // DPI import at /home/ysyxbby/ysyx-workbench/ysyxSoC/build/ysyxSoCFull.v:5402:30
     extern void mrom_read(int raddr, int* rdata);
     // DPI import at /home/ysyxbby/ysyx-workbench/npc/vsrc/Perfomance/perfomance.v:3:30
-    extern void perfomance(int ifu_count, int lsu_count, int compute_count, int csr_count, int jump_count, int mem_count, int exu_count, int ifu_cycles, int lsu_cycles);
+    extern void perfomance(int ifu_count, int lsu_count, int compute_count, int csr_count, int jump_count, int mem_count, int exu_count, int ifu_cycles, int lsu_cycles, int no_icache_count);
     // DPI import at /home/ysyxbby/ysyx-workbench/ysyxSoC/perip/psram/psram.v:147:30
     extern void psram_read(int addr, int* data);
     // DPI import at /home/ysyxbby/ysyx-workbench/ysyxSoC/perip/psram/psram.v:148:30
