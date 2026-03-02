@@ -5,6 +5,7 @@
 // unless using verilator public meta comments.
 // Suggest use VysyxSoCFull.h instead.
 
+
 #ifndef VERILATED_VYSYXSOCFULL__PCH_H_
 #define VERILATED_VYSYXSOCFULL__PCH_H_  // guard
 
@@ -22,7 +23,5 @@
 
 #include "VysyxSoCFull__Syms.h"
 #include "VysyxSoCFull.h"
-
-// Additional include files added using '--compiler-include'
 
 #endif  // guard

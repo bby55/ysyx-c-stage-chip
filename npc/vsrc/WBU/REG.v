@@ -23,7 +23,6 @@ module ysyx_25010028_RegisterFile #(ADDR_WIDTH = 1, DATA_WIDTH = 1)
   assign o_Rs2Data = (i_Rs2Raddr == 0)? 0 : rf[i_Rs2Raddr[3:0]];
   assign o_ReturnA0 = rf[10];
   assign o_A5Data   = rf[15];
-
   always @(posedge i_clk) begin
     if (i_RegWen & (i_RdRaddr != 0)) rf[i_RdRaddr[3:0]] <= i_ExuRes;
   end
@@ -35,7 +34,7 @@ import "DPI-C" function void display_ref(
     input int rf8, input int rf9, input int rf10, input int rf11,
     input int rf12, input int rf13, input int rf14, input int rf15
 );
-  always @(*) begin
+  always @(i_clk) begin
     display_ref(
         rf[0], rf[1], rf[2], rf[3],
         rf[4], rf[5], rf[6], rf[7],

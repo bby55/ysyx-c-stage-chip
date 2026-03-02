@@ -1,46 +1,46 @@
 module ysyx(
   input         clock,
   input         reset,
-   // 1. 添加例化时用到的 io_interrupt 端口（未使用则定义为输入）
-  input         io_interrupt,  // 新增：匹配例化时的绑定
+
+  input         io_interrupt,
   // ------------------------ 写地址通道 ------------------------
-  output        io_slave_awready,   // slave输出（对应master输入）
-  input         io_slave_awvalid,   // slave输入（对应master输出）
-  input  [3:0]  io_slave_awid,      // slave输入（对应master输出）
-  input  [31:0] io_slave_awaddr,    // slave输入（对应master输出）
-  input  [7:0]  io_slave_awlen,     // slave输入（对应master输出）
-  input  [2:0]  io_slave_awsize,    // slave输入（对应master输出）
-  input  [1:0]  io_slave_awburst,   // slave输入（对应master输出）
+  output        io_slave_awready,
+  input         io_slave_awvalid,
+  input  [3:0]  io_slave_awid,
+  input  [31:0] io_slave_awaddr,
+  input  [7:0]  io_slave_awlen,
+  input  [2:0]  io_slave_awsize,
+  input  [1:0]  io_slave_awburst,
   
   // ------------------------ 写数据通道 ------------------------
-  output        io_slave_wready,    // slave输出（对应master输入）
-  input         io_slave_wvalid,    // slave输入（对应master输出）
-  input  [31:0] io_slave_wdata,     // slave输入（对应master输出）
-  input  [3:0]  io_slave_wstrb,     // slave输入（对应master输出）
-  input         io_slave_wlast,     // slave输入（对应master输出）
+  output        io_slave_wready,
+  input         io_slave_wvalid,
+  input  [31:0] io_slave_wdata,
+  input  [3:0]  io_slave_wstrb,
+  input         io_slave_wlast,
   
   // ------------------------ 写响应通道 ------------------------
-  input         io_slave_bready,    // slave输入（对应master输出）
-  output        io_slave_bvalid,    // slave输出（对应master输入）
-  output [3:0]  io_slave_bid,       // slave输出（对应master输入）
-  output [1:0]  io_slave_bresp,     // slave输出（对应master输入）
+  input         io_slave_bready,
+  output        io_slave_bvalid,
+  output [3:0]  io_slave_bid,
+  output [1:0]  io_slave_bresp,
   
   // ------------------------ 读地址通道 ------------------------
-  output        io_slave_arready,   // slave输出（对应master输入）
-  input         io_slave_arvalid,   // slave输入（对应master输出）
-  input  [3:0]  io_slave_arid,      // slave输入（对应master输出）
-  input  [31:0] io_slave_araddr,    // slave输入（对应master输出）
-  input  [7:0]  io_slave_arlen,     // slave输入（对应master输出）
-  input  [2:0]  io_slave_arsize,    // slave输入（对应master输出）
-  input  [1:0]  io_slave_arburst,   // slave输入（对应master输出）
+  output        io_slave_arready,
+  input         io_slave_arvalid,
+  input  [3:0]  io_slave_arid,
+  input  [31:0] io_slave_araddr,
+  input  [7:0]  io_slave_arlen,
+  input  [2:0]  io_slave_arsize,
+  input  [1:0]  io_slave_arburst,
   
   // ------------------------ 读数据通道 ------------------------
-  input         io_slave_rready,    // slave输入（对应master输出）
-  output        io_slave_rvalid,    // slave输出（对应master输入）
-  output [1:0]  io_slave_rresp,     // slave输出（对应master输入）
-  output [31:0] io_slave_rdata,     // slave输出（对应master输入）
-  output        io_slave_rlast,     // slave输出（对应master输入）
-  output [3:0]  io_slave_rid,       // slave输出（对应master输入
+  input         io_slave_rready,
+  output        io_slave_rvalid,
+  output [1:0]  io_slave_rresp,
+  output [31:0] io_slave_rdata,
+  output        io_slave_rlast,
+  output [3:0]  io_slave_rid,
 
 //读地址通道 
   output        io_master_arvalid, //   io_ifu_reqValid/io_lsu_reqValid-->
@@ -80,18 +80,19 @@ module ysyx(
 
 parameter PC_START = 32'h30000000;
 
-`ifdef verilator
-import "DPI-C" function void ebreak(input int a0_val, input int exit_pc);
-always @(posedge clock) begin
-      if(instruction == 32'h00100073)begin
-        ebreak(ReturnA0,PC);
-      end
-      // if(icache_rlast)begin
-      //   $display("pc = %x",PC);
-      // end
-  end
-`endif
-// 将这些由 reg 改为 wire（因为它们由 IFU 模块输出驱动）
+// `ifdef verilator
+// import "DPI-C" function void ebreak(input int a0_val, input int exit_pc);
+// always @(posedge clock) begin
+//       if(instruction == 32'h00100073)begin
+//         ebreak(ReturnA0,PC);
+//       end
+//       // if(icache_rlast)begin
+//       //   $display("pc = %x",PC);
+//       // end
+//   end
+// `endif
+
+
   wire         ifu_arvalid;
   wire [31:0]  ifu_araddr;
   wire [2:0]   ifu_arsize;
@@ -140,23 +141,123 @@ always @(posedge clock) begin
   wire [1:0]   lsu_bresp;
   wire [3:0]   lsu_bid;
 
-  reg  [31:0]       instruction;
-  wire              icache_rlast;
-  wire              icache_arvalid;
-  wire              icache_wash;
 
-  assign icache_wash = (InstrNum == 12'd40)?1'b1:1'b0;
+  wire [4:0]   Rs1;
+  wire [4:0]   Rs2;
+  wire [31:0]  Rs1Data;
+  wire [31:0]  Rs2Data;
+  wire [31:0]  LS_Rs1Data;
+  wire [31:0]  RAW_Rs1Data;
+  wire [31:0]  RAW_Rs2Data;
+  wire         Load_Use;
 
-icache #(
+
+//==========IF/ID==========
+  wire         IF_ID_Valid;
+  wire         ID_IF_Ready;
+  wire [31:0]  IF_ID_PC;
+  wire [31:0]  IF_ID_Instr;
+
+
+//=========ID/EX===========
+  wire          ID_EX_Valid;
+  wire          EX_ID_Ready;
+  wire  [4:0]   ID_EX_Rs1;
+  wire  [4:0]   ID_EX_Rs2;
+  wire  [4:0]   ID_EX_Rd;
+  wire  [31:0]  ID_EX_Imm;
+  wire          ID_EX_RegWen;
+  wire  [11:0]  ID_EX_InstrNum;
+  wire  [11:0]  ID_EX_CsrNum;
+  wire          ID_EX_IsLoad;
+  wire          ID_EX_IsStore;
+  wire  [31:0]  ID_EX_PC;
+  wire  [31:0]  ID_EX_Instr;
+  wire  [31:0]  ID_EX_PC_w;
+
+
+// ========EX/LS=============
+  wire          EX_LS_Valid;
+  wire          LS_EX_Ready;
+  wire  [31:0]  EX_LS_PC;
+  wire  [31:0]  EX_LS_Instr;
+  wire  [11:0]  EX_LS_InstrNum;
+  wire  [31:0]  EX_LS_ExuRes;
+  wire  [31:0]  EX_LS_CsrExuData;
+  wire  [31:0]  EX_LS_JumpPC;
+  wire          EX_LS_JumpPC_en;
+  wire  [4:0]   EX_LS_Rs1;
+  wire  [4:0]   EX_LS_Rs2;
+  wire  [4:0]   EX_LS_Rd;
+  wire  [31:0]  EX_LS_Imm;
+  wire          EX_LS_RegWen;
+  wire  [11:0]  EX_LS_CsrNum;
+  wire          EX_LS_IsLoad;
+  wire          EX_LS_IsStore;
+  wire          EX_LS_IsLoad_w;
+  wire          EX_LS_IsStore_w;
+  wire  [31:0]  EX_LS_Rs1Data;
+
+//=========LS/WB=============
+  wire          LS_WB_Valid;
+  wire          WB_LS_Ready;
+  wire  [31:0]  LS_WB_PC;
+  wire  [31:0]  LS_WB_Instr;
+  wire  [11:0]  LS_WB_InstrNum;
+  wire  [31:0]  LS_WB_ExuRes;
+  wire  [31:0]  LS_WB_CsrExuData;
+  wire  [31:0]  LS_WB_JumpPC;
+  wire          LS_WB_JumpPC_en;
+  wire  [4:0]   LS_WB_Rs1;
+  wire  [4:0]   LS_WB_Rs2;
+  wire  [4:0]   LS_WB_Rd;
+  wire  [31:0]  LS_WB_Imm;
+  wire          LS_WB_RegWen;
+  wire  [11:0]  LS_WB_CsrNum;
+  wire          LS_WB_IsLoad;
+  wire          LS_WB_IsStore;
+  wire  [31:0]  LS_WB_LData;
+
+  //========WB==============
+  wire  [4:0]   WB_Rd;
+  wire  [31:0]  WB_Data;
+  wire          WB_RegWen;
+  wire          WB_Done;
+  wire  [31:0]  ReturnA0;
+// ysyx_25010028_IFU #(
+//     .PC_START(PC_START)
+//   ) U_IFU (
+//     .clock        (clock),
+//     .reset        (reset),
+//     .i_JumpPC     (EX_LS_JumpPC),
+//     .i_JumpPC_en  (EX_LS_JumpPC_en),
+
+//     .o_ifu_arvalid(ifu_arvalid),
+//     .i_ifu_arready(ifu_arready),
+//     .i_ifu_rvalid (ifu_rvalid),
+//     .o_ifu_rready (ifu_rready),
+//     .i_ifu_rlast  (ifu_rlast),
+//     .o_ifu_araddr (ifu_araddr),
+//     .o_ifu_arsize (ifu_arsize),
+//     .o_ifu_arburst(ifu_arburst),
+//     .o_ifu_arlen  (ifu_arlen),
+//     .o_ifu_arid   (ifu_arid), 
+//     .i_ifu_rdata  (ifu_rdata),
+
+//     .IF_ID_Valid  (IF_ID_Valid),
+//     .ID_IF_Ready  (ID_IF_Ready),
+//     .IF_ID_PC     (IF_ID_PC),
+//     .IF_ID_Instr  (IF_ID_Instr)
+//   );
+
+  icache #(
     .PC_START(PC_START)
   ) u_icache (
-    .i_clk      (clock),
-    .i_rst      (reset),
-    .i_JumpPC   (JumpPC),
-    .i_JumpPC_en(JumpPC_en),
-    .o_PC       (PC),
-    .i_is_loadmemory(is_loadmemory),
-    .i_is_storememory(is_storememory),
+    .clock      (clock),
+    .reset      (reset),
+    .i_JumpPC   (EX_LS_JumpPC),
+    .i_JumpPC_en(EX_LS_JumpPC_en),
+    
     .o_icache_arvalid(ifu_arvalid),
     .i_icache_arready(ifu_arready),
     .i_icache_rvalid (ifu_rvalid),
@@ -164,145 +265,271 @@ icache #(
     .i_icache_rlast  (ifu_rlast),
     .o_icache_araddr (ifu_araddr),
     .o_icache_arsize (ifu_arsize),
-    .o_icache_arburst(ifu_arburst), //   -->读地址突发类型
-    .o_icache_arlen  (ifu_arlen),  //   -->读地址突发长度
-    .o_icache_arid   (ifu_arid),   //   -->读地址ID
-    .i_lsu_bvalid (lsu_bvalid),
-    .i_lsu_rlast  (lsu_rlast),
+    .o_icache_arburst(ifu_arburst),
+    .o_icache_arlen  (ifu_arlen),
+    .o_icache_arid   (ifu_arid),
     .i_icache_data   (ifu_rdata),
-    .o_instruction(instruction),
-    .o_icache_rlast (icache_rlast),
-    .o_ifu_arvalid (icache_arvalid),
-    .i_icache_wash (icache_wash)
+
+    .IF_ID_Valid     (IF_ID_Valid),
+    .ID_IF_Ready     (ID_IF_Ready),
+    .IF_ID_PC        (IF_ID_PC),
+    .IF_ID_Instr     (IF_ID_Instr),
+
+    .i_icache_wash   ()
   );
 
-  wire         is_loadmemory;
-  wire         is_storememory;
-  wire  [31:0] Imm;
-  wire  [11:0] InstrNum;
-  wire  [11:0] CsrNum;
-  wire  [4:0]  Rs1Raddr;
-  wire  [4:0]  Rs2Raddr;
-  wire  [4:0]  RdRaddr; 
-  wire         reqValid;
-  wire         RegWen;
-  wire         JumpPC_en;
-  reg  [ 1:0]  AluByteIdx;
-  wire [31:0]  JumpPC;
-  wire [31:0]  ExuRes;       // ALU结果（暂接0，实际需连接EXU输出）
-  wire [31:0]  PC;           // PC值（暂接IfuRaddr，实际需按流水线传递）
-  wire [31:0]  CsrData;      // CSR写数据（暂接0，实际需连接CSR相关逻辑输出）
-  wire [31:0]  CsrExuData; 
-  wire [31:0]  Rs1Data;      // 寄存器堆Rs1读数据（WBU输出）
-  wire [31:0]  Rs2Data;      // 寄存器堆Rs2读数据（WBU输出）
-  wire [31:0]  ReturnA0;     // A0寄存器返回值（WBU输出）
-  wire [ 3:0]  WmaskSh;
 
-ysyx_25010028_IDU U_IDU (
-    .i_instr    (instruction),
-    .i_ifu_rlast (icache_rlast),
-    .i_lsu_rlast(lsu_rlast),
-    .o_Rs1Raddr (Rs1Raddr),
-    .o_Rs2Raddr (Rs2Raddr),
-    .o_RdRaddr  (RdRaddr),
-    .o_Imm      (Imm),
-    .o_InstrNum (InstrNum),
-    .o_is_loadmemory (is_loadmemory),
-    .o_is_storememory(is_storememory),
-    .o_RegWen   (RegWen),
-    .o_CsrNum   (CsrNum)
-  );
+ysyx_25010028_IDU U_IDU(
+  .clock          (clock),
+  .reset          (reset),
+  .IF_ID_Instr    (IF_ID_Instr),
+  .IF_ID_PC       (IF_ID_PC),
+  .IF_ID_Valid    (IF_ID_Valid),
+  .ID_IF_Ready    (ID_IF_Ready),
 
-  wire [31:0]  io_lsu_addr;
-  assign io_lsu_addr = (is_loadmemory || is_storememory) ? Rs1Data+Imm : PC_START;
-  always @(posedge clock) begin
-    if(reset) begin
-      AluByteIdx <= 2'b00;
-    end
-    else if (is_loadmemory || is_storememory) begin
-      AluByteIdx <= io_lsu_addr[1:0];
-    end
-    else begin
-      AluByteIdx <= AluByteIdx;
-    end
-  end
-  assign lsu_wdata = ExuRes << io_lsu_addr[1:0]*8;
-   ysyx_25010028_ALU #(
+  .ID_EX_Valid    (ID_EX_Valid),
+  .EX_ID_Ready    (EX_ID_Ready),
+  .ID_EX_Rs1      (ID_EX_Rs1),
+  .ID_EX_Rs2      (ID_EX_Rs2),
+  .ID_EX_Rd       (ID_EX_Rd),
+  .ID_EX_Imm      (ID_EX_Imm),
+  .ID_EX_RegWen   (ID_EX_RegWen),
+  .ID_EX_InstrNum (ID_EX_InstrNum),
+  .ID_EX_CsrNum   (ID_EX_CsrNum),
+  .ID_EX_IsLoad   (ID_EX_IsLoad),
+  .ID_EX_IsStore  (ID_EX_IsStore),
+  .ID_EX_PC       (ID_EX_PC),
+  .ID_EX_Instr    (ID_EX_Instr),
+
+  .EX_LS_Rd       (EX_LS_Rd),
+  .LS_WB_Rd       (LS_WB_Rd),
+  .EX_LS_ExuRes   (EX_LS_ExuRes),
+  .LS_WB_ExuRes   (LS_WB_ExuRes),
+  .LS_WB_LData    (LS_WB_LData),
+  .EX_LS_Valid    (EX_LS_Valid),
+  .LS_EX_Ready    (LS_EX_Ready),
+  .EX_LS_RegWen   (EX_LS_RegWen),
+  .LS_WB_RegWen   (LS_WB_RegWen),
+  .EX_LS_IsLoad   (EX_LS_IsLoad),
+  .LS_WB_IsLoad   (LS_WB_IsLoad),
+
+  .RAW_Rs1Data    (RAW_Rs1Data),
+  .RAW_Rs2Data    (RAW_Rs2Data),
+  .Rs1            (Rs1),
+  .Rs2            (Rs2),
+  .Rs1Data        (Rs1Data),    
+  .Rs2Data        (Rs2Data),
+
+  .ID_EX_PC_w     (ID_EX_PC_w),
+  .Load_Use       (Load_Use)
+  
+);
+
+
+
+ ysyx_25010028_ALU #(
     .DATA_WIDTH(32)  
   ) U_ALU (
-    .i_Rs1Data   (Rs1Data),    
-    .i_Rs2Data   (Rs2Data),    
-    .i_Imm       (Imm),        
-    .i_PC        (PC),   
-    .i_CsrData   (CsrData),
-    .i_InstrNum  (InstrNum),   // 输入：指令编号（来自IDU，控制ALU运算类型）
-    .o_ExuRes    (ExuRes),      // 输出：ALU结果（传至WBU用于寄存器写回）
-    .o_CsrExuData(CsrExuData),
-    .o_JumpPC_en (JumpPC_en),
-    .o_JumpPC    (JumpPC),
-    .o_lsu_araddr(lsu_araddr),
-    .o_lsu_arlen (lsu_arlen),
-    .o_lsu_arsize(lsu_arsize),
-    .o_lsu_arburst(lsu_arburst),
-    .o_lsu_arid  (lsu_arid),
-    .i_lsu_rdata (lsu_rdata),
-    .o_lsu_awaddr(lsu_awaddr),
-    .o_lsu_awlen (lsu_awlen),
-    .o_lsu_awsize(lsu_awsize),
-    .o_lsu_awburst(lsu_awburst),
-    .o_lsu_wstrb (lsu_wstrb),
-    .o_lsu_wlast  (lsu_wlast),
-    .i_ByteIdx   (AluByteIdx),
-    .i_lsu_rlast (lsu_rlast),
-    .i_lsu_arvalid(lsu_arvalid),
-    .i_lsu_arready(lsu_arready),
-    .i_lsu_awvalid(lsu_awvalid),
-    .i_lsu_awready(lsu_awready),
-    .i_lsu_wvalid(lsu_wvalid),
-    .i_lsu_wready(lsu_wready)
-    
+    .clock           (clock),
+    .reset           (reset),
+    .i_CsrData       (),    
+
+    .ID_EX_Valid     (ID_EX_Valid),
+    .EX_ID_Ready     (EX_ID_Ready),
+    .ID_EX_Imm       (ID_EX_Imm),        
+    .ID_EX_PC        (ID_EX_PC),   
+    .ID_EX_Instr     (ID_EX_Instr),
+    .ID_EX_InstrNum  (ID_EX_InstrNum),
+    .ID_EX_Rs1       (ID_EX_Rs1),        
+    .ID_EX_Rs2       (ID_EX_Rs2),   
+    .ID_EX_Rd        (ID_EX_Rd),
+    .ID_EX_CsrNum    (ID_EX_CsrNum),
+    .ID_EX_RegWen    (ID_EX_RegWen),
+    .ID_EX_IsLoad    (ID_EX_IsLoad),
+    .ID_EX_IsStore   (ID_EX_IsStore),
+
+    .EX_LS_Valid     (EX_LS_Valid),
+    .LS_EX_Ready     (LS_EX_Ready),
+    .EX_LS_PC        (EX_LS_PC),
+    .EX_LS_Instr     (EX_LS_Instr),
+    .EX_LS_InstrNum  (EX_LS_InstrNum),
+    .EX_LS_ExuRes    (EX_LS_ExuRes),
+    .EX_LS_CsrExuData(EX_LS_CsrExuData),
+    .EX_LS_JumpPC    (EX_LS_JumpPC),
+    .EX_LS_JumpPC_en (EX_LS_JumpPC_en),
+    .EX_LS_Rs1       (EX_LS_Rs1),        
+    .EX_LS_Rs2       (EX_LS_Rs2),   
+    .EX_LS_Rd        (EX_LS_Rd),
+    .EX_LS_Imm       (EX_LS_Imm),
+    .EX_LS_CsrNum    (EX_LS_CsrNum),
+    .EX_LS_RegWen    (EX_LS_RegWen),
+    .EX_LS_IsLoad    (EX_LS_IsLoad),
+    .EX_LS_IsStore   (EX_LS_IsStore),
+    .EX_LS_IsLoad_w  (EX_LS_IsLoad_w),
+    .EX_LS_IsStore_w (EX_LS_IsStore_w),
+    .EX_LS_Rs1Data   (EX_LS_Rs1Data),
+
+
+    .RAW_Rs1Data     (RAW_Rs1Data),
+    .RAW_Rs2Data     (RAW_Rs2Data),
+
+    .ID_EX_PC_w      (ID_EX_PC_w),
+    .Load_Use        (Load_Use)
+
+
   );
 
-    ysyx_25010028_WBU #(
-    .ADDR_WIDTH(5),   // 5位地址→32个通用寄存器（RISC-V标准）
-    .DATA_WIDTH(32)   // 32位数据宽度（RISC-V标准）
-  ) U_WBU (
-    .i_clk         (clock),          // 时钟信号
-    .i_RegWen      (RegWen),       // 寄存器写使能（来自IDU）t_Data
-    .i_InstrNum    (InstrNum),     // 指令编号（来自IDU）
-    .i_CsrNum      (CsrNum),       // CSR编号（来自IDU）
-    .i_Rs1Raddr    (Rs1Raddr),     // Rs1读地址（来自IDU）
-    .i_Rs2Raddr    (Rs2Raddr),     // Rs2读地址（来自IDU）
-    .i_RdRaddr     (RdRaddr),      // Rd写地址（来自IDU）
-    .i_ExuRes      (ExuRes),       // ALU结果（暂接0，需连EXU）
-    .i_PC          (PC),           // PC值（暂接IfuRaddr，需按流水线调整）
-    .i_CsrExuData  (CsrExuData),
-    .o_Rs1Data     (Rs1Data),      // Rs1读数据（输出至EXU/LSU等）
-    .o_Rs2Data     (Rs2Data),      // Rs2读数据（输出至EXU/LSU等）
-    .o_CsrData     (CsrData),      // CSR写数据（暂接0，需连相关逻辑）
-    .o_ReturnA0    (ReturnA0),     // A0返回值（输出至系统调用等）
-    .i_ifu_rlast   (icache_rlast)
-    
-  );
+
+  ysyx_25010028_RegisterFile #(
+    .ADDR_WIDTH(5),  
+    .DATA_WIDTH(32)
+) U_REG (
+    .i_clk(clock),
+    .i_RegWen(WB_RegWen),
+    .i_Rs1Raddr(Rs1),
+    .i_Rs2Raddr(Rs2),
+    .i_RdRaddr(WB_Rd),
+    .i_ExuRes(WB_Data),
+    .o_Rs1Data(Rs1Data),
+    .o_Rs2Data(Rs2Data),
+    .o_ReturnA0(ReturnA0),
+    .o_A5Data()
+);
 
   ysyx_25010028_LSU U_LSU (
-    .i_clk          (clock),                // 时钟
-    .i_rst          (reset),                // 复位
-    .i_ifu_rlast    (icache_rlast),            // IFU最后一拍信号 → LSU
-    .o_lsu_arvalid  (lsu_arvalid),          // LSU读地址有效 → Arbiter
-    .i_lsu_arready  (lsu_arready),          // Arbiter读地址就绪 → LSU
-    .i_lsu_rvalid   (lsu_rvalid),           // Arbiter读数据有效 → LSU
-    .o_lsu_rready   (lsu_rready),           // LSU读数据就绪 → Arbiter
-    .o_lsu_awvalid  (lsu_awvalid),          // LSU写地址有效 → Arbiter（暂接0，需扩展Arbiter写通道）
-    .i_lsu_awready  (lsu_awready),          // Arbiter写地址就绪 → LSU（暂接0）
-    .o_lsu_wvalid   (lsu_wvalid),           // LSU写数据有效 → Arbiter（暂接0）
-    .i_lsu_wready   (lsu_wready),           // Arbiter写数据就绪 → LSU（暂接0）
-    .i_is_loadmemory(is_loadmemory),        // IDU加载指令标志 → LSU
-    .i_is_storememory(is_storememory),      // IDU存储指令标志 → LSU
-    .i_lsu_rlast    (lsu_rlast),            // Arbiter读最后一拍 → LSU
-    .o_lsu_bready   (lsu_bready),           // LSU写响应就绪 → Arbiter（暂接0）
-    .i_lsu_bvalid   (lsu_bvalid)            // LSU写响应有效 → Arbiter（暂接0）
+    .clock           (clock),
+    .reset           (reset),
+
+    .EX_LS_Valid     (EX_LS_Valid),
+    .LS_EX_Ready     (LS_EX_Ready),
+
+    .EX_LS_ExuRes    (EX_LS_ExuRes),
+    .EX_LS_CsrExuData(EX_LS_CsrExuData),
+    .EX_LS_JumpPC    (EX_LS_JumpPC),
+    .EX_LS_JumpPC_en (EX_LS_JumpPC_en),
+    .EX_LS_PC        (EX_LS_PC),
+    .EX_LS_Instr     (EX_LS_Instr),
+    .EX_LS_InstrNum  (EX_LS_InstrNum),
+    .EX_LS_Rs1       (EX_LS_Rs1),
+    .EX_LS_Rs2       (EX_LS_Rs2),
+    .EX_LS_Rd        (EX_LS_Rd),
+    .EX_LS_Imm       (EX_LS_Imm),
+    .EX_LS_RegWen    (EX_LS_RegWen),
+    .EX_LS_CsrNum    (EX_LS_CsrNum),
+    .EX_LS_IsLoad    (EX_LS_IsLoad),
+    .EX_LS_IsStore   (EX_LS_IsStore),
+    .EX_LS_IsLoad_w  (EX_LS_IsLoad_w),
+    .EX_LS_IsStore_w (EX_LS_IsStore_w),
+    .EX_LS_Rs1Data   (EX_LS_Rs1Data),
+
+    .WB_LS_Ready     (WB_LS_Ready),
+    .LS_WB_Valid     (LS_WB_Valid),
+
+    .LS_WB_ExuRes    (LS_WB_ExuRes),
+    .LS_WB_CsrExuData(LS_WB_CsrExuData),
+    .LS_WB_JumpPC    (LS_WB_JumpPC),
+    .LS_WB_JumpPC_en (LS_WB_JumpPC_en),
+    .LS_WB_PC        (LS_WB_PC),
+    .LS_WB_Instr     (LS_WB_Instr),
+    .LS_WB_InstrNum  (LS_WB_InstrNum),
+    .LS_WB_Rs1       (LS_WB_Rs1),
+    .LS_WB_Rs2       (LS_WB_Rs2),
+    .LS_WB_Rd        (LS_WB_Rd),
+    .LS_WB_Imm       (LS_WB_Imm),
+    .LS_WB_RegWen    (LS_WB_RegWen),
+    .LS_WB_CsrNum    (LS_WB_CsrNum),
+    .LS_WB_IsLoad    (LS_WB_IsLoad),
+    .LS_WB_IsStore   (LS_WB_IsStore),
+    .LS_WB_LData     (LS_WB_LData),
+
+    .o_lsu_arvalid   (lsu_arvalid),
+    .i_lsu_arready   (lsu_arready),
+    .i_lsu_rvalid    (lsu_rvalid),
+    .o_lsu_rready    (lsu_rready),
+    .o_lsu_awvalid   (lsu_awvalid),
+    .i_lsu_awready   (lsu_awready),
+    .o_lsu_wvalid    (lsu_wvalid),
+    .i_lsu_wready    (lsu_wready),
+    .i_lsu_rlast     (lsu_rlast),
+    .o_lsu_bready    (lsu_bready),
+    .i_lsu_bvalid    (lsu_bvalid),
+    .i_lsu_rdata     (lsu_rdata),
+    .o_lsu_araddr    (lsu_araddr),
+    .o_lsu_arlen     (lsu_arlen),
+    .o_lsu_arsize    (lsu_arsize),
+    .o_lsu_arburst   (lsu_arburst),
+    .o_lsu_arid      (lsu_arid),
+    .o_lsu_awaddr    (lsu_awaddr),
+    .o_lsu_awlen     (lsu_awlen),
+    .o_lsu_awsize    (lsu_awsize),
+    .o_lsu_awburst   (lsu_awburst),
+    .o_lsu_wdata     (lsu_wdata),
+    .o_lsu_wstrb     (lsu_wstrb),
+    .o_lsu_wlast     (lsu_wlast)
+
   );
+
+  ysyx_25010028_WBU #(
+    .ADDR_WIDTH(5),
+    .DATA_WIDTH(32)
+  ) U_WBU(
+    .clock           (clock),
+    .reset           (reset),
+    
+    .WB_LS_Ready     (WB_LS_Ready),
+    .LS_WB_Valid     (LS_WB_Valid),
+
+    .LS_WB_ExuRes    (LS_WB_ExuRes),
+    .LS_WB_CsrExuData(LS_WB_CsrExuData),
+    .LS_WB_JumpPC    (LS_WB_JumpPC),
+    .LS_WB_JumpPC_en (LS_WB_JumpPC_en),
+    .LS_WB_PC        (LS_WB_PC),
+    .LS_WB_Instr     (LS_WB_Instr),
+    .LS_WB_InstrNum  (LS_WB_InstrNum),
+    .LS_WB_Rs1       (LS_WB_Rs1),
+    .LS_WB_Rs2       (LS_WB_Rs2),
+    .LS_WB_Rd        (LS_WB_Rd),
+    .LS_WB_Imm       (LS_WB_Imm),
+    .LS_WB_RegWen    (LS_WB_RegWen),
+    .LS_WB_CsrNum    (LS_WB_CsrNum),
+    .LS_WB_IsLoad    (LS_WB_IsLoad),
+    .LS_WB_IsStore   (LS_WB_IsStore),
+    .LS_WB_LData     (LS_WB_LData),
+
+    .WB_Rd           (WB_Rd),
+    .WB_Data         (WB_Data),
+    .WB_RegWen       (WB_RegWen),
+    .WB_Done         (WB_Done)
+  );
+
+`ifdef verilator
+import "DPI-C" function void ebreak(input int a0_val, input int exit_pc);
+always @(posedge clock) begin
+      if(LS_WB_Instr == 32'h00100073)begin
+        ebreak(ReturnA0,LS_WB_PC);
+      end
+  end
+`endif
+
+`ifdef verilator
+import "DPI-C" function void display(input int instr, input int pc, input int npc, input int update_en);
+always @(posedge clock)begin
+  if(WB_Done) begin
+  display(LS_WB_Instr, pc, npc, {31'd0, 1'b1});
+  end
+  end
+  reg [31:0] npc;
+  reg [31:0] pc;
+always @(posedge clock) begin
+  if(WB_Done)begin
+  npc <= (!reset) ? (LS_WB_JumpPC_en) ? LS_WB_JumpPC: LS_WB_PC + 32'h4 : LS_WB_PC;
+  pc  <= LS_WB_PC;
+end
+end
+
+
+`endif
+
 
 
  Arbiter U_Arbiter (
@@ -386,19 +613,5 @@ ysyx_25010028_IDU U_IDU (
     .i_master_bid(io_master_bid)
   );
 
-perfomance U_perfomance (
-    .clock(clock),
-    .reset(reset),
-    .icache_rlast(icache_rlast),
-    .ifu_rlast(ifu_rlast),
-    .ifu_rready(ifu_rready),
-    .lsu_rlast(lsu_rlast),
-    .lsu_rready(lsu_rready),
-    .InstrNum(InstrNum),
-    .ExuRes(ExuRes),
-    .ifu_arvalid(icache_arvalid),
-    .lsu_arvalid(lsu_arvalid),
-    .lsu_awvalid(lsu_awvalid)
-  );
 
   endmodule

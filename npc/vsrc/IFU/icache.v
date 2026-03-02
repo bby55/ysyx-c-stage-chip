@@ -1,35 +1,32 @@
 module icache #(parameter PC_START = 32'h30000000)(
-  input               i_clk,
-  input               i_rst,
+  input               clock,
+  input               reset,
 
   input       [31:0]  i_JumpPC,
   input               i_JumpPC_en,
-  input               i_is_loadmemory,
-  input               i_is_storememory,
 
-  output reg          o_icache_arvalid, //ifu->mem 读地址有效（时序输出）
-  input               i_icache_arready, //mem->ifu 读地址准备好
-  input               i_icache_rvalid,  //mem->ifu 读数据有效
-  output reg          o_icache_rready,  //ifu->mem 读数据准备好（时序输出）
-  input               i_icache_rlast,   //mem->ifu 读数据最后一拍
-  
-  input               i_lsu_bvalid,  //lsu->ifu 写响应有效（用于等待写响应完成）
-  input               i_lsu_rlast, 
+//=================AXI================
+  output reg          o_icache_arvalid,
+  input               i_icache_arready,
+  input               i_icache_rvalid,
+  output reg          o_icache_rready,
+  input               i_icache_rlast,
 
-  output reg  [31:0]  o_icache_araddr,  //时序输出，与arvalid同步
+  output reg  [31:0]  o_icache_araddr,
   output reg  [2:0]   o_icache_arsize,
   output reg  [1:0]   o_icache_arburst,
   output reg  [3:0]   o_icache_arid,
   output reg  [7:0]   o_icache_arlen,
-
-  output      [31:0]  o_PC,
   input       [31:0]  i_icache_data,
-  output      [31:0]  o_instruction,  // 恢复为wire，组合逻辑同步更新
+//fence.i
+  input               i_icache_wash,
+//==============PipeLine==============
+  output              IF_ID_Valid,
+  input               ID_IF_Ready,
+  output reg  [31:0]  IF_ID_PC,
+  output reg  [31:0]  IF_ID_Instr
 
-  output              o_icache_rlast,
-  output              o_ifu_arvalid,
 
-  input               i_icache_wash    
 
 );
 
@@ -59,7 +56,7 @@ module icache #(parameter PC_START = 32'h30000000)(
 
     reg        ifu_arvalid;
     reg        ifu_arready;
-    reg [31:0] ifu_data;
+    reg [31:0] ifu_rdata;
     reg        ifu_rvalid;
     reg        ifu_rlast;
     reg [31:0] ifu_araddr;
@@ -69,7 +66,7 @@ module icache #(parameter PC_START = 32'h30000000)(
     assign tag = ifu_araddr[31:M_icache + N_icache];
 
     reg [1:0] icache_count;
-    always @(posedge i_clk) begin
+    always @(posedge clock) begin
         if(i_icache_wash)begin
             cache_data[index] <= 128'b0;
             cache_tags[index] <= 24'b0;
@@ -88,11 +85,9 @@ module icache #(parameter PC_START = 32'h30000000)(
        
     end
 
-    assign    o_icache_rlast = ifu_rlast;
-    assign    o_ifu_arvalid = ifu_arvalid;
     assign    o_icache_araddr = (ifu_araddr < 32'h0f000000 || ifu_araddr > 32'h0f001fff) ? {tag,index,4'b0} : ifu_araddr;
-    always @(posedge i_clk) begin
-        if(i_rst) begin
+    always @(posedge clock) begin
+        if(reset) begin
             state <= IDLE;
         end else begin
             state <= next_state;
@@ -105,7 +100,7 @@ module icache #(parameter PC_START = 32'h30000000)(
         ifu_rvalid = 1'b0;
         ifu_arready = 1'b0;
         o_icache_arvalid = 1'b0;
-        ifu_data = 32'h0;
+        ifu_rdata = 32'h0;
         case(state)
             IDLE: begin
                 if(ifu_arvalid) begin
@@ -124,10 +119,10 @@ module icache #(parameter PC_START = 32'h30000000)(
             end
             TRANSFER: begin
                 case(offset[3:2])
-                    2'b00:ifu_data = cache_data[index][31:0];
-                    2'b01:ifu_data = cache_data[index][63:32];
-                    2'b10:ifu_data = cache_data[index][95:64];
-                    2'b11:ifu_data = cache_data[index][127:96];
+                    2'b00:ifu_rdata = cache_data[index][31:0];
+                    2'b01:ifu_rdata = cache_data[index][63:32];
+                    2'b10:ifu_rdata = cache_data[index][95:64];
+                    2'b11:ifu_rdata = cache_data[index][127:96];
                 endcase 
                 ifu_arready = 1'b1;
                 ifu_rvalid = 1'b1;
@@ -137,10 +132,10 @@ module icache #(parameter PC_START = 32'h30000000)(
             end
             WAIT: begin
                 case(offset[3:2])
-                    2'b00:ifu_data = (ifu_araddr < 32'h0f000000 || ifu_araddr > 32'h0f001fff) ? cache_data[index][31:0]     : i_icache_data;
-                    2'b01:ifu_data = (ifu_araddr < 32'h0f000000 || ifu_araddr > 32'h0f001fff) ? cache_data[index][63:32]    : i_icache_data;
-                    2'b10:ifu_data = (ifu_araddr < 32'h0f000000 || ifu_araddr > 32'h0f001fff) ? cache_data[index][95:64]    : i_icache_data;
-                    2'b11:ifu_data =  i_icache_data;
+                    2'b00:ifu_rdata = (ifu_araddr < 32'h0f000000 || ifu_araddr > 32'h0f001fff) ? cache_data[index][31:0]     : i_icache_data;
+                    2'b01:ifu_rdata = (ifu_araddr < 32'h0f000000 || ifu_araddr > 32'h0f001fff) ? cache_data[index][63:32]    : i_icache_data;
+                    2'b10:ifu_rdata = (ifu_araddr < 32'h0f000000 || ifu_araddr > 32'h0f001fff) ? cache_data[index][95:64]    : i_icache_data;
+                    2'b11:ifu_rdata =  i_icache_data;
                 endcase 
                 ifu_arready = i_icache_arready;
                 ifu_rvalid = i_icache_rvalid;
@@ -160,19 +155,16 @@ module icache #(parameter PC_START = 32'h30000000)(
 
 
 
-
 ysyx_25010028_IFU #(
     .PC_START(PC_START)
   ) U_IFU (
-    .i_clk      (i_clk),
-    .i_rst      (i_rst),
-    .i_JumpPC   (i_JumpPC),
-    .i_JumpPC_en(i_JumpPC_en),
-    .o_PC       (o_PC),
-    .i_is_loadmemory(i_is_loadmemory),
-    .i_is_storememory(i_is_storememory),
-    .o_ifu_arvalid(ifu_arvalid), 
-    .i_ifu_arready(ifu_arready), 
+    .clock        (clock),
+    .reset        (reset),
+    .i_JumpPC     (i_JumpPC),
+    .i_JumpPC_en  (i_JumpPC_en),
+
+    .o_ifu_arvalid(ifu_arvalid),
+    .i_ifu_arready(ifu_arready),
     .i_ifu_rvalid (ifu_rvalid),
     .o_ifu_rready (o_icache_rready),
     .i_ifu_rlast  (ifu_rlast),
@@ -180,12 +172,13 @@ ysyx_25010028_IFU #(
     .o_ifu_arsize (o_icache_arsize),
     .o_ifu_arburst(o_icache_arburst),
     .o_ifu_arlen  (o_icache_arlen),
-    .o_ifu_arid   (o_icache_arid),
-    .i_lsu_bvalid (i_lsu_bvalid),
-    .i_lsu_rlast  (i_lsu_rlast),
-    .i_ifu_data   (ifu_data),
-    .o_instruction(o_instruction)
-  );
+    .o_ifu_arid   (o_icache_arid), 
+    .i_ifu_rdata  (ifu_rdata),
 
+    .IF_ID_Valid  (IF_ID_Valid),
+    .ID_IF_Ready  (ID_IF_Ready),
+    .IF_ID_PC     (IF_ID_PC),
+    .IF_ID_Instr  (IF_ID_Instr)
+  );
 
 endmodule

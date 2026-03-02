@@ -10,18 +10,15 @@
 
 class VysyxSoCFull__Syms;
 
-class alignas(VL_CACHE_LINE_BYTES) VysyxSoCFull___024unit final {
+class alignas(VL_CACHE_LINE_BYTES) VysyxSoCFull___024unit final : public VerilatedModule {
   public:
 
     // INTERNAL VARIABLES
-    VysyxSoCFull__Syms* vlSymsp;
-    const char* vlNamep;
+    VysyxSoCFull__Syms* const vlSymsp;
 
     // CONSTRUCTORS
-    VysyxSoCFull___024unit() = default;
-    ~VysyxSoCFull___024unit() = default;
-    void ctor(VysyxSoCFull__Syms* symsp, const char* namep);
-    void dtor();
+    VysyxSoCFull___024unit(VysyxSoCFull__Syms* symsp, const char* v__name);
+    ~VysyxSoCFull___024unit();
     VL_UNCOPYABLE(VysyxSoCFull___024unit);
 
     // INTERNAL METHODS

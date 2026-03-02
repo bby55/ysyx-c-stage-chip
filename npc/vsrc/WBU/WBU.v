@@ -2,54 +2,48 @@ module ysyx_25010028_WBU #(
     ADDR_WIDTH = 1, 
     DATA_WIDTH = 1) 
   (
-  input i_clk,
-  input i_RegWen,
-  input [11:0]           i_InstrNum,
-  input [11:0]           i_CsrNum,
-  input [ADDR_WIDTH-1:0] i_Rs1Raddr,
-  input [ADDR_WIDTH-1:0] i_Rs2Raddr,
-  input [ADDR_WIDTH-1:0] i_RdRaddr,
-  input [DATA_WIDTH-1:0] i_ExuRes,
-  input [DATA_WIDTH-1:0] i_PC,
-  input [DATA_WIDTH-1:0] i_CsrExuData,
-  output [DATA_WIDTH-1:0] o_Rs1Data,
-  output [DATA_WIDTH-1:0] o_Rs2Data,
-  output [DATA_WIDTH-1:0] o_ReturnA0,
-  output [DATA_WIDTH-1:0] o_CsrData,
-  input                   i_ifu_rlast
-);
-  wire [DATA_WIDTH-1:0] A5Data;
+  input               clock,
+  input               reset,
 
-  ysyx_25010028_RegisterFile #(
-    .ADDR_WIDTH(ADDR_WIDTH),  
-    .DATA_WIDTH(DATA_WIDTH)
-) U_REG (
-    .i_clk(i_clk),
-    .i_RegWen(i_RegWen),
-    .i_Rs1Raddr(i_Rs1Raddr),
-    .i_Rs2Raddr(i_Rs2Raddr),
-    .i_RdRaddr(i_RdRaddr),
-    .i_ExuRes(i_ExuRes),
-    .o_Rs1Data(o_Rs1Data),
-    .o_Rs2Data(o_Rs2Data),
-    .o_ReturnA0(o_ReturnA0),
-    .o_A5Data(A5Data)
+  output reg          WB_LS_Ready,
+  input               LS_WB_Valid,
+
+  input        [31:0] LS_WB_ExuRes,
+  input        [31:0] LS_WB_CsrExuData,
+  input        [31:0] LS_WB_JumpPC,
+  input               LS_WB_JumpPC_en,
+  input        [31:0] LS_WB_PC,
+  input        [31:0] LS_WB_Instr,
+  input        [11:0] LS_WB_InstrNum,
+  input        [ 4:0] LS_WB_Rs1,
+  input        [ 4:0] LS_WB_Rs2,
+  input        [ 4:0] LS_WB_Rd,
+  input        [31:0] LS_WB_Imm,
+  input               LS_WB_RegWen,
+  input        [11:0] LS_WB_CsrNum,
+  input               LS_WB_IsLoad,
+  input               LS_WB_IsStore,
+  input        [31:0] LS_WB_LData,
+
+  output       [4:0]  WB_Rd,
+  output       [31:0] WB_Data,
+  output              WB_RegWen,
+  output              WB_Done
+
 );
- 
-  ysyx_25010028_CsrFile #(
-    .ADDR_WIDTH(12),
-    .DATA_WIDTH(DATA_WIDTH)
-  ) U_CSR (
-    .i_clk(i_clk),
-    .i_RegWen(i_RegWen),
-    .i_InstrNum(i_InstrNum),
-    .i_CsrNum(i_CsrNum),
-    .i_PC(i_PC),
-    .i_ExuRes(i_ExuRes),
-    .i_A5Data(A5Data),
-    .i_CsrExuData(i_CsrExuData),
-    .o_CsrData(o_CsrData),
-    .i_ifu_rlast(i_ifu_rlast)
-  );
+assign  WB_Data          = (LS_WB_IsLoad) ? LS_WB_LData : LS_WB_ExuRes;
+assign  WB_Rd            =  LS_WB_Rd;
+assign  WB_RegWen        =  LS_WB_RegWen;
+
+always @(posedge clock) begin
+    WB_LS_Ready         <= 1'b1;
+  if(reset)begin
+    WB_LS_Ready         <= 1'b0;
+  end else if(LS_WB_Valid && WB_LS_Ready) begin
+    WB_Done             <= 1'b1;
+  end else begin
+    WB_Done             <= 1'b0;
+  end
+end
 
 endmodule

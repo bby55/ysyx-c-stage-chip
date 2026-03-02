@@ -90,7 +90,7 @@ void VysyxSoCFull::eval_step() {
 bool VysyxSoCFull::eventsPending() { return false; }
 
 uint64_t VysyxSoCFull::nextTimeSlot() {
-    VL_FATAL_MT(__FILE__, __LINE__, "", "No delays in the design");
+    VL_FATAL_MT(__FILE__, __LINE__, "", "%Error: No delays in the design");
     return 0;
 }
 
@@ -153,7 +153,7 @@ VL_ATTR_COLD void VysyxSoCFull::traceBaseModel(VerilatedTraceBaseC* tfp, int lev
     VerilatedVcdC* const stfp = dynamic_cast<VerilatedVcdC*>(tfp);
     if (VL_UNLIKELY(!stfp)) {
         vl_fatal(__FILE__, __LINE__, __FILE__,"'VysyxSoCFull::trace()' called on non-VerilatedVcdC object;"
-            " use --trace-fst with VerilatedFst object, and --trace-vcd with VerilatedVcd object");
+            " use --trace-fst with VerilatedFst object, and --trace with VerilatedVcd object");
     }
     stfp->spTrace()->addModel(this);
     stfp->spTrace()->addInitCb(&trace_init, &(vlSymsp->TOP));
